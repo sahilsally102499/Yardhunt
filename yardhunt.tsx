@@ -1,147 +1,121 @@
-import { useState, useRef } from "react";
+import { useState, useRef, useEffect } from "react";
 
-const sampleSales = [
-  {
-    id: 1,
-    title: "Moving Sale – Everything Must Go!",
-    name: "The Tremblay Family",
-    address: "142 Rue des Érables",
-    city: "Montréal",
-    province: "QC",
-    date: "2026-06-14",
-    startTime: "8:00 AM",
-    endTime: "2:00 PM",
-    description: "Furniture, kitchen items, vintage clothes, kids toys, tools, and more. Pas de prix trop bas!",
-    tags: ["Furniture", "Clothes", "Tools", "Toys"],
-    emoji: "🏠",
-    posted: "2 days ago",
-    photos: [],
-  },
-  {
-    id: 2,
-    title: "Estate Sale – Antiques & Collectibles",
-    name: "The MacKenzie Estate",
-    address: "88 Birchwood Ave",
-    city: "Victoria",
-    province: "BC",
-    date: "2026-06-13",
-    startTime: "9:00 AM",
-    endTime: "4:00 PM",
-    description: "70 years of collected treasures. Antique furniture, china sets, vintage jewelry, artwork, and books.",
-    tags: ["Antiques", "Jewelry", "Art", "Books"],
-    emoji: "🏺",
-    posted: "1 day ago",
-    photos: [],
-  },
-  {
-    id: 3,
-    title: "Weekend Garage Cleanout",
-    name: "The Patel Family",
-    address: "305 Elm Court",
-    city: "Calgary",
-    province: "AB",
-    date: "2026-06-15",
-    startTime: "7:00 AM",
-    endTime: "1:00 PM",
-    description: "Power tools, hockey gear, bikes, electronics, baby items. Priced to sell fast, eh!",
-    tags: ["Tools", "Electronics", "Sports", "Baby"],
-    emoji: "🔧",
-    posted: "5 hours ago",
-    photos: [],
-  },
-];
+const SUPABASE_URL = "https://rcqlohlftafxicmfjkuf.supabase.co";
+const SUPABASE_KEY = "sb_publishable_JdGpHviVF_vdT43VKOrAWQ_xzRpBNN7";
 
-const tagColors = {
-  Furniture: "#f59e0b",
-  Clothes: "#ec4899",
-  Tools: "#3b82f6",
-  Toys: "#8b5cf6",
-  Antiques: "#d97706",
-  Jewelry: "#f43f5e",
-  Art: "#06b6d4",
-  Books: "#10b981",
-  Electronics: "#6366f1",
-  Sports: "#22c55e",
-  Baby: "#fb923c",
+const supabase = {
+  async getSales() {
+    const today = new Date().toISOString().split("T")[0];
+    const res = await fetch(`${SUPABASE_URL}/rest/v1/sales?date=gte.${today}&order=date.asc`, {
+      headers: { apikey: SUPABASE_KEY, Authorization: `Bearer ${SUPABASE_KEY}` }
+    });
+    return res.json();
+  },
+  async insertSale(sale: any) {
+    const res = await fetch(`${SUPABASE_URL}/rest/v1/sales`, {
+      method: "POST",
+      headers: {
+        apikey: SUPABASE_KEY,
+        Authorization: `Bearer ${SUPABASE_KEY}`,
+        "Content-Type": "application/json",
+        Prefer: "return=representation"
+      },
+      body: JSON.stringify(sale)
+    });
+    return res.json();
+  }
+};
+
+const tagColors: Record<string, string> = {
+  Furniture: "#f59e0b", Clothes: "#ec4899", Tools: "#3b82f6", Toys: "#8b5cf6",
+  Antiques: "#d97706", Jewelry: "#f43f5e", Art: "#06b6d4", Books: "#10b981",
+  Electronics: "#6366f1", Sports: "#22c55e", Baby: "#fb923c", "Hockey Gear": "#e11d48",
 };
 
 const provinces = [
-  { code: "AB", name: "Alberta" },
-  { code: "BC", name: "British Columbia" },
-  { code: "MB", name: "Manitoba" },
-  { code: "NB", name: "New Brunswick" },
-  { code: "NL", name: "Newfoundland and Labrador" },
-  { code: "NS", name: "Nova Scotia" },
-  { code: "NT", name: "Northwest Territories" },
-  { code: "NU", name: "Nunavut" },
-  { code: "ON", name: "Ontario" },
-  { code: "PE", name: "Prince Edward Island" },
-  { code: "QC", name: "Québec" },
-  { code: "SK", name: "Saskatchewan" },
-  { code: "YT", name: "Yukon" },
+  { code: "AB", name: "Alberta" }, { code: "BC", name: "British Columbia" },
+  { code: "MB", name: "Manitoba" }, { code: "NB", name: "New Brunswick" },
+  { code: "NL", name: "Newfoundland and Labrador" }, { code: "NS", name: "Nova Scotia" },
+  { code: "NT", name: "Northwest Territories" }, { code: "NU", name: "Nunavut" },
+  { code: "ON", name: "Ontario" }, { code: "PE", name: "Prince Edward Island" },
+  { code: "QC", name: "Québec" }, { code: "SK", name: "Saskatchewan" }, { code: "YT", name: "Yukon" },
 ];
 
 const tagOptions = ["Furniture","Clothes","Tools","Toys","Antiques","Jewelry","Art","Books","Electronics","Sports","Baby","Hockey Gear","Other"];
+const emojis = ["🏠","🌻","📦","🛋️","🔑","🧺","🏡","🌼"];
 
 export default function App() {
   const [view, setView] = useState("browse");
-  const [sales, setSales] = useState(sampleSales);
+  const [sales, setSales] = useState<any[]>([]);
+  const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState("");
   const [provFilter, setProvFilter] = useState("");
-  const [selectedSale, setSelectedSale] = useState(null);
+  const [selectedSale, setSelectedSale] = useState<any>(null);
   const [submitted, setSubmitted] = useState(false);
+  const [submitting, setSubmitting] = useState(false);
   const [photoIndex, setPhotoIndex] = useState(0);
-  const [form, setForm] = useState({
-    title: "", name: "", address: "", city: "", province: "",
-    date: "", startTime: "", endTime: "", description: "", tags: [], photos: [],
-  });
-  const fileInputRef = useRef();
+  const [form, setForm] = useState({ title:"",name:"",address:"",city:"",province:"",date:"",startTime:"",endTime:"",description:"",tags:[] as string[],photos:[] as string[] });
+  const fileInputRef = useRef<HTMLInputElement>(null);
+
+  useEffect(() => {
+    loadSales();
+  }, []);
+
+  const loadSales = async () => {
+    setLoading(true);
+    try {
+      const data = await supabase.getSales();
+      setSales(Array.isArray(data) ? data : []);
+    } catch (e) {
+      setSales([]);
+    }
+    setLoading(false);
+  };
 
   const filtered = sales.filter(s => {
     const q = search.toLowerCase();
-    const matchSearch = !q || s.title.toLowerCase().includes(q) || s.city.toLowerCase().includes(q) || s.description.toLowerCase().includes(q) || s.tags.some(t => t.toLowerCase().includes(q));
+    const matchSearch = !q || s.title?.toLowerCase().includes(q) || s.city?.toLowerCase().includes(q) || s.description?.toLowerCase().includes(q) || (s.tags || []).some((t: string) => t.toLowerCase().includes(q));
     const matchProv = !provFilter || s.province === provFilter;
     return matchSearch && matchProv;
   });
 
-  const toggleTag = (tag) => {
-    setForm(f => ({
-      ...f,
-      tags: f.tags.includes(tag) ? f.tags.filter(t => t !== tag) : [...f.tags, tag]
-    }));
+  const toggleTag = (tag: string) => {
+    setForm(f => ({ ...f, tags: f.tags.includes(tag) ? f.tags.filter(t => t !== tag) : [...f.tags, tag] }));
   };
 
-  const handlePhotos = (e) => {
-    const files = Array.from(e.target.files);
+  const handlePhotos = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const files = Array.from(e.target.files || []);
     files.forEach(file => {
       const reader = new FileReader();
       reader.onload = (ev) => {
-        setForm(f => ({ ...f, photos: [...f.photos, ev.target.result].slice(0, 6) }));
+        setForm(f => ({ ...f, photos: [...f.photos, ev.target?.result as string].slice(0, 6) }));
       };
       reader.readAsDataURL(file);
     });
   };
 
-  const removePhoto = (idx) => {
-    setForm(f => ({ ...f, photos: f.photos.filter((_, i) => i !== idx) }));
-  };
-
-  const handleSubmit = () => {
+  const handleSubmit = async () => {
     if (!form.title || !form.address || !form.city || !form.province || !form.date) return;
-    const emojis = ["🏠","🌻","📦","🛋️","🔑","🧺"];
-    const newSale = {
-      ...form,
-      id: Date.now(),
-      emoji: emojis[Math.floor(Math.random() * emojis.length)],
-      posted: "Just now",
-    };
-    setSales(prev => [newSale, ...prev]);
-    setSubmitted(true);
-    setTimeout(() => {
-      setSubmitted(false);
-      setView("browse");
-      setForm({ title:"",name:"",address:"",city:"",province:"",date:"",startTime:"",endTime:"",description:"",tags:[],photos:[] });
-    }, 2500);
+    setSubmitting(true);
+    try {
+      await supabase.insertSale({
+        title: form.title, name: form.name, address: form.address,
+        city: form.city, province: form.province, date: form.date,
+        start_time: form.startTime, end_time: form.endTime,
+        description: form.description, tags: form.tags,
+        photos: form.photos, emoji: emojis[Math.floor(Math.random() * emojis.length)]
+      });
+      await loadSales();
+      setSubmitted(true);
+      setTimeout(() => {
+        setSubmitted(false);
+        setView("browse");
+        setForm({ title:"",name:"",address:"",city:"",province:"",date:"",startTime:"",endTime:"",description:"",tags:[],photos:[] });
+      }, 2500);
+    } catch(e) {
+      alert("Something went wrong. Please try again.");
+    }
+    setSubmitting(false);
   };
 
   return (
@@ -164,11 +138,10 @@ export default function App() {
         .photo-remove { position: absolute; top: 3px; right: 3px; background: rgba(0,0,0,0.6); color: white; border: none; border-radius: 50%; width: 20px; height: 20px; font-size: 11px; cursor: pointer; display: flex; align-items: center; justify-content: center; }
         .upload-zone { border: 2px dashed #d6c4a8; border-radius: 8px; padding: 20px; text-align: center; cursor: pointer; transition: border-color 0.2s, background 0.2s; background: #fffdf8; }
         .upload-zone:hover { border-color: #c0392b; background: #fff5f5; }
-        .lightbox { position: fixed; inset: 0; background: rgba(0,0,0,0.9); z-index: 1000; display: flex; align-items: center; justify-content: center; }
-        .lightbox img { max-width: 90vw; max-height: 85vh; border-radius: 6px; object-fit: contain; }
-        .lightbox-close { position: absolute; top: 20px; right: 24px; color: white; font-size: 32px; cursor: pointer; border: none; background: none; }
         .lightbox-nav { position: absolute; top: 50%; transform: translateY(-50%); color: white; font-size: 28px; cursor: pointer; border: none; background: rgba(255,255,255,0.15); border-radius: 50%; width: 44px; height: 44px; display: flex; align-items: center; justify-content: center; }
         .lightbox-nav:hover { background: rgba(255,255,255,0.3); }
+        @keyframes spin { to { transform: rotate(360deg); } }
+        .spinner { width: 40px; height: 40px; border: 4px solid #e8d9c4; border-top-color: #c0392b; border-radius: 50%; animation: spin 0.8s linear infinite; margin: 0 auto; }
       `}</style>
 
       {/* Header */}
@@ -201,36 +174,38 @@ export default function App() {
               {provinces.map(p => <option key={p.code} value={p.code}>{p.code} – {p.name}</option>)}
             </select>
           </div>
-          <p style={{ color: "#f5ddb4", fontSize: 13, marginTop: 16, opacity: 0.8 }}>{sales.length} sales listed nationwide</p>
+          <p style={{ color: "#f5ddb4", fontSize: 13, marginTop: 16, opacity: 0.8 }}>{sales.length} active sale{sales.length !== 1 ? "s" : ""} listed • listings expire automatically after sale date</p>
         </div>
       )}
 
       {/* Browse Grid */}
       {view === "browse" && !selectedSale && (
         <main style={{ maxWidth: 1100, margin: "0 auto", padding: "36px 20px" }}>
-          {filtered.length === 0 ? (
+          {loading ? (
             <div style={{ textAlign: "center", padding: "60px 20px" }}>
-              <div style={{ fontSize: 48, marginBottom: 12 }}>🔍</div>
+              <div className="spinner" style={{ marginBottom: 16 }}></div>
+              <p style={{ color: "#7a5c3a", fontStyle: "italic" }}>Loading sales across Canada…</p>
+            </div>
+          ) : filtered.length === 0 ? (
+            <div style={{ textAlign: "center", padding: "60px 20px" }}>
+              <div style={{ fontSize: 48, marginBottom: 12 }}>🍁</div>
               <p style={{ fontFamily: "'Playfair Display', serif", fontSize: 22, color: "#7a5c3a" }}>No sales found</p>
-              <p style={{ color: "#a08060", marginTop: 8 }}>Try a different search or <span style={{ color: "#c0392b", cursor: "pointer", textDecoration: "underline" }} onClick={() => setView("post")}>post your own sale</span></p>
+              <p style={{ color: "#a08060", marginTop: 8 }}>Be the first! <span style={{ color: "#c0392b", cursor: "pointer", textDecoration: "underline" }} onClick={() => setView("post")}>Post your sale</span></p>
             </div>
           ) : (
             <>
-              <p style={{ color: "#7a5c3a", fontSize: 14, marginBottom: 20, fontStyle: "italic" }}>{filtered.length} sale{filtered.length !== 1 ? "s" : ""} found across Canada</p>
+              <p style={{ color: "#7a5c3a", fontSize: 14, marginBottom: 20, fontStyle: "italic" }}>{filtered.length} upcoming sale{filtered.length !== 1 ? "s" : ""} found across Canada</p>
               <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(320px, 1fr))", gap: 24 }}>
                 {filtered.map(sale => (
                   <div key={sale.id} className="card-hover" onClick={() => { setSelectedSale(sale); setPhotoIndex(0); }} style={{ background: "white", borderRadius: 8, overflow: "hidden", boxShadow: "0 2px 12px rgba(0,0,0,0.08)", border: "1px solid #e8d9c4" }}>
-                    {/* Photo or gradient header */}
                     {sale.photos && sale.photos.length > 0 ? (
                       <div style={{ position: "relative", height: 160, overflow: "hidden" }}>
                         <img src={sale.photos[0]} alt="" style={{ width: "100%", height: "100%", objectFit: "cover" }} />
-                        {sale.photos.length > 1 && (
-                          <span style={{ position: "absolute", bottom: 8, right: 8, background: "rgba(0,0,0,0.6)", color: "white", fontSize: 11, padding: "3px 8px", borderRadius: 10 }}>+{sale.photos.length - 1} photos</span>
-                        )}
+                        {sale.photos.length > 1 && <span style={{ position: "absolute", bottom: 8, right: 8, background: "rgba(0,0,0,0.6)", color: "white", fontSize: 11, padding: "3px 8px", borderRadius: 10 }}>+{sale.photos.length - 1} photos</span>}
                       </div>
                     ) : (
                       <div style={{ background: "linear-gradient(135deg, #6b1a1a, #c0392b)", padding: "20px 20px 16px", display: "flex", alignItems: "flex-start", gap: 12 }}>
-                        <span style={{ fontSize: 32 }}>{sale.emoji}</span>
+                        <span style={{ fontSize: 32 }}>{sale.emoji || "🏠"}</span>
                         <div>
                           <p style={{ fontFamily: "'Playfair Display', serif", fontSize: 17, fontWeight: 700, color: "white", lineHeight: 1.3 }}>{sale.title}</p>
                           <p style={{ color: "#f5ddb4", fontSize: 12, marginTop: 4 }}>📍 {sale.city}, {sale.province}</p>
@@ -238,21 +213,18 @@ export default function App() {
                       </div>
                     )}
                     <div style={{ padding: "16px 20px" }}>
-                      {sale.photos && sale.photos.length > 0 && (
-                        <p style={{ fontFamily: "'Playfair Display', serif", fontSize: 16, fontWeight: 700, color: "#2d1b0e", marginBottom: 6 }}>{sale.title}</p>
-                      )}
+                      {sale.photos && sale.photos.length > 0 && <p style={{ fontFamily: "'Playfair Display', serif", fontSize: 16, fontWeight: 700, color: "#2d1b0e", marginBottom: 6 }}>{sale.title}</p>}
                       <div style={{ display: "flex", gap: 14, marginBottom: 8, flexWrap: "wrap" }}>
                         <span style={{ fontSize: 13, color: "#7a5c3a" }}>📍 {sale.city}, {sale.province}</span>
                         <span style={{ fontSize: 13, color: "#7a5c3a" }}>📅 {new Date(sale.date + "T12:00:00").toLocaleDateString("en-CA", { month:"short", day:"numeric" })}</span>
-                        {sale.startTime && <span style={{ fontSize: 13, color: "#7a5c3a" }}>⏰ {sale.startTime}</span>}
+                        {sale.start_time && <span style={{ fontSize: 13, color: "#7a5c3a" }}>⏰ {sale.start_time}</span>}
                       </div>
-                      <p style={{ fontSize: 14, color: "#5a4030", lineHeight: 1.5, marginBottom: 10, display: "-webkit-box", WebkitLineClamp: 2, WebkitBoxOrient: "vertical", overflow: "hidden" }}>{sale.description}</p>
+                      <p style={{ fontSize: 14, color: "#5a4030", lineHeight: 1.5, marginBottom: 10, display: "-webkit-box", WebkitLineClamp: 2, WebkitBoxOrient: "vertical", overflow: "hidden" } as any}>{sale.description}</p>
                       <div style={{ display: "flex", flexWrap: "wrap", gap: 5 }}>
-                        {sale.tags.map(tag => (
+                        {(sale.tags || []).map((tag: string) => (
                           <span key={tag} className="tag-pill" style={{ background: (tagColors[tag] || "#a08060") + "22", color: tagColors[tag] || "#a08060", border: `1px solid ${tagColors[tag] || "#a08060"}55` }}>{tag}</span>
                         ))}
                       </div>
-                      <p style={{ fontSize: 11, color: "#b0906a", marginTop: 10, textAlign: "right", fontStyle: "italic" }}>Posted {sale.posted}</p>
                     </div>
                   </div>
                 ))}
@@ -267,11 +239,9 @@ export default function App() {
         <main style={{ maxWidth: 720, margin: "0 auto", padding: "36px 20px" }}>
           <button onClick={() => setSelectedSale(null)} style={{ background: "none", border: "none", color: "#c0392b", cursor: "pointer", fontSize: 14, fontFamily: "'Playfair Display', serif", fontWeight: 700, marginBottom: 20, display: "flex", alignItems: "center", gap: 6 }}>← Back to listings</button>
           <div style={{ background: "white", borderRadius: 8, overflow: "hidden", boxShadow: "0 4px 24px rgba(0,0,0,0.1)", border: "1px solid #e8d9c4" }}>
-
-            {/* Photo gallery or gradient */}
             {selectedSale.photos && selectedSale.photos.length > 0 ? (
               <div>
-                <div style={{ position: "relative", height: 280, background: "#1a0a05", cursor: "pointer" }} onClick={() => {}}>
+                <div style={{ position: "relative", height: 280, background: "#1a0a05" }}>
                   <img src={selectedSale.photos[photoIndex]} alt="" style={{ width: "100%", height: "100%", objectFit: "cover", opacity: 0.95 }} />
                   {selectedSale.photos.length > 1 && (
                     <>
@@ -283,7 +253,7 @@ export default function App() {
                 </div>
                 {selectedSale.photos.length > 1 && (
                   <div style={{ display: "flex", gap: 6, padding: "10px 16px", overflowX: "auto", background: "#f5ece0" }}>
-                    {selectedSale.photos.map((p, i) => (
+                    {selectedSale.photos.map((p: string, i: number) => (
                       <div key={i} onClick={() => setPhotoIndex(i)} style={{ width: 56, height: 56, borderRadius: 4, overflow: "hidden", cursor: "pointer", border: i === photoIndex ? "2px solid #c0392b" : "2px solid transparent", flexShrink: 0 }}>
                         <img src={p} alt="" style={{ width: "100%", height: "100%", objectFit: "cover" }} />
                       </div>
@@ -293,12 +263,11 @@ export default function App() {
               </div>
             ) : (
               <div style={{ background: "linear-gradient(135deg, #1a0a05, #c0392b)", padding: "32px 28px" }}>
-                <span style={{ fontSize: 48 }}>{selectedSale.emoji}</span>
+                <span style={{ fontSize: 48 }}>{selectedSale.emoji || "🏠"}</span>
                 <h2 style={{ fontFamily: "'Playfair Display', serif", fontSize: 28, fontWeight: 900, color: "white", marginTop: 10 }}>{selectedSale.title}</h2>
                 <p style={{ color: "#f5ddb4", marginTop: 6 }}>Hosted by {selectedSale.name || "Anonymous"}</p>
               </div>
             )}
-
             <div style={{ padding: "24px 28px" }}>
               {selectedSale.photos && selectedSale.photos.length > 0 && (
                 <div style={{ marginBottom: 18 }}>
@@ -310,7 +279,7 @@ export default function App() {
                 {[
                   ["📍 Address", `${selectedSale.address}, ${selectedSale.city}, ${selectedSale.province}`],
                   ["📅 Date", new Date(selectedSale.date + "T12:00:00").toLocaleDateString("en-CA", { weekday:"long", year:"numeric", month:"long", day:"numeric" })],
-                  ["⏰ Hours", selectedSale.startTime ? `${selectedSale.startTime} – ${selectedSale.endTime}` : "See description"],
+                  ["⏰ Hours", selectedSale.start_time ? `${selectedSale.start_time} – ${selectedSale.end_time}` : "See description"],
                 ].map(([label, val]) => (
                   <div key={label} style={{ background: "#fdf6ec", padding: "12px 14px", borderRadius: 6, border: "1px solid #e8d9c4" }}>
                     <p style={{ fontSize: 11, color: "#7a5c3a", fontWeight: 700, letterSpacing: 1, textTransform: "uppercase", marginBottom: 3 }}>{label}</p>
@@ -320,11 +289,11 @@ export default function App() {
               </div>
               <h3 style={{ fontFamily: "'Playfair Display', serif", fontSize: 18, color: "#3a2c1a", marginBottom: 8 }}>About this Sale</h3>
               <p style={{ fontSize: 15, color: "#5a4030", lineHeight: 1.7, marginBottom: 18 }}>{selectedSale.description}</p>
-              {selectedSale.tags.length > 0 && (
+              {(selectedSale.tags || []).length > 0 && (
                 <>
                   <h3 style={{ fontFamily: "'Playfair Display', serif", fontSize: 15, color: "#3a2c1a", marginBottom: 10 }}>What's Available</h3>
                   <div style={{ display: "flex", flexWrap: "wrap", gap: 7 }}>
-                    {selectedSale.tags.map(tag => (
+                    {(selectedSale.tags || []).map((tag: string) => (
                       <span key={tag} className="tag-pill" style={{ background: (tagColors[tag] || "#a08060") + "22", color: tagColors[tag] || "#a08060", border: `1px solid ${tagColors[tag] || "#a08060"}55`, padding: "6px 14px", fontSize: 13 }}>{tag}</span>
                     ))}
                   </div>
@@ -345,15 +314,13 @@ export default function App() {
             <div style={{ textAlign: "center", padding: "80px 20px" }}>
               <div style={{ fontSize: 64, marginBottom: 16 }}>🎉</div>
               <h2 style={{ fontFamily: "'Playfair Display', serif", fontSize: 30, color: "#3a2c1a" }}>Sale Posted!</h2>
-              <p style={{ color: "#7a5c3a", marginTop: 8 }}>Your sale is now live for Canadians to find.</p>
+              <p style={{ color: "#7a5c3a", marginTop: 8 }}>Your sale is now live for Canadians to find. It will automatically disappear after your sale date! 🍁</p>
             </div>
           ) : (
             <>
               <h2 style={{ fontFamily: "'Playfair Display', serif", fontSize: 32, fontWeight: 900, color: "#2d1b0e", marginBottom: 6 }}>Post Your Sale</h2>
-              <p style={{ color: "#7a5c3a", fontSize: 15, fontStyle: "italic", marginBottom: 30 }}>Fill in the details and shoppers across Canada will find you.</p>
+              <p style={{ color: "#7a5c3a", fontSize: 15, fontStyle: "italic", marginBottom: 30 }}>Your listing will automatically disappear after your sale date passes.</p>
               <div style={{ background: "white", borderRadius: 8, padding: "32px 28px", boxShadow: "0 2px 16px rgba(0,0,0,0.08)", border: "1px solid #e8d9c4", display: "flex", flexDirection: "column", gap: 20 }}>
-
-                {/* Photos Upload */}
                 <div>
                   <label>📸 Photos (up to 6)</label>
                   {form.photos.length > 0 && (
@@ -361,13 +328,13 @@ export default function App() {
                       {form.photos.map((p, i) => (
                         <div key={i} className="photo-thumb">
                           <img src={p} alt="" />
-                          <button className="photo-remove" onClick={() => removePhoto(i)}>✕</button>
+                          <button className="photo-remove" onClick={() => setForm(f => ({ ...f, photos: f.photos.filter((_, idx) => idx !== i) }))}>✕</button>
                         </div>
                       ))}
                     </div>
                   )}
                   {form.photos.length < 6 && (
-                    <div className="upload-zone" onClick={() => fileInputRef.current.click()}>
+                    <div className="upload-zone" onClick={() => fileInputRef.current?.click()}>
                       <div style={{ fontSize: 28, marginBottom: 6 }}>📷</div>
                       <p style={{ fontSize: 14, color: "#7a5c3a", fontWeight: 600 }}>Click to upload photos</p>
                       <p style={{ fontSize: 12, color: "#a08060", marginTop: 3 }}>JPG, PNG up to 6 images • {6 - form.photos.length} remaining</p>
@@ -375,7 +342,6 @@ export default function App() {
                   )}
                   <input ref={fileInputRef} type="file" accept="image/*" multiple style={{ display: "none" }} onChange={handlePhotos} />
                 </div>
-
                 <div>
                   <label>Sale Title *</label>
                   <input type="text" placeholder="e.g. Moving Sale – Everything Must Go!" value={form.title} onChange={e => setForm(f => ({...f, title: e.target.value}))} />
@@ -428,8 +394,8 @@ export default function App() {
                   </div>
                 </div>
                 <div style={{ paddingTop: 8 }}>
-                  <button className="btn-primary" onClick={handleSubmit} style={{ width: "100%", padding: "14px", fontSize: 17 }}>
-                    🍁 Post My Sale
+                  <button className="btn-primary" onClick={handleSubmit} disabled={submitting} style={{ width: "100%", padding: "14px", fontSize: 17, opacity: submitting ? 0.7 : 1 }}>
+                    {submitting ? "Posting…" : "🍁 Post My Sale"}
                   </button>
                   {(!form.title || !form.address || !form.city || !form.province || !form.date) && (
                     <p style={{ fontSize: 12, color: "#a08060", textAlign: "center", marginTop: 8, fontStyle: "italic" }}>* Required fields must be filled</p>
@@ -441,7 +407,6 @@ export default function App() {
         </main>
       )}
 
-      {/* Footer */}
       <footer style={{ background: "#1a0a05", padding: "24px", textAlign: "center", marginTop: 60 }}>
         <p style={{ fontFamily: "'Playfair Display', serif", color: "#f5ddb4", fontSize: 16, fontWeight: 700 }}>🍁 Yardhunt.ca</p>
         <p style={{ color: "#a08060", fontSize: 12, marginTop: 6, fontStyle: "italic" }}>Connecting Canadians, one great deal at a time.</p>
