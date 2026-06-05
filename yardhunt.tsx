@@ -409,7 +409,7 @@ export default function App() {
                 <div style={{ marginTop: 16, padding: "20px", background: "linear-gradient(135deg, #fdf6ec, #fff8e7)", borderRadius: 8, border: "2px solid #f5c27a", textAlign: "center" }}>
                   <p style={{ fontFamily: "'Playfair Display', serif", fontSize: 17, fontWeight: 700, color: "#2d1b0e", marginBottom: 6 }}>⭐ Boost Your Listing</p>
                   <p style={{ fontSize: 13, color: "#7a5c3a", marginBottom: 14 }}>Get pinned to the top of search results and stand out with a Featured badge. More shoppers = more sales!</p>
-                  <a href="https://buy.stripe.com/test_4gM7sLa7ZfD7eIT90k0kE00" target="_blank" rel="noreferrer" style={{ display: "inline-block", background: "#f5a623", color: "white", padding: "12px 24px", borderRadius: 6, fontFamily: "'Playfair Display', serif", fontWeight: 700, fontSize: 15, textDecoration: "none" }}>⭐ Feature This Listing — $9.99 CAD</a>
+                  <a href="https://buy.stripe.com/fZu7sLdkZ12K1QJbRq1Jm00" target="_blank" rel="noreferrer" style={{ display: "inline-block", background: "#f5a623", color: "white", padding: "12px 24px", borderRadius: 6, fontFamily: "'Playfair Display', serif", fontWeight: 700, fontSize: 15, textDecoration: "none" }}>⭐ Feature This Listing — $9.99 CAD</a>
                 </div>
               )}
             </div>
