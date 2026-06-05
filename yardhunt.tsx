@@ -485,7 +485,7 @@ export default function App() {
                     <div style={{ background: "linear-gradient(135deg, #2d1b0e, #c0392b)", borderRadius: 8, padding: "16px", border: "2px solid #c0392b", textAlign: "center", position: "relative" }}>
                       <div style={{ position: "absolute", top: -10, left: "50%", transform: "translateX(-50%)", background: "#c0392b", color: "white", fontSize: 10, fontWeight: 700, padding: "3px 10px", borderRadius: 10, whiteSpace: "nowrap" }}>BEST VALUE</div>
                       <p style={{ fontSize: 11, fontWeight: 700, color: "#f5ddb4", letterSpacing: 1, textTransform: "uppercase", marginBottom: 4 }}>Premium</p>
-                      <p style={{ fontFamily: "'Playfair Display', serif", fontSize: 22, fontWeight: 900, color: "white", marginBottom: 4 }}>$19.99</p>
+                      <p style={{ fontFamily: "'Playfair Display', serif", fontSize: 22, fontWeight: 900, color: "white", marginBottom: 4 }}>$14.99</p>
                       <p style={{ fontSize: 11, color: "#f5ddb4", marginBottom: 12 }}>CAD one-time</p>
                       <ul style={{ fontSize: 12, color: "#f5ddb4", textAlign: "left", marginBottom: 14, paddingLeft: 16 }}>
                         <li>🌟 Premium badge</li>
@@ -616,7 +616,7 @@ export default function App() {
                     <div style={{ display: "flex", flexDirection: "column", gap: 8, flexShrink: 0 }}>
                       <button onClick={() => { setSelectedSale(sale); setView("browse"); }} style={{ background: "#fdf6ec", color: "#7a5c3a", border: "1px solid #e8d9c4", padding: "8px 14px", borderRadius: 6, cursor: "pointer", fontSize: 13, fontWeight: 600 }}>👁 View</button>
                       <a href="https://buy.stripe.com/fZu7sLdkZ12K1QJbRq1Jm00" target="_blank" rel="noreferrer" style={{ background: "#f5a623", color: "white", border: "none", padding: "8px 14px", borderRadius: 6, cursor: "pointer", fontSize: 13, fontWeight: 600, textDecoration: "none", textAlign: "center" }}>⭐ $9.99</a>
-                      <a href="https://buy.stripe.com/cNi4gzep3dPwcvn08I1Jm01" target="_blank" rel="noreferrer" style={{ background: "#c0392b", color: "white", border: "none", padding: "8px 14px", borderRadius: 6, cursor: "pointer", fontSize: 13, fontWeight: 600, textDecoration: "none", textAlign: "center" }}>🌟 $19.99</a>
+                      <a href="https://buy.stripe.com/cNi4gzep3dPwcvn08I1Jm01" target="_blank" rel="noreferrer" style={{ background: "#c0392b", color: "white", border: "none", padding: "8px 14px", borderRadius: 6, cursor: "pointer", fontSize: 13, fontWeight: 600, textDecoration: "none", textAlign: "center" }}>🌟 $14.99</a>
                       {deleteConfirm === sale.id ? (
                         <div style={{ display: "flex", gap: 6 }}>
                           <button onClick={() => handleDelete(sale.id)} style={{ background: "#e74c3c", color: "white", border: "none", padding: "8px 10px", borderRadius: 6, cursor: "pointer", fontSize: 12, fontWeight: 600 }}>Yes, delete</button>
