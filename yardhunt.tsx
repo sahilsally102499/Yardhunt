@@ -45,6 +45,12 @@ const api = {
       method: "POST",
       headers: { apikey: SUPABASE_KEY, Authorization: `Bearer ${token}` }
     });
+  },
+  async deleteSale(id: number) {
+    await fetch(`${SUPABASE_URL}/rest/v1/sales?id=eq.${id}`, {
+      method: "DELETE",
+      headers: { apikey: SUPABASE_KEY, Authorization: `Bearer ${SUPABASE_KEY}` }
+    });
   }
 };
 
@@ -84,6 +90,9 @@ export default function App() {
   const [authError, setAuthError] = useState("");
   const [authLoading, setAuthLoading] = useState(false);
   const [authSuccess, setAuthSuccess] = useState("");
+  const [nearMe, setNearMe] = useState("");
+  const [copied, setCopied] = useState(false);
+  const [deleteConfirm, setDeleteConfirm] = useState<number|null>(null);
   const [form, setForm] = useState({ title:"",name:"",address:"",city:"",province:"",date:"",startTime:"",endTime:"",description:"",tags:[] as string[],photos:[] as string[] });
   const fileInputRef = useRef<HTMLInputElement>(null);
 
@@ -196,8 +205,17 @@ export default function App() {
     const q = search.toLowerCase();
     const matchSearch = !q || s.title?.toLowerCase().includes(q) || s.city?.toLowerCase().includes(q) || s.description?.toLowerCase().includes(q) || (s.tags||[]).some((t:string)=>t.toLowerCase().includes(q));
     const matchProv = !provFilter || s.province === provFilter;
-    return matchSearch && matchProv;
+    const matchNear = !nearMe || s.city?.toLowerCase().includes(nearMe.toLowerCase()) || s.province?.toLowerCase().includes(nearMe.toLowerCase());
+    return matchSearch && matchProv && matchNear;
   });
+
+  const mySales = sales.filter(s => user && s.user_id === user.id);
+
+  const handleDelete = async (id: number) => {
+    await api.deleteSale(id);
+    await loadSales();
+    setDeleteConfirm(null);
+  };
 
   return (
     <div style={{ fontFamily: "'Georgia', serif", minHeight: "100vh", background: "#fdf6ec" }}>
@@ -236,6 +254,7 @@ export default function App() {
           {user ? (
             <>
               <button onClick={() => setView("post")} style={{ background: view==="post" ? "#c0392b" : "transparent", color: view==="post" ? "white" : "#f5ddb4", border: "none", padding: "7px 12px", borderRadius: 4, cursor: "pointer", fontFamily: "'Playfair Display', serif", fontWeight: 700, fontSize: 13 }}>+ Post</button>
+              <button onClick={() => setView("dashboard")} style={{ background: view==="dashboard" ? "#c0392b" : "transparent", color: view==="dashboard" ? "white" : "#f5ddb4", border: "none", padding: "7px 12px", borderRadius: 4, cursor: "pointer", fontFamily: "'Playfair Display', serif", fontWeight: 700, fontSize: 13 }}>My Sales</button>
               <button onClick={handleSignOut} style={{ background: "transparent", color: "#f5ddb4", border: "1px solid #f5ddb455", padding: "7px 12px", borderRadius: 4, cursor: "pointer", fontSize: 12, fontFamily: "'Playfair Display', serif" }}>Log Out</button>
             </>
           ) : (
@@ -293,6 +312,10 @@ export default function App() {
               <option value="">All Provinces</option>
               {provinces.map(p => <option key={p.code} value={p.code}>{p.code} – {p.name}</option>)}
             </select>
+          </div>
+          <div style={{ maxWidth: 620, margin: "12px auto 0", display: "flex", gap: 10 }}>
+            <input type="text" placeholder="📍 Near me — type your city (e.g. Toronto, Calgary…)" value={nearMe} onChange={e => setNearMe(e.target.value)} style={{ flex: 1, background: "rgba(255,255,255,0.15)", border: "1px solid rgba(255,255,255,0.3)", color: "white", fontSize: 14, padding: "10px 16px", borderRadius: 4 }} />
+            {nearMe && <button onClick={() => setNearMe("")} style={{ background: "rgba(255,255,255,0.2)", color: "white", border: "none", padding: "10px 14px", borderRadius: 4, cursor: "pointer", fontSize: 13 }}>✕ Clear</button>}
           </div>
           <p style={{ color: "#f5ddb4", fontSize: 13, marginTop: 16, opacity: 0.8 }}>{sales.length} active sale{sales.length !== 1 ? "s" : ""} • listings expire automatically after sale date</p>
         </div>
@@ -533,6 +556,61 @@ export default function App() {
           )}
         </main>
       )}
+
+      {/* Seller Dashboard */}
+      {view === "dashboard" && user && (
+        <main style={{ maxWidth: 800, margin: "0 auto", padding: "36px 20px" }}>
+          <h2 style={{ fontFamily: "'Playfair Display', serif", fontSize: 30, fontWeight: 900, color: "#2d1b0e", marginBottom: 6 }}>My Sales</h2>
+          <p style={{ color: "#7a5c3a", fontSize: 14, fontStyle: "italic", marginBottom: 28 }}>Manage your listings — {mySales.length} active sale{mySales.length !== 1 ? "s" : ""}</p>
+          {mySales.length === 0 ? (
+            <div style={{ textAlign: "center", padding: "60px 20px", background: "white", borderRadius: 8, border: "1px solid #e8d9c4" }}>
+              <div style={{ fontSize: 48, marginBottom: 12 }}>🏠</div>
+              <p style={{ fontFamily: "'Playfair Display', serif", fontSize: 20, color: "#7a5c3a" }}>No sales posted yet</p>
+              <p style={{ color: "#a08060", marginTop: 8, marginBottom: 20 }}>Post your first sale and it will appear here!</p>
+              <button className="btn-primary" onClick={() => setView("post")}>🍁 Post a Sale</button>
+            </div>
+          ) : (
+            <div style={{ display: "flex", flexDirection: "column", gap: 16 }}>
+              {mySales.map(sale => (
+                <div key={sale.id} style={{ background: "white", borderRadius: 8, padding: "20px 24px", boxShadow: "0 2px 12px rgba(0,0,0,0.08)", border: "1px solid #e8d9c4" }}>
+                  <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", gap: 12 }}>
+                    <div style={{ flex: 1 }}>
+                      <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 4 }}>
+                        <span style={{ fontSize: 24 }}>{sale.emoji || "🏠"}</span>
+                        <p style={{ fontFamily: "'Playfair Display', serif", fontSize: 18, fontWeight: 700, color: "#2d1b0e" }}>{sale.title}</p>
+                      </div>
+                      <p style={{ fontSize: 13, color: "#7a5c3a" }}>📍 {sale.address}, {sale.city}, {sale.province}</p>
+                      <p style={{ fontSize: 13, color: "#7a5c3a" }}>📅 {new Date(sale.date + "T12:00:00").toLocaleDateString("en-CA", { weekday: "long", month: "long", day: "numeric" })}</p>
+                      {sale.start_time && <p style={{ fontSize: 13, color: "#7a5c3a" }}>⏰ {sale.start_time} – {sale.end_time}</p>}
+                      <div style={{ display: "flex", flexWrap: "wrap", gap: 5, marginTop: 8 }}>
+                        {(sale.tags || []).map((tag: string) => (
+                          <span key={tag} className="tag-pill" style={{ background: (tagColors[tag] || "#a08060") + "22", color: tagColors[tag] || "#a08060", border: `1px solid ${tagColors[tag] || "#a08060"}55` }}>{tag}</span>
+                        ))}
+                      </div>
+                    </div>
+                    <div style={{ display: "flex", flexDirection: "column", gap: 8, flexShrink: 0 }}>
+                      <button onClick={() => { setSelectedSale(sale); setView("browse"); }} style={{ background: "#fdf6ec", color: "#7a5c3a", border: "1px solid #e8d9c4", padding: "8px 14px", borderRadius: 6, cursor: "pointer", fontSize: 13, fontWeight: 600 }}>👁 View</button>
+                      <a href="https://buy.stripe.com/fZu7sLdkZ12K1QJbRq1Jm00" target="_blank" rel="noreferrer" style={{ background: "#f5a623", color: "white", border: "none", padding: "8px 14px", borderRadius: 6, cursor: "pointer", fontSize: 13, fontWeight: 600, textDecoration: "none", textAlign: "center" }}>⭐ Feature</a>
+                      {deleteConfirm === sale.id ? (
+                        <div style={{ display: "flex", gap: 6 }}>
+                          <button onClick={() => handleDelete(sale.id)} style={{ background: "#e74c3c", color: "white", border: "none", padding: "8px 10px", borderRadius: 6, cursor: "pointer", fontSize: 12, fontWeight: 600 }}>Yes, delete</button>
+                          <button onClick={() => setDeleteConfirm(null)} style={{ background: "#fdf6ec", color: "#7a5c3a", border: "1px solid #e8d9c4", padding: "8px 10px", borderRadius: 6, cursor: "pointer", fontSize: 12 }}>Cancel</button>
+                        </div>
+                      ) : (
+                        <button onClick={() => setDeleteConfirm(sale.id)} style={{ background: "transparent", color: "#e74c3c", border: "1px solid #e74c3c55", padding: "8px 14px", borderRadius: 6, cursor: "pointer", fontSize: 13 }}>🗑 Delete</button>
+                      )}
+                    </div>
+                  </div>
+                </div>
+              ))}
+              <div style={{ textAlign: "center", marginTop: 8 }}>
+                <button className="btn-primary" onClick={() => setView("post")}>🍁 Post Another Sale</button>
+              </div>
+            </div>
+          )}
+        </main>
+      )}
+
 
       {/* Map View */}
       {view === "map" && (
