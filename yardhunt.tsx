@@ -16,7 +16,7 @@ const api = {
       method: "POST",
       headers: {
         apikey: SUPABASE_KEY,
-        Authorization: `Bearer ${token}`,
+        Authorization: `Bearer ${SUPABASE_KEY}`,
         "Content-Type": "application/json",
         Prefer: "return=representation"
       },
