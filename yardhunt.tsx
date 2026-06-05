@@ -467,10 +467,35 @@ export default function App() {
                 </button>
               </div>
               {user && selectedSale.user_id === user.id && (
-                <div style={{ marginTop: 16, padding: "20px", background: "linear-gradient(135deg, #fdf6ec, #fff8e7)", borderRadius: 8, border: "2px solid #f5c27a", textAlign: "center" }}>
-                  <p style={{ fontFamily: "'Playfair Display', serif", fontSize: 17, fontWeight: 700, color: "#2d1b0e", marginBottom: 6 }}>⭐ Boost Your Listing</p>
-                  <p style={{ fontSize: 13, color: "#7a5c3a", marginBottom: 14 }}>Get pinned to the top of search results and stand out with a Featured badge. More shoppers = more sales!</p>
-                  <a href="https://buy.stripe.com/fZu7sLdkZ12K1QJbRq1Jm00" target="_blank" rel="noreferrer" style={{ display: "inline-block", background: "#f5a623", color: "white", padding: "12px 24px", borderRadius: 6, fontFamily: "'Playfair Display', serif", fontWeight: 700, fontSize: 15, textDecoration: "none" }}>⭐ Feature This Listing — $9.99 CAD</a>
+                <div style={{ marginTop: 16, padding: "20px", background: "linear-gradient(135deg, #fdf6ec, #fff8e7)", borderRadius: 8, border: "2px solid #f5c27a" }}>
+                  <p style={{ fontFamily: "'Playfair Display', serif", fontSize: 17, fontWeight: 700, color: "#2d1b0e", marginBottom: 6, textAlign: "center" }}>🚀 Boost Your Listing</p>
+                  <p style={{ fontSize: 13, color: "#7a5c3a", marginBottom: 16, textAlign: "center" }}>Stand out from the crowd and get more shoppers at your sale!</p>
+                  <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12 }}>
+                    <div style={{ background: "white", borderRadius: 8, padding: "16px", border: "2px solid #f5c27a", textAlign: "center" }}>
+                      <p style={{ fontSize: 11, fontWeight: 700, color: "#7a5c3a", letterSpacing: 1, textTransform: "uppercase", marginBottom: 4 }}>Basic</p>
+                      <p style={{ fontFamily: "'Playfair Display', serif", fontSize: 22, fontWeight: 900, color: "#2d1b0e", marginBottom: 4 }}>$9.99</p>
+                      <p style={{ fontSize: 11, color: "#7a5c3a", marginBottom: 12 }}>CAD one-time</p>
+                      <ul style={{ fontSize: 12, color: "#5a4030", textAlign: "left", marginBottom: 14, paddingLeft: 16 }}>
+                        <li>⭐ Featured badge</li>
+                        <li>📌 Pinned to top</li>
+                        <li>3 day boost</li>
+                      </ul>
+                      <a href="https://buy.stripe.com/fZu7sLdkZ12K1QJbRq1Jm00" target="_blank" rel="noreferrer" style={{ display: "block", background: "#f5a623", color: "white", padding: "10px", borderRadius: 6, fontFamily: "'Playfair Display', serif", fontWeight: 700, fontSize: 14, textDecoration: "none" }}>⭐ Get Basic</a>
+                    </div>
+                    <div style={{ background: "linear-gradient(135deg, #2d1b0e, #c0392b)", borderRadius: 8, padding: "16px", border: "2px solid #c0392b", textAlign: "center", position: "relative" }}>
+                      <div style={{ position: "absolute", top: -10, left: "50%", transform: "translateX(-50%)", background: "#c0392b", color: "white", fontSize: 10, fontWeight: 700, padding: "3px 10px", borderRadius: 10, whiteSpace: "nowrap" }}>BEST VALUE</div>
+                      <p style={{ fontSize: 11, fontWeight: 700, color: "#f5ddb4", letterSpacing: 1, textTransform: "uppercase", marginBottom: 4 }}>Premium</p>
+                      <p style={{ fontFamily: "'Playfair Display', serif", fontSize: 22, fontWeight: 900, color: "white", marginBottom: 4 }}>$19.99</p>
+                      <p style={{ fontSize: 11, color: "#f5ddb4", marginBottom: 12 }}>CAD one-time</p>
+                      <ul style={{ fontSize: 12, color: "#f5ddb4", textAlign: "left", marginBottom: 14, paddingLeft: 16 }}>
+                        <li>🌟 Premium badge</li>
+                        <li>📌 #1 position</li>
+                        <li>7 day boost</li>
+                        <li>Bold highlighted card</li>
+                      </ul>
+                      <a href="https://buy.stripe.com/cNi4gzep3dPwcvn08I1Jm01" target="_blank" rel="noreferrer" style={{ display: "block", background: "white", color: "#c0392b", padding: "10px", borderRadius: 6, fontFamily: "'Playfair Display', serif", fontWeight: 700, fontSize: 14, textDecoration: "none" }}>🌟 Get Premium</a>
+                    </div>
+                  </div>
                 </div>
               )}
             </div>
@@ -590,7 +615,8 @@ export default function App() {
                     </div>
                     <div style={{ display: "flex", flexDirection: "column", gap: 8, flexShrink: 0 }}>
                       <button onClick={() => { setSelectedSale(sale); setView("browse"); }} style={{ background: "#fdf6ec", color: "#7a5c3a", border: "1px solid #e8d9c4", padding: "8px 14px", borderRadius: 6, cursor: "pointer", fontSize: 13, fontWeight: 600 }}>👁 View</button>
-                      <a href="https://buy.stripe.com/fZu7sLdkZ12K1QJbRq1Jm00" target="_blank" rel="noreferrer" style={{ background: "#f5a623", color: "white", border: "none", padding: "8px 14px", borderRadius: 6, cursor: "pointer", fontSize: 13, fontWeight: 600, textDecoration: "none", textAlign: "center" }}>⭐ Feature</a>
+                      <a href="https://buy.stripe.com/fZu7sLdkZ12K1QJbRq1Jm00" target="_blank" rel="noreferrer" style={{ background: "#f5a623", color: "white", border: "none", padding: "8px 14px", borderRadius: 6, cursor: "pointer", fontSize: 13, fontWeight: 600, textDecoration: "none", textAlign: "center" }}>⭐ $9.99</a>
+                      <a href="https://buy.stripe.com/cNi4gzep3dPwcvn08I1Jm01" target="_blank" rel="noreferrer" style={{ background: "#c0392b", color: "white", border: "none", padding: "8px 14px", borderRadius: 6, cursor: "pointer", fontSize: 13, fontWeight: 600, textDecoration: "none", textAlign: "center" }}>🌟 $19.99</a>
                       {deleteConfirm === sale.id ? (
                         <div style={{ display: "flex", gap: 6 }}>
                           <button onClick={() => handleDelete(sale.id)} style={{ background: "#e74c3c", color: "white", border: "none", padding: "8px 10px", borderRadius: 6, cursor: "pointer", fontSize: 12, fontWeight: 600 }}>Yes, delete</button>
