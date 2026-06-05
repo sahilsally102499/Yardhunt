@@ -216,6 +216,7 @@ export default function App() {
         </div>
         <nav style={{ display: "flex", gap: 6, alignItems: "center" }}>
           <button onClick={() => { setView("browse"); setSelectedSale(null); }} style={{ background: view==="browse" ? "#c0392b" : "transparent", color: view==="browse" ? "white" : "#f5ddb4", border: "none", padding: "7px 12px", borderRadius: 4, cursor: "pointer", fontFamily: "'Playfair Display', serif", fontWeight: 700, fontSize: 13 }}>Browse</button>
+          <button onClick={() => setView("map")} style={{ background: view==="map" ? "#c0392b" : "transparent", color: view==="map" ? "white" : "#f5ddb4", border: "none", padding: "7px 12px", borderRadius: 4, cursor: "pointer", fontFamily: "'Playfair Display', serif", fontWeight: 700, fontSize: 13 }}>🗺️ Map</button>
           {user ? (
             <>
               <button onClick={() => setView("post")} style={{ background: view==="post" ? "#c0392b" : "transparent", color: view==="post" ? "white" : "#f5ddb4", border: "none", padding: "7px 12px", borderRadius: 4, cursor: "pointer", fontFamily: "'Playfair Display', serif", fontWeight: 700, fontSize: 13 }}>+ Post</button>
@@ -495,6 +496,40 @@ export default function App() {
           )}
         </main>
       )}
+
+      {/* Map View */}
+      {view === "map" && (
+        <main style={{ maxWidth: 1100, margin: "0 auto", padding: "36px 20px" }}>
+          <h2 style={{ fontFamily: "'Playfair Display', serif", fontSize: 28, fontWeight: 900, color: "#2d1b0e", marginBottom: 8 }}>🗺️ Sales Near You</h2>
+          <p style={{ color: "#7a5c3a", fontSize: 14, fontStyle: "italic", marginBottom: 20 }}>Browse garage sales across Canada</p>
+          {sales.length === 0 ? (
+            <div style={{ textAlign: "center", padding: "60px 20px" }}>
+              <div style={{ fontSize: 48, marginBottom: 12 }}>🗺️</div>
+              <p style={{ fontFamily: "'Playfair Display', serif", fontSize: 22, color: "#7a5c3a" }}>No sales on the map yet</p>
+              <p style={{ color: "#a08060", marginTop: 8 }}>Be the first to post a sale! 🍁</p>
+            </div>
+          ) : (
+            <>
+              <div style={{ background: "#fff3e0", border: "1px solid #f5c27a", borderRadius: 8, padding: "14px 18px", marginBottom: 20 }}>
+                <p style={{ fontSize: 13, color: "#7a4a00" }}>🍁 Showing {sales.length} upcoming sale{sales.length !== 1 ? "s" : ""} across Canada. Click a listing to see details!</p>
+              </div>
+              <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(280px, 1fr))", gap: 16 }}>
+                {sales.map(sale => (
+                  <div key={sale.id} className="card-hover" onClick={() => { setSelectedSale(sale); setView("browse"); }} style={{ background: "white", borderRadius: 8, padding: "14px 16px", boxShadow: "0 2px 8px rgba(0,0,0,0.08)", border: "1px solid #e8d9c4", display: "flex", gap: 12, alignItems: "flex-start" }}>
+                    <span style={{ fontSize: 24 }}>{sale.emoji || "🏠"}</span>
+                    <div>
+                      <p style={{ fontFamily: "'Playfair Display', serif", fontSize: 15, fontWeight: 700, color: "#2d1b0e" }}>{sale.title}</p>
+                      <p style={{ fontSize: 13, color: "#7a5c3a", marginTop: 2 }}>📍 {sale.city}, {sale.province}</p>
+                      <p style={{ fontSize: 13, color: "#7a5c3a" }}>📅 {new Date(sale.date + "T12:00:00").toLocaleDateString("en-CA", { month: "short", day: "numeric" })}</p>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </>
+          )}
+        </main>
+      )}
+
 
       <footer style={{ background: "#1a0a05", padding: "24px", textAlign: "center", marginTop: 60 }}>
         <p style={{ fontFamily: "'Playfair Display', serif", color: "#f5ddb4", fontSize: 16, fontWeight: 700 }}>🍁 Yardhunt.ca</p>
