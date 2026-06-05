@@ -51,6 +51,20 @@ const api = {
       method: "DELETE",
       headers: { apikey: SUPABASE_KEY, Authorization: `Bearer ${SUPABASE_KEY}` }
     });
+  },
+  async getReviews(saleId: number) {
+    const res = await fetch(`${SUPABASE_URL}/rest/v1/reviews?sale_id=eq.${saleId}&order=created_at.desc`, {
+      headers: { apikey: SUPABASE_KEY, Authorization: `Bearer ${SUPABASE_KEY}` }
+    });
+    return res.json();
+  },
+  async addReview(review: any) {
+    const res = await fetch(`${SUPABASE_URL}/rest/v1/reviews`, {
+      method: "POST",
+      headers: { apikey: SUPABASE_KEY, Authorization: `Bearer ${SUPABASE_KEY}`, "Content-Type": "application/json", Prefer: "return=representation" },
+      body: JSON.stringify(review)
+    });
+    return res.json();
   }
 };
 
@@ -93,6 +107,11 @@ export default function App() {
   const [nearMe, setNearMe] = useState("");
   const [copied, setCopied] = useState(false);
   const [deleteConfirm, setDeleteConfirm] = useState<number|null>(null);
+  const [reviews, setReviews] = useState<any[]>([]);
+  const [reviewRating, setReviewRating] = useState(5);
+  const [reviewComment, setReviewComment] = useState("");
+  const [reviewSubmitting, setReviewSubmitting] = useState(false);
+  const [reviewSuccess, setReviewSuccess] = useState(false);
   const [form, setForm] = useState({ title:"",name:"",address:"",city:"",province:"",date:"",startTime:"",endTime:"",description:"",tags:[] as string[],photos:[] as string[] });
   const fileInputRef = useRef<HTMLInputElement>(null);
 
@@ -210,6 +229,13 @@ export default function App() {
   });
 
   const mySales = sales.filter(s => user && s.user_id === user.id);
+
+  const loadReviews = async (saleId: number) => {
+    try {
+      const data = await api.getReviews(saleId);
+      setReviews(Array.isArray(data) ? data : []);
+    } catch(e) { setReviews([]); }
+  };
 
   const handleDelete = async (id: number) => {
     await api.deleteSale(id);
@@ -342,7 +368,7 @@ export default function App() {
               <p style={{ color: "#7a5c3a", fontSize: 14, marginBottom: 20, fontStyle: "italic" }}>{filtered.length} upcoming sale{filtered.length !== 1 ? "s" : ""} found across Canada</p>
               <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(300px, 1fr))", gap: 24 }}>
                 {filtered.map(sale => (
-                  <div key={sale.id} className="card-hover" onClick={() => { setSelectedSale(sale); setPhotoIndex(0); }} style={{ background: "white", borderRadius: 8, overflow: "hidden", boxShadow: "0 2px 12px rgba(0,0,0,0.08)", border: "1px solid #e8d9c4" }}>
+                  <div key={sale.id} className="card-hover" onClick={() => { setSelectedSale(sale); setPhotoIndex(0); loadReviews(sale.id); setReviewSuccess(false); setReviewComment(''); setReviewRating(5); }} style={{ background: "white", borderRadius: 8, overflow: "hidden", boxShadow: "0 2px 12px rgba(0,0,0,0.08)", border: "1px solid #e8d9c4" }}>
                     {sale.photos && sale.photos.length > 0 ? (
                       <div style={{ position: "relative", height: 160, overflow: "hidden" }}>
                         <img src={sale.photos[0]} alt="" style={{ width: "100%", height: "100%", objectFit: "cover" }} />
