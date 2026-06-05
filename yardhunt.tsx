@@ -88,7 +88,15 @@ export default function App() {
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
-    loadSales();
+    loadSales().then(() => {
+      // Check if URL has a sale ID to open directly (from shared links)
+      const params = new URLSearchParams(window.location.search);
+      const saleId = params.get("sale");
+      if (saleId) {
+        // Will be handled after sales load
+        sessionStorage.setItem("openSaleId", saleId);
+      }
+    });
     const saved = localStorage.getItem("yh_user");
     const savedToken = localStorage.getItem("yh_token");
     if (saved && savedToken) {
@@ -101,7 +109,15 @@ export default function App() {
     setLoading(true);
     try {
       const data = await api.getSales();
-      setSales(Array.isArray(data) ? data : []);
+      const salesData = Array.isArray(data) ? data : [];
+      setSales(salesData);
+      // Open shared sale if coming from a shared link
+      const openId = sessionStorage.getItem("openSaleId");
+      if (openId) {
+        const sale = salesData.find((s: any) => String(s.id) === openId);
+        if (sale) { setSelectedSale(sale); setView("browse"); }
+        sessionStorage.removeItem("openSaleId");
+      }
     } catch (e) { setSales([]); }
     setLoading(false);
   };
@@ -405,6 +421,27 @@ export default function App() {
               )}
               <div style={{ marginTop: 24, padding: "14px", background: "#fff3e0", borderRadius: 6, border: "1px solid #f5c27a" }}>
                 <p style={{ fontSize: 13, color: "#7a4a00", fontStyle: "italic" }}>🍁 Tip: Always confirm details with the seller before heading out. Sales can end early!</p>
+              </div>
+              <div style={{ marginTop: 16, display: "flex", gap: 10 }}>
+                <button onClick={() => {
+                  const url = `${window.location.origin}?sale=${selectedSale.id}`;
+                  const text = `Check out this garage sale: ${selectedSale.title} in ${selectedSale.city}, ${selectedSale.province} on ${new Date(selectedSale.date + "T12:00:00").toLocaleDateString("en-CA", { month: "short", day: "numeric" })} — ${url}`;
+                  if (navigator.share) {
+                    navigator.share({ title: selectedSale.title, text, url });
+                  } else {
+                    navigator.clipboard.writeText(url);
+                    alert("Link copied to clipboard!");
+                  }
+                }} style={{ flex: 1, background: "#c0392b", color: "white", border: "none", padding: "12px", borderRadius: 6, fontFamily: "'Playfair Display', serif", fontWeight: 700, fontSize: 15, cursor: "pointer" }}>
+                  📤 Share This Sale
+                </button>
+                <button onClick={() => {
+                  const url = `${window.location.origin}?sale=${selectedSale.id}`;
+                  navigator.clipboard.writeText(url);
+                  alert("Link copied!");
+                }} style={{ background: "#fdf6ec", color: "#7a5c3a", border: "1px solid #e8d9c4", padding: "12px 16px", borderRadius: 6, cursor: "pointer", fontSize: 14 }}>
+                  🔗 Copy Link
+                </button>
               </div>
               {user && selectedSale.user_id === user.id && (
                 <div style={{ marginTop: 16, padding: "20px", background: "linear-gradient(135deg, #fdf6ec, #fff8e7)", borderRadius: 8, border: "2px solid #f5c27a", textAlign: "center" }}>
