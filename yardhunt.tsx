@@ -243,22 +243,22 @@ export default function App() {
       `}</style>
 
       {/* Header */}
-      <header style={{ background: "#1a0a05", padding: "0 16px", display: "flex", alignItems: "center", justifyContent: "space-between", height: 64 }}>
-        <div style={{ display: "flex", alignItems: "center", gap: 8, cursor: "pointer" }} onClick={() => { setView("browse"); setSelectedSale(null); }}>
-          <span style={{ fontSize: 24 }}>🍁</span>
-          <span style={{ fontFamily: "'Playfair Display', serif", fontSize: 20, fontWeight: 900, color: "#f5ddb4" }}>Yardhunt.ca</span>
+      <header style={{ background: "#1a0a05", padding: "0 16px", display: "flex", alignItems: "center", justifyContent: "space-between", height: 56 }}>
+        <div style={{ display: "flex", alignItems: "center", gap: 6, cursor: "pointer", flexShrink: 0 }} onClick={() => { setView("browse"); setSelectedSale(null); }}>
+          <span style={{ fontSize: 20 }}>🍁</span>
+          <span style={{ fontFamily: "'Playfair Display', serif", fontSize: 18, fontWeight: 900, color: "#f5ddb4" }}>Yardhunt.ca</span>
         </div>
-        <nav style={{ display: "flex", gap: 6, alignItems: "center" }}>
-          <button onClick={() => { setView("browse"); setSelectedSale(null); }} style={{ background: view==="browse" ? "#c0392b" : "transparent", color: view==="browse" ? "white" : "#f5ddb4", border: "none", padding: "7px 12px", borderRadius: 4, cursor: "pointer", fontFamily: "'Playfair Display', serif", fontWeight: 700, fontSize: 13 }}>Browse</button>
-          <button onClick={() => setView("map")} style={{ background: view==="map" ? "#c0392b" : "transparent", color: view==="map" ? "white" : "#f5ddb4", border: "none", padding: "7px 12px", borderRadius: 4, cursor: "pointer", fontFamily: "'Playfair Display', serif", fontWeight: 700, fontSize: 13 }}>🗺️ Map</button>
+        <nav style={{ display: "flex", gap: 2, alignItems: "center", overflowX: "auto" }}>
+          <button onClick={() => { setView("browse"); setSelectedSale(null); }} style={{ background: view==="browse" ? "#c0392b" : "transparent", color: view==="browse" ? "white" : "#f5ddb4", border: "none", padding: "6px 10px", borderRadius: 4, cursor: "pointer", fontFamily: "'Playfair Display', serif", fontWeight: 700, fontSize: 12, whiteSpace: "nowrap" }}>Browse</button>
+          <button onClick={() => setView("map")} style={{ background: view==="map" ? "#c0392b" : "transparent", color: view==="map" ? "white" : "#f5ddb4", border: "none", padding: "6px 10px", borderRadius: 4, cursor: "pointer", fontFamily: "'Playfair Display', serif", fontWeight: 700, fontSize: 12, whiteSpace: "nowrap" }}>🗺️ Map</button>
           {user ? (
             <>
-              <button onClick={() => setView("post")} style={{ background: view==="post" ? "#c0392b" : "transparent", color: view==="post" ? "white" : "#f5ddb4", border: "none", padding: "7px 12px", borderRadius: 4, cursor: "pointer", fontFamily: "'Playfair Display', serif", fontWeight: 700, fontSize: 13 }}>+ Post</button>
-              <button onClick={() => setView("dashboard")} style={{ background: view==="dashboard" ? "#c0392b" : "transparent", color: view==="dashboard" ? "white" : "#f5ddb4", border: "none", padding: "7px 12px", borderRadius: 4, cursor: "pointer", fontFamily: "'Playfair Display', serif", fontWeight: 700, fontSize: 13 }}>My Sales</button>
-              <button onClick={handleSignOut} style={{ background: "transparent", color: "#f5ddb4", border: "1px solid #f5ddb455", padding: "7px 12px", borderRadius: 4, cursor: "pointer", fontSize: 12, fontFamily: "'Playfair Display', serif" }}>Log Out</button>
+              <button onClick={() => setView("post")} style={{ background: view==="post" ? "#c0392b" : "transparent", color: view==="post" ? "white" : "#f5ddb4", border: "none", padding: "6px 10px", borderRadius: 4, cursor: "pointer", fontFamily: "'Playfair Display', serif", fontWeight: 700, fontSize: 12, whiteSpace: "nowrap" }}>+ Post</button>
+              <button onClick={() => setView("dashboard")} style={{ background: view==="dashboard" ? "#c0392b" : "transparent", color: view==="dashboard" ? "white" : "#f5ddb4", border: "none", padding: "6px 10px", borderRadius: 4, cursor: "pointer", fontFamily: "'Playfair Display', serif", fontWeight: 700, fontSize: 12, whiteSpace: "nowrap" }}>My Sales</button>
+              <button onClick={handleSignOut} style={{ background: "transparent", color: "#f5ddb455", border: "none", padding: "6px 8px", borderRadius: 4, cursor: "pointer", fontSize: 11, whiteSpace: "nowrap" }}>Log Out</button>
             </>
           ) : (
-            <button onClick={() => setView("auth")} style={{ background: "#c0392b", color: "white", border: "none", padding: "7px 14px", borderRadius: 4, cursor: "pointer", fontFamily: "'Playfair Display', serif", fontWeight: 700, fontSize: 13 }}>Sign In</button>
+            <button onClick={() => setView("auth")} style={{ background: "#c0392b", color: "white", border: "none", padding: "6px 12px", borderRadius: 4, cursor: "pointer", fontFamily: "'Playfair Display', serif", fontWeight: 700, fontSize: 12, whiteSpace: "nowrap" }}>Sign In</button>
           )}
         </nav>
       </header>
