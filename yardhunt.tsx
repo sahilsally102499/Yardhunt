@@ -524,6 +524,61 @@ export default function App() {
                   </div>
                 </div>
               )}
+
+              {/* Reviews Section */}
+              <div style={{ marginTop: 24 }}>
+                <h3 style={{ fontFamily: "'Playfair Display', serif", fontSize: 20, color: "#2d1b0e", marginBottom: 16 }}>⭐ Reviews & Comments</h3>
+                {user && selectedSale.user_id !== user.id && (
+                  <div style={{ background: "#fdf6ec", borderRadius: 8, padding: "20px", border: "1px solid #e8d9c4", marginBottom: 20 }}>
+                    <p style={{ fontFamily: "'Playfair Display', serif", fontSize: 15, fontWeight: 700, color: "#2d1b0e", marginBottom: 12 }}>Leave a Review</p>
+                    {reviewSuccess ? (
+                      <p style={{ color: "#166534", background: "#f0fdf4", padding: "10px 14px", borderRadius: 6, fontSize: 14 }}>✅ Thanks for your review!</p>
+                    ) : (
+                      <>
+                        <div style={{ display: "flex", gap: 6, marginBottom: 12 }}>
+                          {[1,2,3,4,5].map(star => (
+                            <button key={star} onClick={() => setReviewRating(star)} style={{ background: "none", border: "none", cursor: "pointer", fontSize: 28, opacity: star <= reviewRating ? 1 : 0.3 }}>⭐</button>
+                          ))}
+                        </div>
+                        <textarea rows={3} placeholder="Share your experience at this sale…" value={reviewComment} onChange={e => setReviewComment(e.target.value)} style={{ width: "100%", padding: "10px 14px", border: "1.5px solid #d6c4a8", borderRadius: 4, fontSize: 14, fontFamily: "'Source Serif 4', serif", resize: "vertical", marginBottom: 10 }} />
+                        <button onClick={async () => {
+                          if (!reviewComment.trim()) return;
+                          setReviewSubmitting(true);
+                          await api.addReview({ sale_id: selectedSale.id, user_id: user.id, user_email: user.email, rating: reviewRating, comment: reviewComment });
+                          await loadReviews(selectedSale.id);
+                          setReviewSuccess(true);
+                          setReviewComment("");
+                          setReviewSubmitting(false);
+                        }} disabled={reviewSubmitting || !reviewComment.trim()} className="btn-primary" style={{ opacity: reviewSubmitting ? 0.7 : 1 }}>
+                          {reviewSubmitting ? "Posting…" : "Post Review"}
+                        </button>
+                      </>
+                    )}
+                  </div>
+                )}
+                {!user && (
+                  <p style={{ fontSize: 14, color: "#7a5c3a", fontStyle: "italic", marginBottom: 16 }}>
+                    <span style={{ color: "#c0392b", cursor: "pointer", textDecoration: "underline" }} onClick={() => setView("auth")}>Sign in</span> to leave a review
+                  </p>
+                )}
+                {reviews.length === 0 ? (
+                  <p style={{ fontSize: 14, color: "#a08060", fontStyle: "italic" }}>No reviews yet — be the first!</p>
+                ) : (
+                  <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
+                    {reviews.map(r => (
+                      <div key={r.id} style={{ background: "white", borderRadius: 8, padding: "14px 16px", border: "1px solid #e8d9c4" }}>
+                        <div style={{ display: "flex", justifyContent: "space-between", marginBottom: 6 }}>
+                          <span style={{ fontSize: 16 }}>{"⭐".repeat(r.rating)}</span>
+                          <span style={{ fontSize: 11, color: "#a08060" }}>{new Date(r.created_at).toLocaleDateString("en-CA", { month: "short", day: "numeric" })}</span>
+                        </div>
+                        <p style={{ fontSize: 14, color: "#3a2c1a", lineHeight: 1.5 }}>{r.comment}</p>
+                        <p style={{ fontSize: 11, color: "#a08060", marginTop: 6 }}>{r.user_email?.split("@")[0] || "Anonymous"}</p>
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </div>
+
             </div>
           </div>
         </main>
