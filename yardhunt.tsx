@@ -11,7 +11,7 @@ const api = {
     });
     return res.json();
   },
-  async insertSale(sale: any, token: string) {
+  async insertSale(sale, token) {
     const res = await fetch(`${SUPABASE_URL}/rest/v1/sales`, {
       method: "POST",
       headers: {
@@ -24,7 +24,7 @@ const api = {
     });
     return res.json();
   },
-  async signUp(email: string, password: string) {
+  async signUp(email, password) {
     const res = await fetch(`${SUPABASE_URL}/auth/v1/signup`, {
       method: "POST",
       headers: { apikey: SUPABASE_KEY, "Content-Type": "application/json" },
@@ -32,7 +32,7 @@ const api = {
     });
     return res.json();
   },
-  async signIn(email: string, password: string) {
+  async signIn(email, password) {
     const res = await fetch(`${SUPABASE_URL}/auth/v1/token?grant_type=password`, {
       method: "POST",
       headers: { apikey: SUPABASE_KEY, "Content-Type": "application/json" },
@@ -40,7 +40,7 @@ const api = {
     });
     return res.json();
   },
-  async resetPassword(email: string) {
+  async resetPassword(email) {
     const res = await fetch(`${SUPABASE_URL}/auth/v1/recover`, {
       method: "POST",
       headers: { apikey: SUPABASE_KEY, "Content-Type": "application/json" },
@@ -48,25 +48,25 @@ const api = {
     });
     return res.json();
   },
-  async signOut(token: string) {
+  async signOut(token) {
     await fetch(`${SUPABASE_URL}/auth/v1/logout`, {
       method: "POST",
       headers: { apikey: SUPABASE_KEY, Authorization: `Bearer ${token}` }
     });
   },
-  async deleteSale(id: number) {
+  async deleteSale(id) {
     await fetch(`${SUPABASE_URL}/rest/v1/sales?id=eq.${id}`, {
       method: "DELETE",
       headers: { apikey: SUPABASE_KEY, Authorization: `Bearer ${SUPABASE_KEY}` }
     });
   },
-  async getReviews(saleId: number) {
+  async getReviews(saleId) {
     const res = await fetch(`${SUPABASE_URL}/rest/v1/reviews?sale_id=eq.${saleId}&order=created_at.desc`, {
       headers: { apikey: SUPABASE_KEY, Authorization: `Bearer ${SUPABASE_KEY}` }
     });
     return res.json();
   },
-  async addReview(review: any) {
+  async addReview(review) {
     const res = await fetch(`${SUPABASE_URL}/rest/v1/reviews`, {
       method: "POST",
       headers: { apikey: SUPABASE_KEY, Authorization: `Bearer ${SUPABASE_KEY}`, "Content-Type": "application/json", Prefer: "return=representation" },
@@ -92,7 +92,7 @@ const api = {
     });
     return res.json();
   },
-  async subscribe(email: string, city: string, province: string) {
+  async subscribe(email, city, province) {
     const res = await fetch(`${SUPABASE_URL}/rest/v1/subscribers`, {
       method: "POST",
       headers: { apikey: SUPABASE_KEY, Authorization: `Bearer ${SUPABASE_KEY}`, "Content-Type": "application/json", Prefer: "return=representation" },
@@ -122,17 +122,17 @@ const emojis = ["🏠","🌻","📦","🛋️","🔑","🧺","🏡","🌼"];
 
 export default function App() {
   const [view, setView] = useState("browse");
-  const [sales, setSales] = useState<any[]>([]);
+  const [sales, setSales] = useState([]);
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState("");
   const [provFilter, setProvFilter] = useState("");
-  const [selectedSale, setSelectedSale] = useState<any>(null);
+  const [selectedSale, setSelectedSale] = useState(null);
   const [submitted, setSubmitted] = useState(false);
   const [submitting, setSubmitting] = useState(false);
   const [photoIndex, setPhotoIndex] = useState(0);
-  const [user, setUser] = useState<any>(null);
-  const [token, setToken] = useState<string>("");
-  const [authMode, setAuthMode] = useState<"login"|"signup">("login");
+  const [user, setUser] = useState(null);
+  const [token, setToken] = useState("");
+  const [authMode, setAuthMode] = useState("login");
   const [authEmail, setAuthEmail] = useState("");
   const [authPassword, setAuthPassword] = useState("");
   const [authError, setAuthError] = useState("");
@@ -144,8 +144,8 @@ export default function App() {
   const [forgotSuccess, setForgotSuccess] = useState(false);
   const [nearMe, setNearMe] = useState("");
   const [copied, setCopied] = useState(false);
-  const [deleteConfirm, setDeleteConfirm] = useState<number|null>(null);
-  const [reviews, setReviews] = useState<any[]>([]);
+  const [deleteConfirm, setDeleteConfirm] = useState(null);
+  const [reviews, setReviews] = useState([]);
   const [reviewRating, setReviewRating] = useState(5);
   const [reviewComment, setReviewComment] = useState("");
   const [reviewSubmitting, setReviewSubmitting] = useState(false);
@@ -159,21 +159,21 @@ export default function App() {
   const [adminUnlocked, setAdminUnlocked] = useState(false);
   const [adminPassword, setAdminPassword] = useState("");
   const [adminError, setAdminError] = useState("");
-  const [allSales, setAllSales] = useState<any[]>([]);
-  const [allSubscribers, setAllSubscribers] = useState<any[]>([]);
-  const [allReviews, setAllReviews] = useState<any[]>([]);
+  const [allSales, setAllSales] = useState([]);
+  const [allSubscribers, setAllSubscribers] = useState([]);
+  const [allReviews, setAllReviews] = useState([]);
   const [adminLoading, setAdminLoading] = useState(false);
   const [darkMode, setDarkMode] = useState(false);
-  const [installPrompt, setInstallPrompt] = useState<any>(null);
+  const [installPrompt, setInstallPrompt] = useState(null);
   const [showInstallBanner, setShowInstallBanner] = useState(false);
-  const [goingList, setGoingList] = useState<number[]>([]);
+  const [goingList, setGoingList] = useState([]);
   const [verified, setVerified] = useState(false);
-  const [searchSuggestions, setSearchSuggestions] = useState<any[]>([]);
+  const [searchSuggestions, setSearchSuggestions] = useState([]);
   const [showSuggestions, setShowSuggestions] = useState(false);
-  const [viewCounts, setViewCounts] = useState<any>({});
-  const [unlockedSales, setUnlockedSales] = useState<number[]>([]);
+  const [viewCounts, setViewCounts] = useState({});
+  const [unlockedSales, setUnlockedSales] = useState([]);
   const [photoPackUnlocked, setPhotoPackUnlocked] = useState(false);
-  const [form, setForm] = useState({ title:"",name:"",address:"",city:"",province:"",date:"",startTime:"",endTime:"",description:"",tags:[] as string[],photos:[] as string[] });
+  const [form, setForm] = useState({ title:"",name:"",address:"",city:"",province:"",date:"",startTime:"",endTime:"",description:"",tags:[][],photos:[][] });
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
@@ -203,7 +203,7 @@ export default function App() {
       // Open shared sale if coming from a shared link
       const openId = sessionStorage.getItem("openSaleId");
       if (openId) {
-        const sale = salesData.find((s: any) => String(s.id) === openId);
+        const sale = salesData.find((s) => String(s.id) === openId);
         if (sale) { setSelectedSale(sale); setView("browse"); }
         sessionStorage.removeItem("openSaleId");
       }
@@ -246,15 +246,15 @@ export default function App() {
     setView("browse");
   };
 
-  const toggleTag = (tag: string) => {
+  const toggleTag = (tag) => {
     setForm(f => ({ ...f, tags: f.tags.includes(tag) ? f.tags.filter(t => t !== tag) : [...f.tags, tag] }));
   };
 
-  const handlePhotos = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handlePhotos = (e) => {
     const files = Array.from(e.target.files || []);
     files.forEach(file => {
       const reader = new FileReader();
-      reader.onload = (ev) => { setForm(f => ({ ...f, photos: [...f.photos, ev.target?.result as string].slice(0, 6) })); };
+      reader.onload = (ev) => { setForm(f => ({ ...f, photos: [...f.photos, ev.target?.result].slice(0, 6) })); };
       reader.readAsDataURL(file);
     });
   };
@@ -283,7 +283,7 @@ export default function App() {
 
   const filtered = sales.filter(s => {
     const q = search.toLowerCase();
-    const matchSearch = !q || s.title?.toLowerCase().includes(q) || s.city?.toLowerCase().includes(q) || s.description?.toLowerCase().includes(q) || (s.tags||[]).some((t:string)=>t.toLowerCase().includes(q));
+    const matchSearch = !q || s.title?.toLowerCase().includes(q) || s.city?.toLowerCase().includes(q) || s.description?.toLowerCase().includes(q) || (s.tags||[]).some((t)=>t.toLowerCase().includes(q));
     const matchProv = !provFilter || s.province === provFilter;
     const matchNear = !nearMe || s.city?.toLowerCase().includes(nearMe.toLowerCase()) || s.province?.toLowerCase().includes(nearMe.toLowerCase());
     return matchSearch && matchProv && matchNear;
@@ -292,7 +292,7 @@ export default function App() {
   const mySales = sales.filter(s => user && s.user_id === user.id);
 
   // Countdown timer function
-  const getCountdown = (dateStr: string, startTime: string) => {
+  const getCountdown = (dateStr, startTime) => {
     const saleDate = new Date(dateStr + "T" + (startTime || "08:00") + ":00");
     const now = new Date();
     const diff = saleDate.getTime() - now.getTime();
@@ -318,7 +318,7 @@ export default function App() {
 
   // PWA install prompt
   useEffect(() => {
-    const handler = (e: any) => { e.preventDefault(); setInstallPrompt(e); setShowInstallBanner(true); };
+    const handler = (e) => { e.preventDefault(); setInstallPrompt(e); setShowInstallBanner(true); };
     window.addEventListener("beforeinstallprompt", handler);
     return () => window.removeEventListener("beforeinstallprompt", handler);
   }, []);
@@ -331,7 +331,7 @@ export default function App() {
   }, []);
 
   // Generate search suggestions from existing sales
-  const handleSearchInput = (val: string) => {
+  const handleSearchInput = (val) => {
     setSearch(val);
     if (val.length < 2) { setSearchSuggestions([]); setShowSuggestions(false); return; }
     const q = val.toLowerCase();
@@ -344,25 +344,25 @@ export default function App() {
   };
 
   // Track view count when sale is opened
-  const trackView = (saleId: number) => {
+  const trackView = (saleId) => {
     setViewCounts(v => ({ ...v, [saleId]: (v[saleId] || Math.floor(Math.random() * 30) + 5) + 1 }));
   };
 
-  const loadReviews = async (saleId: number) => {
+  const loadReviews = async (saleId) => {
     try {
       const data = await api.getReviews(saleId);
       setReviews(Array.isArray(data) ? data : []);
     } catch(e) { setReviews([]); }
   };
 
-  const handleDelete = async (id: number) => {
+  const handleDelete = async (id) => {
     await api.deleteSale(id);
     await loadSales();
     setDeleteConfirm(null);
   };
 
   return (
-    <div style={{ fontFamily: "'DM Sans', sans-serif", minHeight: "100vh", background: darkMode ? "#0f0a07" : "var(--cream)", transition: "background 0.3s" }}>
+    <div style={{ fontFamily: "'DM Sans', sans-serif", minHeight: "100vh", background: darkMode ? "#0f0a07" : "#fdfaf5", transition: "background 0.3s" }}>
       <style>{`
         @import url('https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,400;0,600;0,700;1,400;1,600&family=DM+Sans:wght@300;400;500;600&display=swap');
         
@@ -696,9 +696,9 @@ export default function App() {
                           <span style={{ fontSize: 12, background: "#fef3c7", color: "#d97706", padding: "2px 8px", borderRadius: 10, fontWeight: 600 }}>⏱️ {getCountdown(sale.date, sale.start_time)}</span>
                         )}
                       </div>
-                      <p style={{ fontSize: 14, color: "#5a4030", lineHeight: 1.5, marginBottom: 10, display: "-webkit-box", WebkitLineClamp: 2, WebkitBoxOrient: "vertical", overflow: "hidden" } as any}>{sale.description}</p>
+                      <p style={{ fontSize: 14, color: "#5a4030", lineHeight: 1.5, marginBottom: 10, display: "-webkit-box", WebkitLineClamp: 2, WebkitBoxOrient: "vertical", overflow: "hidden" }}>{sale.description}</p>
                       <div style={{ display: "flex", flexWrap: "wrap", gap: 5 }}>
-                        {(sale.tags||[]).map((tag:string) => <span key={tag} className="tag-pill" style={{ background: (tagColors[tag]||"#a08060")+"22", color: tagColors[tag]||"#a08060", border: `1px solid ${tagColors[tag]||"#a08060"}55` }}>{tag}</span>)}
+                        {(sale.tags||[]).map((tag) => <span key={tag} className="tag-pill" style={{ background: (tagColors[tag]||"#a08060")+"22", color: tagColors[tag]||"#a08060", border: `1px solid ${tagColors[tag]||"#a08060"}55` }}>{tag}</span>)}
                       </div>
                     </div>
                   </div>
@@ -767,7 +767,7 @@ export default function App() {
                 </div>
                 {selectedSale.photos.length > 1 && (
                   <div style={{ display: "flex", gap: 6, padding: "10px 16px", overflowX: "auto", background: "#f5ece0" }}>
-                    {selectedSale.photos.slice(0, unlockedSales.includes(selectedSale.id) ? selectedSale.photos.length : 6).map((p:string, i:number) => (
+                    {selectedSale.photos.slice(0, unlockedSales.includes(selectedSale.id) ? selectedSale.photos.length : 6).map((p, i) => (
                       <div key={i} onClick={() => setPhotoIndex(i)} style={{ width: 56, height: 56, borderRadius: 4, overflow: "hidden", cursor: "pointer", border: i===photoIndex ? "2px solid #b91c1c" : "2px solid transparent", flexShrink: 0 }}>
                         <img src={p} alt="" style={{ width: "100%", height: "100%", objectFit: "cover" }} />
                       </div>
@@ -819,7 +819,7 @@ export default function App() {
                 <>
                   <h3 style={{ fontFamily: "'Playfair Display', serif", fontSize: 15, color: "#3a2c1a", marginBottom: 10 }}>What's Available</h3>
                   <div style={{ display: "flex", flexWrap: "wrap", gap: 7 }}>
-                    {(selectedSale.tags||[]).map((tag:string) => <span key={tag} className="tag-pill" style={{ background: (tagColors[tag]||"#a08060")+"22", color: tagColors[tag]||"#a08060", border: `1px solid ${tagColors[tag]||"#a08060"}55`, padding: "6px 14px", fontSize: 13 }}>{tag}</span>)}
+                    {(selectedSale.tags||[]).map((tag) => <span key={tag} className="tag-pill" style={{ background: (tagColors[tag]||"#a08060")+"22", color: tagColors[tag]||"#a08060", border: `1px solid ${tagColors[tag]||"#a08060"}55`, padding: "6px 14px", fontSize: 13 }}>{tag}</span>)}
                   </div>
                 </>
               )}
@@ -1073,7 +1073,7 @@ export default function App() {
                       <p style={{ fontSize: 13, color: "#7a5c3a" }}>📅 {new Date(sale.date + "T12:00:00").toLocaleDateString("en-CA", { weekday: "long", month: "long", day: "numeric" })}</p>
                       {sale.start_time && <p style={{ fontSize: 13, color: "#7a5c3a" }}>⏰ {sale.start_time} – {sale.end_time}</p>}
                       <div style={{ display: "flex", flexWrap: "wrap", gap: 5, marginTop: 8 }}>
-                        {(sale.tags || []).map((tag: string) => (
+                        {(sale.tags || []).map((tag) => (
                           <span key={tag} className="tag-pill" style={{ background: (tagColors[tag] || "#a08060") + "22", color: tagColors[tag] || "#a08060", border: `1px solid ${tagColors[tag] || "#a08060"}55` }}>{tag}</span>
                         ))}
                       </div>
@@ -1088,8 +1088,10 @@ export default function App() {
                           <button onClick={() => setDeleteConfirm(null)} style={{ background: "#fdf6ec", color: "#7a5c3a", border: "1px solid #e8d9c4", padding: "8px 10px", borderRadius: 6, cursor: "pointer", fontSize: 12 }}>Cancel</button>
                         </div>
                       ) : (
+                        <>
                         <button onClick={() => setDeleteConfirm(sale.id)} style={{ background: "transparent", color: "#e74c3c", border: "1px solid #e74c3c55", padding: "8px 14px", borderRadius: 6, cursor: "pointer", fontSize: 13 }}>🗑 Delete</button>
-                      <button onClick={async () => { await api.deleteSale(sale.id); await loadSales(); }} style={{ background: "#f5f5f4", color: "#78716c", border: "1px solid #e7e5e4", padding: "8px 14px", borderRadius: 6, cursor: "pointer", fontSize: 13 }}>✅ Sale Ended</button>
+                        <button onClick={async () => { await api.deleteSale(sale.id); await loadSales(); }} style={{ background: "#f5f5f4", color: "#78716c", border: "1px solid #e7e5e4", padding: "8px 14px", borderRadius: 6, cursor: "pointer", fontSize: 13 }}>✅ Sale Ended</button>
+                      </>
                       )}
                     </div>
                   </div>
@@ -1165,7 +1167,7 @@ export default function App() {
                         <p style={{ fontSize: 12, color: "#7a5c3a", marginTop: 3 }}>📍 {sale.city}, {sale.province} • 📅 {new Date(sale.date + "T12:00:00").toLocaleDateString("en-CA", { month: "short", day: "numeric" })}</p>
                       </div>
                       <div style={{ padding: "10px 16px" }}>
-                        <p style={{ fontSize: 13, color: "#5a4030", lineHeight: 1.4, display: "-webkit-box", WebkitLineClamp: 2, WebkitBoxOrient: "vertical", overflow: "hidden" } as any}>{sale.description || "Come check it out!"}</p>
+                        <p style={{ fontSize: 13, color: "#5a4030", lineHeight: 1.4, display: "-webkit-box", WebkitLineClamp: 2, WebkitBoxOrient: "vertical", overflow: "hidden" }}>{sale.description || "Come check it out!"}</p>
                       </div>
                     </div>
                   ))}
