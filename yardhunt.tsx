@@ -258,6 +258,7 @@ const emojis = ["🏠","🌻","📦","🛋️","🔑","🧺","🏡","🌼"];
 
 export default function App() {
   const [view, setView] = useState("browse");
+  const [viewHistory, setViewHistory] = useState(["browse"]);
   const [sales, setSales] = useState([]);
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState("");
@@ -676,6 +677,18 @@ export default function App() {
     await api.deleteSale(id);
     await loadSales();
     setDeleteConfirm(null);
+  };
+
+  const navigateTo = (newView) => {
+    setViewHistory(h => [...h.slice(-9), newView]);
+    setView(newView);
+  };
+
+  const goBack = () => {
+    if (selectedSale) { setSelectedSale(null); return; }
+    const prev = viewHistory.length > 1 ? viewHistory[viewHistory.length - 2] : "browse";
+    setViewHistory(h => h.slice(0, -1));
+    setView(prev);
   };
 
   const handleTouchStart = (e) => setTouchStartY(e.touches[0].clientY);
@@ -1536,6 +1549,9 @@ export default function App() {
       {/* Seller Dashboard */}
       {view === "dashboard" && user && (
         <main style={{ maxWidth: 800, margin: "0 auto", padding: "36px 20px" }}>
+          <button onClick={goBack} style={{ display: "flex", alignItems: "center", gap: 6, background: "none", border: "none", color: "#b91c1c", cursor: "pointer", fontSize: 14, fontWeight: 700, fontFamily: "'DM Sans', sans-serif", marginBottom: 20, padding: 0 }}>
+            ← Back
+          </button>
           <h2 style={{ fontFamily: "'Playfair Display', serif", fontSize: 30, fontWeight: 900, color: "#2d1b0e", marginBottom: 6 }}>My Dashboard</h2>
           <p style={{ color: "#7a5c3a", fontSize: 14, fontStyle: "italic", marginBottom: 20 }}>Manage your listings & questions</p>
           {/* Dashboard Tabs */}
@@ -1693,6 +1709,9 @@ export default function App() {
       {/* ===== ADVERTISE PAGE ===== */}
       {view === "advertise" && (
         <main style={{ maxWidth: 900, margin: "0 auto", padding: "36px 20px" }}>
+          <button onClick={goBack} style={{ display: "flex", alignItems: "center", gap: 6, background: "none", border: "none", color: "#b91c1c", cursor: "pointer", fontSize: 14, fontWeight: 700, fontFamily: "'DM Sans', sans-serif", marginBottom: 20, padding: 0 }}>
+            ← Back
+          </button>
           {adSuccess ? (
             <div style={{ textAlign: "center", padding: "60px 20px", background: "white", borderRadius: 16, border: "2px solid #059669" }}>
               <p style={{ fontSize: 56, marginBottom: 16 }}>🎉</p>
@@ -1830,6 +1849,9 @@ export default function App() {
       {/* ===== SAVED SALES VIEW ===== */}
       {view === "favourites" && (
         <main style={{ maxWidth: 900, margin: "0 auto", padding: "36px 20px" }}>
+          <button onClick={goBack} style={{ display: "flex", alignItems: "center", gap: 6, background: "none", border: "none", color: "#b91c1c", cursor: "pointer", fontSize: 14, fontWeight: 700, fontFamily: "'DM Sans', sans-serif", marginBottom: 20, padding: 0 }}>
+            ← Back
+          </button>
           <h2 style={{ fontFamily: "'Playfair Display', serif", fontSize: 30, fontWeight: 900, color: "#2d1b0e", marginBottom: 8 }}>❤️ Saved Sales</h2>
           <p style={{ color: "#78716c", fontSize: 14, marginBottom: 28 }}>Sales you've saved for later</p>
           {favourites.length === 0 ? (
@@ -1947,6 +1969,9 @@ export default function App() {
 
       {view === "categories" && (
         <main style={{ maxWidth: 1100, margin: "0 auto", padding: "36px 20px" }}>
+          <button onClick={goBack} style={{ display: "flex", alignItems: "center", gap: 6, background: "none", border: "none", color: "#b91c1c", cursor: "pointer", fontSize: 14, fontWeight: 700, fontFamily: "'DM Sans', sans-serif", marginBottom: 20, padding: 0 }}>
+            ← Back
+          </button>
           <h2 style={{ fontFamily: "'Playfair Display', serif", fontSize: 30, fontWeight: 900, color: "#2d1b0e", marginBottom: 8 }}>🗂️ Browse by Category</h2>
           <p style={{ color: "#7a5c3a", fontSize: 14, fontStyle: "italic", marginBottom: 28 }}>Find exactly what you're looking for across Canada</p>
 
@@ -2011,6 +2036,10 @@ export default function App() {
       {/* Map View */}
       {view === "map" && (
         <main style={{ maxWidth: 1100, margin: "0 auto", padding: "36px 20px" }}>
+          <button onClick={goBack} style={{ display: "flex", alignItems: "center", gap: 6, background: "none", border: "none", color: "#b91c1c", cursor: "pointer", fontSize: 14, fontWeight: 700, fontFamily: "'DM Sans', sans-serif", marginBottom: 20, padding: 0 }}>
+            ← Back
+          </button>
+
           <h2 style={{ fontFamily: "'Playfair Display', serif", fontSize: 28, fontWeight: 900, color: "#2d1b0e", marginBottom: 8 }}>🗺️ Sales Near You</h2>
           <p style={{ color: "#7a5c3a", fontSize: 14, fontStyle: "italic", marginBottom: 20 }}>Browse garage sales across Canada</p>
           {sales.length === 0 ? (
@@ -2045,7 +2074,7 @@ export default function App() {
       {/* Terms & Privacy View */}
       {view === "terms" && (
         <main style={{ maxWidth: 720, margin: "0 auto", padding: "40px 20px" }}>
-          <button onClick={() => setView("browse")} style={{ background: "none", border: "none", color: "#b91c1c", cursor: "pointer", fontSize: 14, fontFamily: "'DM Sans', sans-serif", fontWeight: 600, marginBottom: 24, display: "flex", alignItems: "center", gap: 6 }}>← Back</button>
+          <button onClick={goBack} style={{ background: "none", border: "none", color: "#b91c1c", cursor: "pointer", fontSize: 14, fontFamily: "'DM Sans', sans-serif", fontWeight: 600, marginBottom: 24, display: "flex", alignItems: "center", gap: 6 }}>← Back</button>
           <div style={{ background: "white", borderRadius: 16, padding: "40px 32px", boxShadow: "0 4px 24px rgba(0,0,0,0.06)", border: "1px solid #e7e5e4" }}>
             <h1 style={{ fontFamily: "'Cormorant Garamond', serif", fontSize: 32, fontWeight: 700, color: "#292524", marginBottom: 8 }}>Terms & Privacy</h1>
             <p style={{ color: "#78716c", fontSize: 14, marginBottom: 32 }}>Last updated: June 2026</p>
