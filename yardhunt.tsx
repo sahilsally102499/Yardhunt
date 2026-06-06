@@ -173,8 +173,8 @@ export default function App() {
   const [viewCounts, setViewCounts] = useState({});
   const [unlockedSales, setUnlockedSales] = useState([]);
   const [photoPackUnlocked, setPhotoPackUnlocked] = useState(false);
-  const [form, setForm] = useState({ title:"",name:"",address:"",city:"",province:"",date:"",startTime:"",endTime:"",description:"",tags:[][],photos:[][] });
-  const fileInputRef = useRef<HTMLInputElement>(null);
+  const [form, setForm] = useState({ title:"",name:"",address:"",city:"",province:"",date:"",startTime:"",endTime:"",description:"",tags:[],photos:[] });
+  const fileInputRef = useRef(null);
 
   useEffect(() => {
     loadSales().then(() => {
