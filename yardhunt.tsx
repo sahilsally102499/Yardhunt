@@ -147,6 +147,44 @@ const api = {
       body: JSON.stringify({ answer })
     });
   },
+  async getAds() {
+    const res = await fetch(`${SUPABASE_URL}/rest/v1/ads?status=eq.active&order=created_at.desc`, {
+      headers: { apikey: SUPABASE_KEY, Authorization: `Bearer ${SUPABASE_KEY}` }
+    });
+    return res.json();
+  },
+  async getAllAds() {
+    const res = await fetch(`${SUPABASE_URL}/rest/v1/ads?order=created_at.desc`, {
+      headers: { apikey: SUPABASE_KEY, Authorization: `Bearer ${SUPABASE_KEY}` }
+    });
+    return res.json();
+  },
+  async updateAdStatus(id, status) {
+    await fetch(`${SUPABASE_URL}/rest/v1/ads?id=eq.${id}`, {
+      method: "PATCH",
+      headers: { apikey: SUPABASE_KEY, Authorization: `Bearer ${SUPABASE_KEY}`, "Content-Type": "application/json" },
+      body: JSON.stringify({ status })
+    });
+  },
+  async deleteAd(id) {
+    await fetch(`${SUPABASE_URL}/rest/v1/ads?id=eq.${id}`, {
+      method: "DELETE",
+      headers: { apikey: SUPABASE_KEY, Authorization: `Bearer ${SUPABASE_KEY}` }
+    });
+  },
+  async getAdPricing() {
+    const res = await fetch(`${SUPABASE_URL}/rest/v1/ad_pricing?order=id.asc`, {
+      headers: { apikey: SUPABASE_KEY, Authorization: `Bearer ${SUPABASE_KEY}` }
+    });
+    return res.json();
+  },
+  async updateAdPricing(id, price) {
+    await fetch(`${SUPABASE_URL}/rest/v1/ad_pricing?id=eq.${id}`, {
+      method: "PATCH",
+      headers: { apikey: SUPABASE_KEY, Authorization: `Bearer ${SUPABASE_KEY}`, "Content-Type": "application/json" },
+      body: JSON.stringify({ price })
+    });
+  },
   async getMyQuestions(saleIds) {
     if (!saleIds.length) return [];
     const ids = saleIds.join(",");
@@ -239,6 +277,12 @@ export default function App() {
   const [unlockedSales, setUnlockedSales] = useState([]);
   const [photoPackUnlocked, setPhotoPackUnlocked] = useState(false);
   const [form, setForm] = useState({ title:"",name:"",address:"",city:"",province:"",date:"",startTime:"",endTime:"",description:"",tags:[],photos:[],extraDate:"",extraDateStart:"",extraDateEnd:"" });
+  const [ads, setAds] = useState([]);
+  const [allAds, setAllAds] = useState([]);
+  const [adPricing, setAdPricing] = useState([]);
+  const [adForm, setAdForm] = useState({ business_name:"", description:"", website:"", city:"", province:"", logo_url:"", package_type:"Starter", email:"" });
+  const [adSubmitting, setAdSubmitting] = useState(false);
+  const [adSuccess, setAdSuccess] = useState(false);
   const [questions, setQuestions] = useState([]);
   const [myQuestions, setMyQuestions] = useState([]);
   const [dashTab, setDashTab] = useState("listings");
@@ -265,6 +309,11 @@ export default function App() {
   }, [view, sales, user]);
 
   useEffect(() => {
+    loadAds();
+    loadAdPricing();
+    // Check for ad success
+    const params = new URLSearchParams(window.location.search);
+    if (params.get("ad_success")) { setAdSuccess(true); setView("advertise"); }
     loadSales().then(() => {
       // Check if URL has a sale ID to open directly (from shared links)
       const params = new URLSearchParams(window.location.search);
@@ -281,6 +330,20 @@ export default function App() {
       setToken(savedToken);
     }
   }, []);
+
+  const loadAds = async () => {
+    try {
+      const data = await api.getAds();
+      setAds(Array.isArray(data) ? data : []);
+    } catch(e) { setAds([]); }
+  };
+
+  const loadAdPricing = async () => {
+    try {
+      const data = await api.getAdPricing();
+      setAdPricing(Array.isArray(data) ? data : []);
+    } catch(e) {}
+  };
 
   const loadSales = async () => {
     setLoading(true);
@@ -408,10 +471,11 @@ export default function App() {
   const loadAdminData = async () => {
     setAdminLoading(true);
     try {
-      const [s, sub, rev] = await Promise.all([api.getAllSales(), api.getAllSubscribers(), api.getAllReviews()]);
+      const [s, sub, rev, allAdsData] = await Promise.all([api.getAllSales(), api.getAllSubscribers(), api.getAllReviews(), api.getAllAds()]);
       setAllSales(Array.isArray(s) ? s : []);
       setAllSubscribers(Array.isArray(sub) ? sub : []);
       setAllReviews(Array.isArray(rev) ? rev : []);
+      setAllAds(Array.isArray(allAdsData) ? allAdsData : []);
       // Fetch users via Supabase admin API
       const usersRes = await fetch(`${SUPABASE_URL}/auth/v1/admin/users?per_page=500`, {
         headers: { apikey: SUPABASE_KEY, Authorization: `Bearer ${SUPABASE_KEY}` }
@@ -608,6 +672,7 @@ export default function App() {
               { label: "Saved Sales", icon: "❤️", view: "favourites", action: () => setView("favourites") },
               { label: "Categories", icon: "🗂️", view: "categories", action: () => setView("categories") },
               { label: "Map View", icon: "🗺️", view: "map", action: () => setView("map") },
+              { label: "Promote Your Business", icon: "📢", view: "advertise", action: () => setView("advertise") },
             ].map(item => (
               <button key={item.view} onClick={() => { item.action(); setMenuOpen(false); }} style={{ display: "flex", alignItems: "center", gap: 12, width: "100%", background: view === item.view ? "rgba(185,28,28,0.2)" : "transparent", color: view === item.view ? "#fca5a5" : "#f5ddb4", border: "none", padding: "14px 20px", textAlign: "left", cursor: "pointer", fontFamily: "'DM Sans', sans-serif", fontWeight: 500, fontSize: 15, borderLeft: view === item.view ? "3px solid #b91c1c" : "3px solid transparent", transition: "all 0.15s" }}>
                 <span style={{ fontSize: 18 }}>{item.icon}</span>
@@ -795,7 +860,28 @@ export default function App() {
                 <p style={{ color: "#78716c", fontSize: 12, fontStyle: "italic" }}>Sorted by date</p>
               </div>
               <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(300px, 1fr))", gap: 24 }}>
-                {filtered.map(sale => (
+                {filtered.reduce((acc, sale, idx) => {
+                  // Insert a sponsored ad every 4 listings
+                  if (idx > 0 && idx % 4 === 0) {
+                    const cityAds = ads.filter(a => a.city?.toLowerCase() === (sale.city||"").toLowerCase() || !a.city);
+                    const ad = cityAds[Math.floor(idx/4 - 1) % cityAds.length];
+                    if (ad) acc.push(
+                      <div key={`ad-${ad.id}-${idx}`} style={{ background: "linear-gradient(135deg, #1c1009, #2d1b0e)", borderRadius: 8, overflow: "hidden", boxShadow: "0 2px 12px rgba(0,0,0,0.15)", border: "2px solid #d97706", position: "relative" }}>
+                        <div style={{ position: "absolute", top: 10, right: 10, background: "#d97706", color: "white", fontSize: 10, fontWeight: 700, padding: "2px 8px", borderRadius: 10, letterSpacing: 0.8 }}>SPONSORED</div>
+                        {ad.logo_url && <img src={ad.logo_url} alt={ad.business_name} style={{ width: "100%", height: 140, objectFit: "cover", opacity: 0.9 }} />}
+                        {!ad.logo_url && <div style={{ height: 80, display: "flex", alignItems: "center", justifyContent: "center", fontSize: 40 }}>📢</div>}
+                        <div style={{ padding: "16px 20px" }}>
+                          <p style={{ fontFamily: "'Cormorant Garamond', serif", fontSize: 18, fontWeight: 700, color: "#f5ddb4", marginBottom: 6 }}>{ad.business_name}</p>
+                          <p style={{ fontSize: 13, color: "#a8a29e", marginBottom: 10, lineHeight: 1.5 }}>{ad.description}</p>
+                          <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+                            <span style={{ fontSize: 11, color: "#78716c" }}>📍 {ad.city}</span>
+                            <a href={ad.website} target="_blank" rel="noreferrer" style={{ background: "#d97706", color: "white", padding: "7px 14px", borderRadius: 6, fontSize: 12, fontWeight: 700, textDecoration: "none" }}>Visit →</a>
+                          </div>
+                        </div>
+                      </div>
+                    );
+                  }
+                  acc.push(
                   <div key={sale.id} className="card-hover" onClick={() => { setSelectedSale(sale); setPhotoIndex(0); loadReviews(sale.id); loadQuestions(sale.id); trackView(sale.id); setReviewSuccess(false); setReviewComment(''); setReviewRating(5); setQuestionText(""); }} style={{ background: "white", borderRadius: 8, overflow: "hidden", boxShadow: "0 2px 12px rgba(0,0,0,0.08)", border: "1px solid #e8d9c4" }}>
                     {sale.photos && sale.photos.length > 0 ? (
                       <div style={{ position: "relative", height: 160, overflow: "hidden" }}>
@@ -841,7 +927,9 @@ export default function App() {
                       </div>
                     </div>
                   </div>
-                ))}
+                );
+                  return acc;
+                }, [])}
               </div>
             </>
           )}
@@ -1425,6 +1513,127 @@ export default function App() {
       )}
 
 
+      {/* ===== ADVERTISE PAGE ===== */}
+      {view === "advertise" && (
+        <main style={{ maxWidth: 900, margin: "0 auto", padding: "36px 20px" }}>
+          {adSuccess ? (
+            <div style={{ textAlign: "center", padding: "60px 20px", background: "white", borderRadius: 16, border: "2px solid #059669" }}>
+              <p style={{ fontSize: 56, marginBottom: 16 }}>🎉</p>
+              <h2 style={{ fontFamily: "'Cormorant Garamond', serif", fontSize: 32, color: "#059669", marginBottom: 10 }}>Payment Successful!</h2>
+              <p style={{ color: "#78716c", fontSize: 16, marginBottom: 24 }}>Your ad is being reviewed and will go live within 24 hours. We'll email you at {adForm.email} when it's active.</p>
+              <button className="btn-primary" onClick={() => { setAdSuccess(false); setView("browse"); }}>Back to Browse 🍁</button>
+            </div>
+          ) : (
+            <>
+            {/* Hero */}
+            <div style={{ background: "linear-gradient(135deg, #1c1009, #3b0f0f)", borderRadius: 16, padding: "40px 32px", marginBottom: 40, textAlign: "center", color: "white" }}>
+              <p style={{ fontSize: 48, marginBottom: 12 }}>📢</p>
+              <h1 style={{ fontFamily: "'Cormorant Garamond', serif", fontSize: 36, fontWeight: 700, color: "#f5ddb4", marginBottom: 10 }}>Promote Your Business</h1>
+              <p style={{ fontSize: 16, color: "#a8a29e", maxWidth: 560, margin: "0 auto 20px" }}>Reach thousands of Canadians actively browsing garage sales in your city. Your ad appears natively in the feed — no banners, no popups.</p>
+              <div style={{ display: "flex", justifyContent: "center", gap: 24, flexWrap: "wrap" }}>
+                {[["🎯", "City Targeted"], ["👥", "Active Buyers"], ["📱", "Mobile First"], ["🍁", "Canada Wide"]].map(([icon, label]) => (
+                  <div key={label} style={{ textAlign: "center" }}>
+                    <p style={{ fontSize: 24 }}>{icon}</p>
+                    <p style={{ fontSize: 12, color: "#f5ddb4", fontWeight: 600 }}>{label}</p>
+                  </div>
+                ))}
+              </div>
+            </div>
+
+            {/* Packages */}
+            <h2 style={{ fontFamily: "'Cormorant Garamond', serif", fontSize: 28, color: "#292524", marginBottom: 20, textAlign: "center" }}>Choose Your Package</h2>
+            <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(240px, 1fr))", gap: 20, marginBottom: 40 }}>
+              {[
+                { type: "Starter", icon: "⭐", desc: "Perfect for local businesses just getting started", features: ["Appears in feed every 4 listings", "City targeted", "Business name + description", "Link to your website"], color: "#d97706" },
+                { type: "City", icon: "🌟", desc: "More visibility across your entire city", features: ["2x more impressions", "City + neighbourhood targeted", "Logo/image support", "Priority placement"], color: "#7c3aed", best: true },
+                { type: "Premium", icon: "💎", desc: "Maximum exposure across multiple cities", features: ["Province-wide reach", "Top of feed placement", "Logo + custom banner", "Weekly performance report"], color: "#b91c1c" },
+              ].map(pkg => {
+                const pricing = adPricing.find(p => p.package_type === pkg.type);
+                const price = pricing?.price || (pkg.type === "Starter" ? 99 : pkg.type === "City" ? 149 : 199);
+                return (
+                  <div key={pkg.type} onClick={() => setAdForm(f => ({...f, package_type: pkg.type}))} style={{ background: "white", borderRadius: 12, padding: "24px", border: adForm.package_type === pkg.type ? `2px solid ${pkg.color}` : "1px solid #e7e5e4", cursor: "pointer", position: "relative", boxShadow: adForm.package_type === pkg.type ? `0 4px 20px ${pkg.color}33` : "none" }}>
+                    {pkg.best && <div style={{ position: "absolute", top: -10, left: "50%", transform: "translateX(-50%)", background: "#7c3aed", color: "white", fontSize: 10, fontWeight: 700, padding: "3px 12px", borderRadius: 10, whiteSpace: "nowrap" }}>MOST POPULAR</div>}
+                    <p style={{ fontSize: 28, marginBottom: 8 }}>{pkg.icon}</p>
+                    <p style={{ fontFamily: "'Cormorant Garamond', serif", fontSize: 20, fontWeight: 700, color: "#292524", marginBottom: 4 }}>{pkg.type}</p>
+                    <p style={{ fontSize: 28, fontWeight: 700, color: pkg.color, marginBottom: 4 }}>${price}<span style={{ fontSize: 14, color: "#78716c", fontWeight: 400 }}>/mo</span></p>
+                    <p style={{ fontSize: 13, color: "#78716c", marginBottom: 14 }}>{pkg.desc}</p>
+                    <ul style={{ fontSize: 13, color: "#292524", paddingLeft: 16 }}>
+                      {pkg.features.map(f => <li key={f} style={{ marginBottom: 4 }}>✓ {f}</li>)}
+                    </ul>
+                    {adForm.package_type === pkg.type && <div style={{ marginTop: 14, background: pkg.color, color: "white", textAlign: "center", padding: "6px", borderRadius: 8, fontSize: 13, fontWeight: 700 }}>✓ Selected</div>}
+                  </div>
+                );
+              })}
+            </div>
+
+            {/* Ad Form */}
+            <div style={{ background: "white", borderRadius: 16, padding: "32px", border: "1px solid #e7e5e4", marginBottom: 32 }}>
+              <h2 style={{ fontFamily: "'Cormorant Garamond', serif", fontSize: 26, color: "#292524", marginBottom: 6 }}>Your Business Details</h2>
+              <p style={{ color: "#78716c", fontSize: 14, marginBottom: 24 }}>Fill in your info and we'll set up your ad automatically after payment.</p>
+              <div style={{ display: "flex", flexDirection: "column", gap: 16 }}>
+                <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 16 }}>
+                  <div><label>Business Name *</label><input value={adForm.business_name} onChange={e=>setAdForm(f=>({...f,business_name:e.target.value}))} placeholder="e.g. John's Junk Removal" /></div>
+                  <div><label>Your Email *</label><input type="email" value={adForm.email} onChange={e=>setAdForm(f=>({...f,email:e.target.value}))} placeholder="you@business.com" /></div>
+                </div>
+                <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 16 }}>
+                  <div><label>Target City *</label><input value={adForm.city} onChange={e=>setAdForm(f=>({...f,city:e.target.value}))} placeholder="e.g. Toronto" /></div>
+                  <div><label>Province</label>
+                    <select value={adForm.province} onChange={e=>setAdForm(f=>({...f,province:e.target.value}))}>
+                      <option value="">Select province…</option>
+                      {provinces.map(p=><option key={p.code} value={p.code}>{p.name}</option>)}
+                    </select>
+                  </div>
+                </div>
+                <div><label>Website URL *</label><input value={adForm.website} onChange={e=>setAdForm(f=>({...f,website:e.target.value}))} placeholder="https://yourbusiness.ca" /></div>
+                <div><label>Ad Description *</label><textarea value={adForm.description} onChange={e=>setAdForm(f=>({...f,description:e.target.value}))} placeholder="Tell buyers what you offer in 1-2 sentences…" rows={3} style={{ padding:"12px",borderRadius:8,border:"1px solid #e7e5e4",fontSize:14,width:"100%",boxSizing:"border-box",resize:"vertical" }} /></div>
+                <div><label>Logo/Image URL <span style={{fontWeight:400,color:"#a8a29e"}}>(optional)</span></label><input value={adForm.logo_url} onChange={e=>setAdForm(f=>({...f,logo_url:e.target.value}))} placeholder="https://yourbusiness.ca/logo.png" /></div>
+
+                {/* Preview */}
+                {adForm.business_name && (
+                  <div>
+                    <label style={{ marginBottom: 8, display: "block" }}>Preview</label>
+                    <div style={{ background: "linear-gradient(135deg, #1c1009, #2d1b0e)", borderRadius: 8, overflow: "hidden", border: "2px solid #d97706", maxWidth: 300, position: "relative" }}>
+                      <div style={{ position: "absolute", top: 8, right: 8, background: "#d97706", color: "white", fontSize: 10, fontWeight: 700, padding: "2px 8px", borderRadius: 10 }}>SPONSORED</div>
+                      {adForm.logo_url && <img src={adForm.logo_url} alt="" style={{ width: "100%", height: 100, objectFit: "cover" }} />}
+                      {!adForm.logo_url && <div style={{ height: 60, display: "flex", alignItems: "center", justifyContent: "center", fontSize: 32 }}>📢</div>}
+                      <div style={{ padding: "14px 16px" }}>
+                        <p style={{ fontFamily: "'Cormorant Garamond', serif", fontSize: 16, fontWeight: 700, color: "#f5ddb4", marginBottom: 4 }}>{adForm.business_name}</p>
+                        <p style={{ fontSize: 12, color: "#a8a29e", marginBottom: 8 }}>{adForm.description || "Your description here"}</p>
+                        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+                          <span style={{ fontSize: 11, color: "#78716c" }}>📍 {adForm.city || "Your City"}</span>
+                          <span style={{ background: "#d97706", color: "white", padding: "4px 10px", borderRadius: 6, fontSize: 11, fontWeight: 700 }}>Visit →</span>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                )}
+
+                <button disabled={adSubmitting || !adForm.business_name || !adForm.email || !adForm.city || !adForm.website || !adForm.description} onClick={async () => {
+                  setAdSubmitting(true);
+                  try {
+                    const pricing = adPricing.find(p => p.package_type === adForm.package_type);
+                    const price = pricing?.price || (adForm.package_type === "Starter" ? 99 : adForm.package_type === "City" ? 149 : 199);
+                    const res = await fetch("https://rcqlohlftafxicmfjkuf.supabase.co/functions/v1/create-ad-checkout", {
+                      method: "POST",
+                      headers: { "Content-Type": "application/json", "Authorization": `Bearer ${SUPABASE_KEY}` },
+                      body: JSON.stringify({ ...adForm, price })
+                    });
+                    const data = await res.json();
+                    if (data.url) window.location.href = data.url;
+                    else alert("Something went wrong. Please try again.");
+                  } catch(e) { alert("Error. Please try again."); }
+                  setAdSubmitting(false);
+                }} className="btn-primary" style={{ fontSize: 17, padding: "16px" }}>
+                  {adSubmitting ? "Setting up checkout…" : `💳 Continue to Payment — ${adForm.package_type} Plan`}
+                </button>
+                <p style={{ fontSize: 12, color: "#a8a29e", textAlign: "center" }}>🔒 Secure payment via Stripe · Cancel anytime · Ads reviewed within 24hrs</p>
+              </div>
+            </div>
+            </>
+          )}
+        </main>
+      )}
+
       {/* Categories View */}
       {/* ===== SAVED SALES VIEW ===== */}
       {view === "favourites" && (
@@ -1700,6 +1909,7 @@ export default function App() {
                   { id: "broadcast", label: "📧 Broadcast" },
                   { id: "moderation", label: "🚨 Moderation" },
                   { id: "reviews", label: "⭐ Reviews" },
+                  { id: "ads", label: "📢 Ads" },
                 ].map(tab => (
                   <button key={tab.id} onClick={() => setAdminTab(tab.id)} style={{ padding: "8px 16px", borderRadius: 20, border: "none", cursor: "pointer", fontSize: 13, fontWeight: 600, background: adminTab === tab.id ? "#1c1009" : "#f5f5f4", color: adminTab === tab.id ? "#f5ddb4" : "#78716c" }}>
                     {tab.label}
@@ -2190,6 +2400,88 @@ export default function App() {
                 </div>
               </div>
               </>}
+
+              {/* ===== ADS TAB ===== */}
+              {adminTab === "ads" && <>
+
+              {/* Pricing Settings */}
+              <div style={{ background: "white", borderRadius: 12, border: "1px solid #e7e5e4", padding: 24, marginBottom: 24 }}>
+                <h3 style={{ fontFamily: "'Cormorant Garamond', serif", fontSize: 22, color: "#292524", marginBottom: 6 }}>💰 Ad Pricing</h3>
+                <p style={{ color: "#78716c", fontSize: 13, marginBottom: 20 }}>Set your monthly prices — updates live on the advertise page instantly</p>
+                <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(200px, 1fr))", gap: 16 }}>
+                  {[
+                    { type: "Starter", icon: "⭐", default: 99 },
+                    { type: "City", icon: "🌟", default: 149 },
+                    { type: "Premium", icon: "💎", default: 199 },
+                  ].map(pkg => {
+                    const pricing = adPricing.find(p => p.package_type === pkg.type);
+                    return (
+                      <div key={pkg.type} style={{ background: "#fdfaf5", borderRadius: 10, padding: 16, border: "1px solid #e7e5e4" }}>
+                        <p style={{ fontSize: 20, marginBottom: 6 }}>{pkg.icon}</p>
+                        <p style={{ fontSize: 14, fontWeight: 700, color: "#292524", marginBottom: 10 }}>{pkg.type}</p>
+                        <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+                          <span style={{ fontSize: 14, color: "#78716c" }}>$</span>
+                          <input type="number" defaultValue={pricing?.price || pkg.default} onBlur={async e => {
+                            const newPrice = parseFloat(e.target.value);
+                            if (pricing?.id) {
+                              await api.updateAdPricing(pricing.id, newPrice);
+                            } else {
+                              await fetch(`${SUPABASE_URL}/rest/v1/ad_pricing`, {
+                                method: "POST",
+                                headers: { apikey: SUPABASE_KEY, Authorization: `Bearer ${SUPABASE_KEY}`, "Content-Type": "application/json" },
+                                body: JSON.stringify({ package_type: pkg.type, price: newPrice })
+                              });
+                            }
+                            loadAdPricing();
+                          }} style={{ width: "100%", padding: "8px 10px", borderRadius: 8, border: "1px solid #e7e5e4", fontSize: 16, fontWeight: 700 }} />
+                          <span style={{ fontSize: 13, color: "#78716c" }}>/mo</span>
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+              </div>
+
+              {/* All Ads */}
+              <div style={{ background: "white", borderRadius: 12, border: "1px solid #e7e5e4", padding: 24 }}>
+                <h3 style={{ fontFamily: "'Cormorant Garamond', serif", fontSize: 22, color: "#292524", marginBottom: 6 }}>📢 All Ads ({allAds.length})</h3>
+                <p style={{ color: "#78716c", fontSize: 13, marginBottom: 20 }}>Approve pending ads, manage active ones</p>
+                {allAds.length === 0 ? (
+                  <p style={{ color: "#78716c", fontSize: 14, textAlign: "center", padding: "20px" }}>No ads yet — share yardhunt.ca/advertise with local businesses!</p>
+                ) : (
+                  <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
+                    {allAds.map(ad => (
+                      <div key={ad.id} style={{ borderRadius: 10, padding: "16px 20px", border: ad.status === "active" ? "1px solid #bbf7d0" : ad.status === "pending_payment" ? "1px solid #fde68a" : "2px solid #fca5a5", background: ad.status === "active" ? "#f0fdf4" : ad.status === "pending_payment" ? "#fffbeb" : "white" }}>
+                        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", gap: 12 }}>
+                          <div style={{ flex: 1 }}>
+                            <div style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 4 }}>
+                              <p style={{ fontSize: 16, fontWeight: 700, color: "#292524" }}>{ad.business_name}</p>
+                              <span style={{ fontSize: 11, fontWeight: 700, padding: "2px 8px", borderRadius: 20, background: ad.status === "active" ? "#dcfce7" : ad.status === "pending_payment" ? "#fef9c3" : "#fef2f2", color: ad.status === "active" ? "#15803d" : ad.status === "pending_payment" ? "#a16207" : "#b91c1c" }}>
+                                {ad.status === "active" ? "✅ Active" : ad.status === "pending_payment" ? "⏳ Pending Payment" : "🔍 Pending Review"}
+                              </span>
+                            </div>
+                            <p style={{ fontSize: 13, color: "#78716c", marginBottom: 2 }}>📍 {ad.city}, {ad.province} · {ad.package_type} · ${ad.price}/mo</p>
+                            <p style={{ fontSize: 13, color: "#78716c", marginBottom: 2 }}>📧 {ad.email}</p>
+                            <p style={{ fontSize: 13, color: "#78716c" }}>🌐 <a href={ad.website} target="_blank" rel="noreferrer" style={{ color: "#2563eb" }}>{ad.website}</a></p>
+                            {ad.description && <p style={{ fontSize: 13, color: "#292524", marginTop: 6, fontStyle: "italic" }}>"{ad.description}"</p>}
+                          </div>
+                          <div style={{ display: "flex", flexDirection: "column", gap: 6, flexShrink: 0 }}>
+                            {ad.status !== "active" && (
+                              <button onClick={async () => { await api.updateAdStatus(ad.id, "active"); loadAdminData(); loadAds(); }} style={{ fontSize: 12, padding: "6px 12px", borderRadius: 8, border: "none", background: "#059669", color: "white", cursor: "pointer", fontWeight: 700 }}>✅ Approve</button>
+                            )}
+                            {ad.status === "active" && (
+                              <button onClick={async () => { await api.updateAdStatus(ad.id, "paused"); loadAdminData(); loadAds(); }} style={{ fontSize: 12, padding: "6px 12px", borderRadius: 8, border: "1px solid #d97706", background: "#fffbeb", color: "#d97706", cursor: "pointer", fontWeight: 700 }}>⏸ Pause</button>
+                            )}
+                            <button onClick={async () => { if(confirm("Delete this ad?")) { await api.deleteAd(ad.id); loadAdminData(); loadAds(); }}} style={{ fontSize: 12, padding: "6px 12px", borderRadius: 8, border: "1px solid #b91c1c", background: "#fef2f2", color: "#b91c1c", cursor: "pointer" }}>🗑️ Delete</button>
+                          </div>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </div>
+              </>}
+
             </>
           )}
         </main>
