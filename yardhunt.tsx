@@ -280,7 +280,7 @@ export default function App() {
   const [ads, setAds] = useState([]);
   const [allAds, setAllAds] = useState([]);
   const [adPricing, setAdPricing] = useState([]);
-  const [adForm, setAdForm] = useState({ business_name:"", description:"", website:"", city:"", province:"", logo_url:"", package_type:"Starter", email:"" });
+  const [adForm, setAdForm] = useState({ business_name:"", description:"", website:"", city:"", province:"", logo_url:"", package_type:"Starter", billing_period:"monthly", email:"" });
   const [adSubmitting, setAdSubmitting] = useState(false);
   const [adSuccess, setAdSuccess] = useState(false);
   const [questions, setQuestions] = useState([]);
@@ -1541,7 +1541,18 @@ export default function App() {
             </div>
 
             {/* Packages */}
-            <h2 style={{ fontFamily: "'Cormorant Garamond', serif", fontSize: 28, color: "#292524", marginBottom: 20, textAlign: "center" }}>Choose Your Package</h2>
+            <h2 style={{ fontFamily: "'Cormorant Garamond', serif", fontSize: 28, color: "#292524", marginBottom: 16, textAlign: "center" }}>Choose Your Package</h2>
+            {/* Billing period toggle */}
+            <div style={{ display: "flex", justifyContent: "center", marginBottom: 24 }}>
+              <div style={{ display: "flex", background: "#f5f5f4", borderRadius: 30, padding: 4, gap: 4 }}>
+                <button onClick={() => setAdForm(f=>({...f, billing_period:"weekly"}))} style={{ padding: "8px 24px", borderRadius: 26, border: "none", cursor: "pointer", fontSize: 14, fontWeight: 700, background: adForm.billing_period === "weekly" ? "white" : "transparent", color: adForm.billing_period === "weekly" ? "#292524" : "#78716c", boxShadow: adForm.billing_period === "weekly" ? "0 2px 8px rgba(0,0,0,0.1)" : "none" }}>
+                  Weekly
+                </button>
+                <button onClick={() => setAdForm(f=>({...f, billing_period:"monthly"}))} style={{ padding: "8px 24px", borderRadius: 26, border: "none", cursor: "pointer", fontSize: 14, fontWeight: 700, background: adForm.billing_period === "monthly" ? "white" : "transparent", color: adForm.billing_period === "monthly" ? "#292524" : "#78716c", boxShadow: adForm.billing_period === "monthly" ? "0 2px 8px rgba(0,0,0,0.1)" : "none" }}>
+                  Monthly <span style={{ fontSize: 11, background: "#dcfce7", color: "#15803d", padding: "1px 6px", borderRadius: 10, marginLeft: 4 }}>Save 20%</span>
+                </button>
+              </div>
+            </div>
             <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(240px, 1fr))", gap: 20, marginBottom: 40 }}>
               {[
                 { type: "Starter", icon: "⭐", desc: "Perfect for local businesses just getting started", features: ["Appears in feed every 4 listings", "City targeted", "Business name + description", "Link to your website"], color: "#d97706" },
@@ -1549,13 +1560,15 @@ export default function App() {
                 { type: "Premium", icon: "💎", desc: "Maximum exposure across multiple cities", features: ["Province-wide reach", "Top of feed placement", "Logo + custom banner", "Weekly performance report"], color: "#b91c1c" },
               ].map(pkg => {
                 const pricing = adPricing.find(p => p.package_type === pkg.type);
-                const price = pricing?.price || (pkg.type === "Starter" ? 99 : pkg.type === "City" ? 149 : 199);
+                const monthlyPrice = pricing?.price || (pkg.type === "Starter" ? 99 : pkg.type === "City" ? 149 : 199);
+                const weeklyPrice = pricing?.weekly_price || Math.round(monthlyPrice / 4);
+                const price = adForm.billing_period === "weekly" ? weeklyPrice : monthlyPrice;
                 return (
                   <div key={pkg.type} onClick={() => setAdForm(f => ({...f, package_type: pkg.type}))} style={{ background: "white", borderRadius: 12, padding: "24px", border: adForm.package_type === pkg.type ? `2px solid ${pkg.color}` : "1px solid #e7e5e4", cursor: "pointer", position: "relative", boxShadow: adForm.package_type === pkg.type ? `0 4px 20px ${pkg.color}33` : "none" }}>
                     {pkg.best && <div style={{ position: "absolute", top: -10, left: "50%", transform: "translateX(-50%)", background: "#7c3aed", color: "white", fontSize: 10, fontWeight: 700, padding: "3px 12px", borderRadius: 10, whiteSpace: "nowrap" }}>MOST POPULAR</div>}
                     <p style={{ fontSize: 28, marginBottom: 8 }}>{pkg.icon}</p>
                     <p style={{ fontFamily: "'Cormorant Garamond', serif", fontSize: 20, fontWeight: 700, color: "#292524", marginBottom: 4 }}>{pkg.type}</p>
-                    <p style={{ fontSize: 28, fontWeight: 700, color: pkg.color, marginBottom: 4 }}>${price}<span style={{ fontSize: 14, color: "#78716c", fontWeight: 400 }}>/mo</span></p>
+                    <p style={{ fontSize: 28, fontWeight: 700, color: pkg.color, marginBottom: 4 }}>${price}<span style={{ fontSize: 14, color: "#78716c", fontWeight: 400 }}>/{adForm.billing_period === "weekly" ? "wk" : "mo"}</span></p>
                     <p style={{ fontSize: 13, color: "#78716c", marginBottom: 14 }}>{pkg.desc}</p>
                     <ul style={{ fontSize: 13, color: "#292524", paddingLeft: 16 }}>
                       {pkg.features.map(f => <li key={f} style={{ marginBottom: 4 }}>✓ {f}</li>)}
@@ -1612,11 +1625,13 @@ export default function App() {
                   setAdSubmitting(true);
                   try {
                     const pricing = adPricing.find(p => p.package_type === adForm.package_type);
-                    const price = pricing?.price || (adForm.package_type === "Starter" ? 99 : adForm.package_type === "City" ? 149 : 199);
+                    const monthlyP = pricing?.price || (adForm.package_type === "Starter" ? 99 : adForm.package_type === "City" ? 149 : 199);
+                    const weeklyP = pricing?.weekly_price || Math.round(monthlyP / 4);
+                    const price = adForm.billing_period === "weekly" ? weeklyP : monthlyP;
                     const res = await fetch("https://rcqlohlftafxicmfjkuf.supabase.co/functions/v1/create-ad-checkout", {
                       method: "POST",
                       headers: { "Content-Type": "application/json", "Authorization": `Bearer ${SUPABASE_KEY}` },
-                      body: JSON.stringify({ ...adForm, price })
+                      body: JSON.stringify({ ...adForm, price, billing_period: adForm.billing_period })
                     });
                     const data = await res.json();
                     if (data.url) window.location.href = data.url;
@@ -1624,7 +1639,7 @@ export default function App() {
                   } catch(e) { alert("Error. Please try again."); }
                   setAdSubmitting(false);
                 }} className="btn-primary" style={{ fontSize: 17, padding: "16px" }}>
-                  {adSubmitting ? "Setting up checkout…" : `💳 Continue to Payment — ${adForm.package_type} Plan`}
+                  {adSubmitting ? "Setting up checkout…" : `💳 Continue to Payment — ${adForm.package_type} (${adForm.billing_period === "weekly" ? "Weekly" : "Monthly"})`}
                 </button>
                 <p style={{ fontSize: 12, color: "#a8a29e", textAlign: "center" }}>🔒 Secure payment via Stripe · Cancel anytime · Ads reviewed within 24hrs</p>
               </div>
@@ -2407,19 +2422,20 @@ export default function App() {
               {/* Pricing Settings */}
               <div style={{ background: "white", borderRadius: 12, border: "1px solid #e7e5e4", padding: 24, marginBottom: 24 }}>
                 <h3 style={{ fontFamily: "'Cormorant Garamond', serif", fontSize: 22, color: "#292524", marginBottom: 6 }}>💰 Ad Pricing</h3>
-                <p style={{ color: "#78716c", fontSize: 13, marginBottom: 20 }}>Set your monthly prices — updates live on the advertise page instantly</p>
-                <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(200px, 1fr))", gap: 16 }}>
+                <p style={{ color: "#78716c", fontSize: 13, marginBottom: 20 }}>Set your prices — updates live on the advertise page instantly</p>
+                <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(220px, 1fr))", gap: 16 }}>
                   {[
-                    { type: "Starter", icon: "⭐", default: 99 },
-                    { type: "City", icon: "🌟", default: 149 },
-                    { type: "Premium", icon: "💎", default: 199 },
+                    { type: "Starter", icon: "⭐", default: 99, defaultWeekly: 29 },
+                    { type: "City", icon: "🌟", default: 149, defaultWeekly: 44 },
+                    { type: "Premium", icon: "💎", default: 199, defaultWeekly: 59 },
                   ].map(pkg => {
                     const pricing = adPricing.find(p => p.package_type === pkg.type);
                     return (
                       <div key={pkg.type} style={{ background: "#fdfaf5", borderRadius: 10, padding: 16, border: "1px solid #e7e5e4" }}>
-                        <p style={{ fontSize: 20, marginBottom: 6 }}>{pkg.icon}</p>
-                        <p style={{ fontSize: 14, fontWeight: 700, color: "#292524", marginBottom: 10 }}>{pkg.type}</p>
-                        <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+                        <p style={{ fontSize: 20, marginBottom: 4 }}>{pkg.icon}</p>
+                        <p style={{ fontSize: 14, fontWeight: 700, color: "#292524", marginBottom: 12 }}>{pkg.type}</p>
+                        <label style={{ fontSize: 11, color: "#78716c", fontWeight: 600, textTransform: "uppercase", letterSpacing: 0.8 }}>Monthly Price</label>
+                        <div style={{ display: "flex", alignItems: "center", gap: 6, marginBottom: 10, marginTop: 4 }}>
                           <span style={{ fontSize: 14, color: "#78716c" }}>$</span>
                           <input type="number" defaultValue={pricing?.price || pkg.default} onBlur={async e => {
                             const newPrice = parseFloat(e.target.value);
@@ -2429,12 +2445,34 @@ export default function App() {
                               await fetch(`${SUPABASE_URL}/rest/v1/ad_pricing`, {
                                 method: "POST",
                                 headers: { apikey: SUPABASE_KEY, Authorization: `Bearer ${SUPABASE_KEY}`, "Content-Type": "application/json" },
-                                body: JSON.stringify({ package_type: pkg.type, price: newPrice })
+                                body: JSON.stringify({ package_type: pkg.type, price: newPrice, weekly_price: pkg.defaultWeekly })
                               });
                             }
                             loadAdPricing();
-                          }} style={{ width: "100%", padding: "8px 10px", borderRadius: 8, border: "1px solid #e7e5e4", fontSize: 16, fontWeight: 700 }} />
-                          <span style={{ fontSize: 13, color: "#78716c" }}>/mo</span>
+                          }} style={{ width: "100%", padding: "8px 10px", borderRadius: 8, border: "1px solid #e7e5e4", fontSize: 15, fontWeight: 700 }} />
+                          <span style={{ fontSize: 12, color: "#78716c" }}>/mo</span>
+                        </div>
+                        <label style={{ fontSize: 11, color: "#78716c", fontWeight: 600, textTransform: "uppercase", letterSpacing: 0.8 }}>Weekly Price</label>
+                        <div style={{ display: "flex", alignItems: "center", gap: 6, marginTop: 4 }}>
+                          <span style={{ fontSize: 14, color: "#78716c" }}>$</span>
+                          <input type="number" defaultValue={pricing?.weekly_price || pkg.defaultWeekly} onBlur={async e => {
+                            const newWeekly = parseFloat(e.target.value);
+                            if (pricing?.id) {
+                              await fetch(`${SUPABASE_URL}/rest/v1/ad_pricing?id=eq.${pricing.id}`, {
+                                method: "PATCH",
+                                headers: { apikey: SUPABASE_KEY, Authorization: `Bearer ${SUPABASE_KEY}`, "Content-Type": "application/json" },
+                                body: JSON.stringify({ weekly_price: newWeekly })
+                              });
+                            } else {
+                              await fetch(`${SUPABASE_URL}/rest/v1/ad_pricing`, {
+                                method: "POST",
+                                headers: { apikey: SUPABASE_KEY, Authorization: `Bearer ${SUPABASE_KEY}`, "Content-Type": "application/json" },
+                                body: JSON.stringify({ package_type: pkg.type, price: pkg.default, weekly_price: newWeekly })
+                              });
+                            }
+                            loadAdPricing();
+                          }} style={{ width: "100%", padding: "8px 10px", borderRadius: 8, border: "1px solid #e7e5e4", fontSize: 15, fontWeight: 700 }} />
+                          <span style={{ fontSize: 12, color: "#78716c" }}>/wk</span>
                         </div>
                       </div>
                     );
