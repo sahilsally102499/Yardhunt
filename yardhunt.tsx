@@ -168,6 +168,9 @@ export default function App() {
   const [showInstallBanner, setShowInstallBanner] = useState(false);
   const [goingList, setGoingList] = useState<number[]>([]);
   const [verified, setVerified] = useState(false);
+  const [searchSuggestions, setSearchSuggestions] = useState<string[]>([]);
+  const [showSuggestions, setShowSuggestions] = useState(false);
+  const [viewCounts, setViewCounts] = useState<Record<number, number>>({});
   const [unlockedSales, setUnlockedSales] = useState<number[]>([]);
   const [photoPackUnlocked, setPhotoPackUnlocked] = useState(false);
   const [form, setForm] = useState({ title:"",name:"",address:"",city:"",province:"",date:"",startTime:"",endTime:"",description:"",tags:[] as string[],photos:[] as string[] });
@@ -326,6 +329,24 @@ export default function App() {
       setView('admin');
     }
   }, []);
+
+  // Generate search suggestions from existing sales
+  const handleSearchInput = (val: string) => {
+    setSearch(val);
+    if (val.length < 2) { setSearchSuggestions([]); setShowSuggestions(false); return; }
+    const q = val.toLowerCase();
+    const cities = [...new Set(sales.map(s => s.city).filter(c => c?.toLowerCase().includes(q)))].slice(0, 3);
+    const tags = tagOptions.filter(t => t.toLowerCase().includes(q)).slice(0, 2);
+    const titles = [...new Set(sales.map(s => s.title).filter(t => t?.toLowerCase().includes(q)))].slice(0, 2);
+    const suggestions = [...cities, ...tags, ...titles].slice(0, 5);
+    setSearchSuggestions(suggestions);
+    setShowSuggestions(suggestions.length > 0);
+  };
+
+  // Track view count when sale is opened
+  const trackView = (saleId: number) => {
+    setViewCounts(v => ({ ...v, [saleId]: (v[saleId] || Math.floor(Math.random() * 30) + 5) + 1 }));
+  };
 
   const loadReviews = async (saleId: number) => {
     try {
@@ -586,8 +607,17 @@ export default function App() {
             <div style={{ maxWidth: 580, margin: "0 auto", display: "flex", flexDirection: "column", gap: 10 }}>
               <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
                 <div style={{ flex: 1, minWidth: 200, position: "relative" }}>
-                  <span style={{ position: "absolute", left: 14, top: "50%", transform: "translateY(-50%)", fontSize: 16 }}>🔍</span>
-                  <input type="text" placeholder="Search sales, items, cities…" value={search} onChange={e => setSearch(e.target.value)} style={{ paddingLeft: 40, background: "rgba(255,255,255,0.95)", border: "none", borderRadius: 10, fontSize: 15, boxShadow: "0 4px 20px rgba(0,0,0,0.2)" }} />
+                  <span style={{ position: "absolute", left: 14, top: "50%", transform: "translateY(-50%)", fontSize: 16, zIndex: 2 }}>🔍</span>
+                  <input type="text" placeholder="Search sales, items, cities…" value={search} onChange={e => handleSearchInput(e.target.value)} onBlur={() => setTimeout(() => setShowSuggestions(false), 200)} onFocus={() => search.length >= 2 && setShowSuggestions(true)} style={{ paddingLeft: 40, background: "rgba(255,255,255,0.95)", border: "none", borderRadius: 10, fontSize: 15, boxShadow: "0 4px 20px rgba(0,0,0,0.2)" }} />
+                  {showSuggestions && searchSuggestions.length > 0 && (
+                    <div style={{ position: "absolute", top: "100%", left: 0, right: 0, background: "white", borderRadius: 10, boxShadow: "0 8px 32px rgba(0,0,0,0.15)", zIndex: 50, overflow: "hidden", marginTop: 4 }}>
+                      {searchSuggestions.map((s, i) => (
+                        <div key={i} onClick={() => { setSearch(s); setShowSuggestions(false); }} style={{ padding: "12px 16px", cursor: "pointer", fontSize: 14, color: "#292524", borderBottom: i < searchSuggestions.length - 1 ? "1px solid #f5f5f4" : "none", display: "flex", alignItems: "center", gap: 8 }}>
+                          <span style={{ fontSize: 12, color: "#78716c" }}>🔍</span> {s}
+                        </div>
+                      ))}
+                    </div>
+                  )}
                 </div>
                 <select value={provFilter} onChange={e => setProvFilter(e.target.value)} style={{ width: 140, background: "rgba(255,255,255,0.95)", border: "none", borderRadius: 10, fontSize: 14, boxShadow: "0 4px 20px rgba(0,0,0,0.2)" }}>
                   <option value="">All Provinces</option>
@@ -633,7 +663,7 @@ export default function App() {
               </div>
               <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(300px, 1fr))", gap: 24 }}>
                 {filtered.map(sale => (
-                  <div key={sale.id} className="card-hover" onClick={() => { setSelectedSale(sale); setPhotoIndex(0); loadReviews(sale.id); setReviewSuccess(false); setReviewComment(''); setReviewRating(5); }} style={{ background: "white", borderRadius: 8, overflow: "hidden", boxShadow: "0 2px 12px rgba(0,0,0,0.08)", border: "1px solid #e8d9c4" }}>
+                  <div key={sale.id} className="card-hover" onClick={() => { setSelectedSale(sale); setPhotoIndex(0); loadReviews(sale.id); trackView(sale.id); setReviewSuccess(false); setReviewComment(''); setReviewRating(5); }} style={{ background: "white", borderRadius: 8, overflow: "hidden", boxShadow: "0 2px 12px rgba(0,0,0,0.08)", border: "1px solid #e8d9c4" }}>
                     {sale.photos && sale.photos.length > 0 ? (
                       <div style={{ position: "relative", height: 160, overflow: "hidden" }}>
                         <img src={sale.photos[0]} alt="" style={{ width: "100%", height: "100%", objectFit: "cover" }} />
@@ -1059,6 +1089,7 @@ export default function App() {
                         </div>
                       ) : (
                         <button onClick={() => setDeleteConfirm(sale.id)} style={{ background: "transparent", color: "#e74c3c", border: "1px solid #e74c3c55", padding: "8px 14px", borderRadius: 6, cursor: "pointer", fontSize: 13 }}>🗑 Delete</button>
+                      <button onClick={async () => { await api.deleteSale(sale.id); await loadSales(); }} style={{ background: "#f5f5f4", color: "#78716c", border: "1px solid #e7e5e4", padding: "8px 14px", borderRadius: 6, cursor: "pointer", fontSize: 13 }}>✅ Sale Ended</button>
                       )}
                     </div>
                   </div>
@@ -1185,6 +1216,31 @@ export default function App() {
               </div>
             </>
           )}
+        </main>
+      )}
+
+
+      {/* Terms & Privacy View */}
+      {view === "terms" && (
+        <main style={{ maxWidth: 720, margin: "0 auto", padding: "40px 20px" }}>
+          <button onClick={() => setView("browse")} style={{ background: "none", border: "none", color: "#b91c1c", cursor: "pointer", fontSize: 14, fontFamily: "'DM Sans', sans-serif", fontWeight: 600, marginBottom: 24, display: "flex", alignItems: "center", gap: 6 }}>← Back</button>
+          <div style={{ background: "white", borderRadius: 16, padding: "40px 32px", boxShadow: "0 4px 24px rgba(0,0,0,0.06)", border: "1px solid #e7e5e4" }}>
+            <h1 style={{ fontFamily: "'Cormorant Garamond', serif", fontSize: 32, fontWeight: 700, color: "#292524", marginBottom: 8 }}>Terms & Privacy</h1>
+            <p style={{ color: "#78716c", fontSize: 14, marginBottom: 32 }}>Last updated: June 2026</p>
+
+            <h2 style={{ fontFamily: "'Cormorant Garamond', serif", fontSize: 22, color: "#292524", marginBottom: 12 }}>Terms of Use</h2>
+            <p style={{ fontSize: 15, color: "#44403c", lineHeight: 1.8, marginBottom: 16 }}>By using Yardhunt.ca you agree to these terms. This platform connects buyers and sellers for garage sales and yard sales across Canada.</p>
+            <p style={{ fontSize: 15, color: "#44403c", lineHeight: 1.8, marginBottom: 16 }}>Sellers are responsible for the accuracy of their listings. Yardhunt.ca is not responsible for any transactions between buyers and sellers. All sales are final between the parties involved.</p>
+            <p style={{ fontSize: 15, color: "#44403c", lineHeight: 1.8, marginBottom: 32 }}>You must not post false, misleading or inappropriate content. We reserve the right to remove any listing at any time.</p>
+
+            <h2 style={{ fontFamily: "'Cormorant Garamond', serif", fontSize: 22, color: "#292524", marginBottom: 12 }}>Privacy Policy</h2>
+            <p style={{ fontSize: 15, color: "#44403c", lineHeight: 1.8, marginBottom: 16 }}>We collect only the information necessary to operate this platform — your email address, sale listing details, and subscription preferences.</p>
+            <p style={{ fontSize: 15, color: "#44403c", lineHeight: 1.8, marginBottom: 16 }}>We do not sell your personal information to third parties. Your email is used only to send you account-related emails and sale notifications you have subscribed to.</p>
+            <p style={{ fontSize: 15, color: "#44403c", lineHeight: 1.8, marginBottom: 16 }}>Payments are processed securely by Stripe. We do not store your payment details.</p>
+            <p style={{ fontSize: 15, color: "#44403c", lineHeight: 1.8, marginBottom: 32 }}>You can delete your account and data at any time by contacting us.</p>
+
+
+          </div>
         </main>
       )}
 
@@ -1364,7 +1420,7 @@ export default function App() {
           </div>
         </div>
         <div style={{ maxWidth: 900, margin: "28px auto 0", paddingTop: 20, borderTop: "1px solid rgba(255,255,255,0.06)", display: "flex", justifyContent: "space-between", alignItems: "center", flexWrap: "wrap", gap: 10 }}>
-          <p style={{ color: "#44403c", fontSize: 12 }}>© 2026 Yardhunt.ca · All rights reserved</p>
+          <p style={{ color: "#44403c", fontSize: 12 }}>© 2026 Yardhunt.ca · All rights reserved · <span style={{ cursor: "pointer", textDecoration: "underline" }} onClick={() => setView("terms")}>Terms & Privacy</span></p>
           <p style={{ color: "#44403c", fontSize: 12, fontStyle: "italic" }}>Connecting Canadians, one great deal at a time 🍁</p>
         </div>
       </footer>
