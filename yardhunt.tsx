@@ -1203,7 +1203,7 @@ export default function App() {
                     </div>
                     <div style={{ display: "flex", flexDirection: "column", gap: 8, flexShrink: 0 }}>
                       <button onClick={() => { setSelectedSale(sale); setView("browse"); }} style={{ background: "#fdf6ec", color: "#7a5c3a", border: "1px solid #e8d9c4", padding: "8px 14px", borderRadius: 6, cursor: "pointer", fontSize: 13, fontWeight: 600 }}>👁 View</button>
-                      <button onClick={() => { setEditingSale(sale.id); setEditForm({ title: sale.title, address: sale.address, city: sale.city, province: sale.province, date: sale.date, startTime: sale.start_time||"", endTime: sale.end_time||"", description: sale.description||"", tags: sale.tags||[] }); }} style={{ background: "#eff6ff", color: "#2563eb", border: "1px solid #bfdbfe", padding: "8px 14px", borderRadius: 6, cursor: "pointer", fontSize: 13, fontWeight: 600 }}>✏️ Edit</button>
+                      <button onClick={() => { setEditingSale(sale.id); setEditForm({ title: sale.title, address: sale.address, city: sale.city, province: sale.province, date: sale.date, startTime: sale.start_time||"", endTime: sale.end_time||"", description: sale.description||"", tags: sale.tags||[], extraDate: sale.extra_date||"", extraDateStart: sale.extra_date_start||"", extraDateEnd: sale.extra_date_end||"" }); }} style={{ background: "#eff6ff", color: "#2563eb", border: "1px solid #bfdbfe", padding: "8px 14px", borderRadius: 6, cursor: "pointer", fontSize: 13, fontWeight: 600 }}>✏️ Edit</button>
                       <a href="https://buy.stripe.com/fZu7sLdkZ12K1QJbRq1Jm00" target="_blank" rel="noreferrer" style={{ background: "#f5a623", color: "white", border: "none", padding: "8px 14px", borderRadius: 6, cursor: "pointer", fontSize: 13, fontWeight: 600, textDecoration: "none", textAlign: "center" }}>⭐ $9.99</a>
                       <a href="https://buy.stripe.com/cNi4gzep3dPwcvn08I1Jm01" target="_blank" rel="noreferrer" style={{ background: "#c0392b", color: "white", border: "none", padding: "8px 14px", borderRadius: 6, cursor: "pointer", fontSize: 13, fontWeight: 600, textDecoration: "none", textAlign: "center" }}>🌟 $14.99</a>
                       {deleteConfirm === sale.id ? (
@@ -1328,15 +1328,33 @@ export default function App() {
                 <div><label>Street Address</label><input value={editForm.address} onChange={e=>setEditForm(f=>({...f,address:e.target.value}))} /></div>
                 <div><label>City</label><input value={editForm.city} onChange={e=>setEditForm(f=>({...f,city:e.target.value}))} /></div>
               </div>
-              <div><label>Date *</label><input type="date" value={editForm.date} onChange={e=>setEditForm(f=>({...f,date:e.target.value}))} /></div>
-              <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12 }}>
-                <div><label>Start Time</label><input type="time" value={editForm.startTime} onChange={e=>setEditForm(f=>({...f,startTime:e.target.value}))} /></div>
-                <div><label>End Time</label><input type="time" value={editForm.endTime} onChange={e=>setEditForm(f=>({...f,endTime:e.target.value}))} /></div>
+              {/* Day 1 */}
+              <div style={{ background: "#fdfaf5", borderRadius: 8, padding: "14px", border: "1px solid #e7e5e4" }}>
+                <p style={{ fontSize: 12, fontWeight: 700, color: "#78716c", marginBottom: 10, textTransform: "uppercase", letterSpacing: 0.8 }}>📅 Day 1</p>
+                <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: 8 }}>
+                  <div><label style={{fontSize:11}}>Date *</label><input type="date" value={editForm.date} onChange={e=>setEditForm(f=>({...f,date:e.target.value}))} style={{fontSize:12,padding:"8px 6px"}} /></div>
+                  <div><label style={{fontSize:11}}>Start Time</label><input type="time" value={editForm.startTime} onChange={e=>setEditForm(f=>({...f,startTime:e.target.value}))} style={{fontSize:12,padding:"8px 6px"}} /></div>
+                  <div><label style={{fontSize:11}}>End Time</label><input type="time" value={editForm.endTime} onChange={e=>setEditForm(f=>({...f,endTime:e.target.value}))} style={{fontSize:12,padding:"8px 6px"}} /></div>
+                </div>
+              </div>
+              {/* Day 2 */}
+              <div style={{ background: "#fdfaf5", borderRadius: 8, padding: "14px", border: "1px solid #e7e5e4" }}>
+                <label style={{ fontSize: 12, fontWeight: 700, color: "#78716c", display: "flex", alignItems: "center", gap: 8, cursor: "pointer", marginBottom: 10 }}>
+                  <input type="checkbox" checked={!!editForm.extraDate} onChange={e => setEditForm(f=>({...f, extraDate: e.target.checked ? f.date : "", extraDateStart: "", extraDateEnd: ""}))} />
+                  <span>📅 2-Day Sale — Add Second Day</span>
+                </label>
+                {editForm.extraDate && (
+                  <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: 8 }}>
+                    <div><label style={{fontSize:11}}>Day 2 Date</label><input type="date" value={editForm.extraDate} onChange={e=>setEditForm(f=>({...f,extraDate:e.target.value}))} style={{fontSize:12,padding:"8px 6px"}} /></div>
+                    <div><label style={{fontSize:11}}>Start Time</label><input type="time" value={editForm.extraDateStart||""} onChange={e=>setEditForm(f=>({...f,extraDateStart:e.target.value}))} style={{fontSize:12,padding:"8px 6px"}} /></div>
+                    <div><label style={{fontSize:11}}>End Time</label><input type="time" value={editForm.extraDateEnd||""} onChange={e=>setEditForm(f=>({...f,extraDateEnd:e.target.value}))} style={{fontSize:12,padding:"8px 6px"}} /></div>
+                  </div>
+                )}
               </div>
               <div><label>Description</label><textarea value={editForm.description} onChange={e=>setEditForm(f=>({...f,description:e.target.value}))} rows={4} style={{ padding:"12px",borderRadius:8,border:"1px solid #e7e5e4",fontSize:14,width:"100%",boxSizing:"border-box" }} /></div>
               <button disabled={editSubmitting} onClick={async () => {
                 setEditSubmitting(true);
-                await api.updateSale(editingSale, { title:editForm.title, address:editForm.address, city:editForm.city, province:editForm.province, date:editForm.date, start_time:editForm.startTime, end_time:editForm.endTime, description:editForm.description, tags:editForm.tags }, token);
+                await api.updateSale(editingSale, { title:editForm.title, address:editForm.address, city:editForm.city, province:editForm.province, date:editForm.date, start_time:editForm.startTime, end_time:editForm.endTime, description:editForm.description, tags:editForm.tags, extra_date: editForm.extraDate||null, extra_date_start: editForm.extraDateStart||null, extra_date_end: editForm.extraDateEnd||null }, token);
                 await loadSales();
                 setEditingSale(null);
                 setEditSubmitting(false);
