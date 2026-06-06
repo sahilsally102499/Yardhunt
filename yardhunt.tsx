@@ -1154,90 +1154,87 @@ export default function App() {
             </div>
           )}
 
-          {/* Donation Box */}
-          <div style={{ marginTop: 40, background: "linear-gradient(135deg, #1c1009, #2d1b0e)", borderRadius: 12, padding: "32px 28px", textAlign: "center" }}>
-            {donationSuccess ? (
-              <div>
-                <p style={{ fontSize: 48, marginBottom: 12 }}>💝</p>
-                <h3 style={{ fontFamily: "'Playfair Display', serif", fontSize: 26, fontWeight: 900, color: "#f5ddb4", marginBottom: 8 }}>Thank You So Much! 🍁</h3>
-                <p style={{ color: "#a8a29e", fontSize: 15 }}>Your support means everything and helps keep Yardhunt.ca free for all Canadians.</p>
-                <button onClick={() => setDonationSuccess(false)} style={{ marginTop: 16, background: "transparent", border: "1px solid #d97706", color: "#d97706", padding: "8px 20px", borderRadius: 8, cursor: "pointer", fontSize: 14 }}>💝 Donate Again</button>
-              </div>
-            ) : (
-              <>
-                <p style={{ fontSize: 40, marginBottom: 10 }}>💝</p>
-                <h3 style={{ fontFamily: "'Playfair Display', serif", fontSize: 26, fontWeight: 900, color: "#f5ddb4", marginBottom: 8 }}>Support Yardhunt.ca</h3>
-                <p style={{ color: "#a8a29e", fontSize: 14, marginBottom: 24, maxWidth: 420, margin: "0 auto 24px" }}>Love using Yardhunt? Help keep it free for all Canadians with a small tip. Every dollar helps! 🍁</p>
-                {/* Preset amounts */}
-                <div style={{ display: "flex", justifyContent: "center", gap: 10, marginBottom: 16, flexWrap: "wrap" }}>
-                  {[3, 5, 10, 25].map(amt => (
-                    <button key={amt} onClick={() => setDonationAmount(String(amt))} style={{ padding: "10px 20px", borderRadius: 20, border: `2px solid ${donationAmount === String(amt) ? "#d97706" : "rgba(255,255,255,0.15)"}`, background: donationAmount === String(amt) ? "#d97706" : "transparent", color: donationAmount === String(amt) ? "white" : "#f5ddb4", fontSize: 15, fontWeight: 700, cursor: "pointer" }}>
-                      ${amt}
-                    </button>
-                  ))}
-                </div>
-                {/* Custom amount */}
-                <div style={{ display: "flex", alignItems: "center", gap: 8, maxWidth: 280, margin: "0 auto 16px", background: "rgba(255,255,255,0.08)", borderRadius: 10, padding: "4px 16px", border: "1px solid rgba(255,255,255,0.15)" }}>
-                  <span style={{ color: "#f5ddb4", fontSize: 18, fontWeight: 700 }}>$</span>
-                  <input type="number" min="1" placeholder="Custom amount" value={donationAmount} onChange={e => setDonationAmount(e.target.value)} style={{ background: "transparent", border: "none", color: "white", fontSize: 16, width: "100%", outline: "none", padding: "10px 0" }} />
-                  <span style={{ color: "#78716c", fontSize: 13 }}>CAD</span>
-                </div>
-                {/* Optional name + message */}
-                <div style={{ display: "flex", flexDirection: "column", gap: 10, maxWidth: 380, margin: "0 auto 20px" }}>
-                  <input placeholder="Your name (optional)" value={donationName} onChange={e => setDonationName(e.target.value)} style={{ padding: "10px 16px", borderRadius: 8, border: "1px solid rgba(255,255,255,0.15)", background: "rgba(255,255,255,0.08)", color: "white", fontSize: 14 }} />
-                  <input placeholder="Leave a message (optional)" value={donationMessage} onChange={e => setDonationMessage(e.target.value)} style={{ padding: "10px 16px", borderRadius: 8, border: "1px solid rgba(255,255,255,0.15)", background: "rgba(255,255,255,0.08)", color: "white", fontSize: 14 }} />
-                </div>
-                <button disabled={donationLoading || !donationAmount || parseFloat(donationAmount) < 1} onClick={async () => {
-                  setDonationLoading(true);
-                  try {
-                    const res = await fetch("https://rcqlohlftafxicmfjkuf.supabase.co/functions/v1/create-donation-checkout", {
-                      method: "POST",
-                      headers: { "Content-Type": "application/json", "Authorization": `Bearer ${SUPABASE_KEY}` },
-                      body: JSON.stringify({ amount: parseFloat(donationAmount), name: donationName, message: donationMessage })
-                    });
-                    const data = await res.json();
-                    if (data.url) window.location.href = data.url;
-                    else alert("Something went wrong. Please try again.");
-                  } catch(e) { alert("Error. Please try again."); }
-                  setDonationLoading(false);
-                }} style={{ background: donationAmount && parseFloat(donationAmount) >= 1 ? "#d97706" : "rgba(255,255,255,0.1)", color: "white", border: "none", padding: "14px 36px", borderRadius: 10, fontSize: 17, fontWeight: 700, cursor: donationAmount && parseFloat(donationAmount) >= 1 ? "pointer" : "default", fontFamily: "'Cormorant Garamond', serif", transition: "all 0.2s" }}>
-                  {donationLoading ? "Setting up…" : `💝 Donate ${donationAmount ? "$"+donationAmount : ""} CAD`}
-                </button>
-                <p style={{ fontSize: 11, color: "#44403c", marginTop: 12 }}>🔒 Secure payment via Stripe · No account needed</p>
-              </>
-            )}
-          </div>
+          {/* Donation + Notify Side by Side */}
+          <div style={{ marginTop: 32, display: "grid", gridTemplateColumns: "1fr 1fr", gap: 16 }}>
 
-          {/* Notify Me Section */}
-          <div style={{ marginTop: 40, background: "linear-gradient(135deg, #1a0a05, #6b1a1a)", borderRadius: 12, padding: "32px 28px", textAlign: "center" }}>
-            <span style={{ fontSize: 36 }}>🔔</span>
-            <h3 style={{ fontFamily: "'Playfair Display', serif", fontSize: 24, fontWeight: 900, color: "white", marginTop: 10, marginBottom: 8 }}>Get Notified of Sales Near You</h3>
-            <p style={{ color: "#f5ddb4", fontSize: 14, marginBottom: 24, fontStyle: "italic" }}>Enter your city and we'll email you when new garage sales are posted nearby!</p>
-            {subSuccess ? (
-              <div style={{ background: "rgba(255,255,255,0.15)", borderRadius: 8, padding: "16px", color: "white" }}>
-                <p style={{ fontSize: 20, marginBottom: 6 }}>🎉 You're subscribed!</p>
-                <p style={{ fontSize: 14, color: "#f5ddb4" }}>We'll email you when new sales are posted in {subCity}!</p>
-              </div>
-            ) : (
-              <div style={{ display: "flex", flexDirection: "column", gap: 10, maxWidth: 420, margin: "0 auto" }}>
-                <input type="email" placeholder="Your email address" value={subEmail} onChange={e => setSubEmail(e.target.value)} style={{ padding: "12px 16px", borderRadius: 6, border: "none", fontSize: 15, fontFamily: "'Source Serif 4', serif" }} />
-                <input type="text" placeholder="Your city (e.g. Toronto, Calgary)" value={subCity} onChange={e => setSubCity(e.target.value)} style={{ padding: "12px 16px", borderRadius: 6, border: "none", fontSize: 15, fontFamily: "'Source Serif 4', serif" }} />
-                <select value={subProvince} onChange={e => setSubProvince(e.target.value)} style={{ padding: "12px 16px", borderRadius: 6, border: "none", fontSize: 15, fontFamily: "'Source Serif 4', serif", color: subProvince ? "#3a2c1a" : "#888" }}>
-                  <option value="">Select your province (optional)</option>
-                  {provinces.map(p => <option key={p.code} value={p.code}>{p.name}</option>)}
-                </select>
-                <button onClick={async () => {
-                  if (!subEmail || !subCity) return;
-                  setSubLoading(true);
-                  await api.subscribe(subEmail, subCity, subProvince);
-                  setSubSuccess(true);
-                  setSubLoading(false);
-                }} disabled={subLoading || !subEmail || !subCity} style={{ background: "#c0392b", color: "white", border: "none", padding: "13px", borderRadius: 6, fontFamily: "'Playfair Display', serif", fontWeight: 700, fontSize: 16, cursor: "pointer", opacity: subLoading || !subEmail || !subCity ? 0.6 : 1 }}>
-                  {subLoading ? "Subscribing…" : "🔔 Notify Me of Sales Near Me"}
-                </button>
-                <p style={{ fontSize: 11, color: "#f5ddb455" }}>No spam. Unsubscribe anytime. 🍁</p>
-              </div>
-            )}
+            {/* Notify Me - compact */}
+            <div style={{ background: "linear-gradient(135deg, #1a0a05, #6b1a1a)", borderRadius: 12, padding: "20px", textAlign: "center" }}>
+              <span style={{ fontSize: 24 }}>🔔</span>
+              <h3 style={{ fontFamily: "'Playfair Display', serif", fontSize: 16, fontWeight: 900, color: "white", marginTop: 6, marginBottom: 4 }}>Get Notified of Sales Near You</h3>
+              <p style={{ color: "#f5ddb4", fontSize: 12, marginBottom: 14, fontStyle: "italic" }}>Email me when new sales are posted nearby!</p>
+              {subSuccess ? (
+                <div style={{ background: "rgba(255,255,255,0.15)", borderRadius: 8, padding: "10px", color: "white" }}>
+                  <p style={{ fontSize: 16, marginBottom: 4 }}>🎉 Subscribed!</p>
+                  <p style={{ fontSize: 12, color: "#f5ddb4" }}>We'll email you for sales in {subCity}!</p>
+                </div>
+              ) : (
+                <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
+                  <input type="email" placeholder="Your email" value={subEmail} onChange={e => setSubEmail(e.target.value)} style={{ padding: "9px 12px", borderRadius: 6, border: "none", fontSize: 13 }} />
+                  <input type="text" placeholder="Your city" value={subCity} onChange={e => setSubCity(e.target.value)} style={{ padding: "9px 12px", borderRadius: 6, border: "none", fontSize: 13 }} />
+                  <select value={subProvince} onChange={e => setSubProvince(e.target.value)} style={{ padding: "9px 12px", borderRadius: 6, border: "none", fontSize: 13, color: subProvince ? "#3a2c1a" : "#888" }}>
+                    <option value="">Province (optional)</option>
+                    {provinces.map(p => <option key={p.code} value={p.code}>{p.name}</option>)}
+                  </select>
+                  <button onClick={async () => {
+                    if (!subEmail || !subCity) return;
+                    setSubLoading(true);
+                    await api.subscribe(subEmail, subCity, subProvince);
+                    setSubSuccess(true);
+                    setSubLoading(false);
+                  }} disabled={subLoading || !subEmail || !subCity} style={{ background: "#c0392b", color: "white", border: "none", padding: "10px", borderRadius: 6, fontFamily: "'Playfair Display', serif", fontWeight: 700, fontSize: 14, cursor: "pointer", opacity: subLoading || !subEmail || !subCity ? 0.6 : 1 }}>
+                    {subLoading ? "Subscribing…" : "🔔 Notify Me"}
+                  </button>
+                  <p style={{ fontSize: 10, color: "#f5ddb455" }}>No spam. Unsubscribe anytime. 🍁</p>
+                </div>
+              )}
+            </div>
+
+            {/* Donation Box - compact */}
+            <div style={{ background: "linear-gradient(135deg, #1c1009, #2d1b0e)", borderRadius: 12, padding: "20px", textAlign: "center" }}>
+              {donationSuccess ? (
+                <div>
+                  <p style={{ fontSize: 32, marginBottom: 8 }}>💝</p>
+                  <h3 style={{ fontFamily: "'Playfair Display', serif", fontSize: 16, fontWeight: 900, color: "#f5ddb4", marginBottom: 6 }}>Thank You! 🍁</h3>
+                  <p style={{ color: "#a8a29e", fontSize: 12 }}>Your support keeps Yardhunt.ca free for all Canadians.</p>
+                  <button onClick={() => setDonationSuccess(false)} style={{ marginTop: 10, background: "transparent", border: "1px solid #d97706", color: "#d97706", padding: "6px 16px", borderRadius: 8, cursor: "pointer", fontSize: 12 }}>💝 Donate Again</button>
+                </div>
+              ) : (
+                <>
+                  <span style={{ fontSize: 24 }}>💝</span>
+                  <h3 style={{ fontFamily: "'Playfair Display', serif", fontSize: 16, fontWeight: 900, color: "#f5ddb4", marginTop: 6, marginBottom: 4 }}>Support Yardhunt.ca</h3>
+                  <p style={{ color: "#a8a29e", fontSize: 12, marginBottom: 12 }}>Love using Yardhunt? Help keep it free! 🍁</p>
+                  <div style={{ display: "flex", justifyContent: "center", gap: 6, marginBottom: 10, flexWrap: "wrap" }}>
+                    {[3, 5, 10, 25].map(amt => (
+                      <button key={amt} onClick={() => setDonationAmount(String(amt))} style={{ padding: "6px 12px", borderRadius: 16, border: `2px solid ${donationAmount === String(amt) ? "#d97706" : "rgba(255,255,255,0.15)"}`, background: donationAmount === String(amt) ? "#d97706" : "transparent", color: donationAmount === String(amt) ? "white" : "#f5ddb4", fontSize: 13, fontWeight: 700, cursor: "pointer" }}>
+                        ${amt}
+                      </button>
+                    ))}
+                  </div>
+                  <div style={{ display: "flex", alignItems: "center", gap: 6, maxWidth: 200, margin: "0 auto 10px", background: "rgba(255,255,255,0.08)", borderRadius: 8, padding: "3px 12px", border: "1px solid rgba(255,255,255,0.15)" }}>
+                    <span style={{ color: "#f5ddb4", fontSize: 14, fontWeight: 700 }}>$</span>
+                    <input type="number" min="1" placeholder="Custom" value={donationAmount} onChange={e => setDonationAmount(e.target.value)} style={{ background: "transparent", border: "none", color: "white", fontSize: 14, width: "100%", outline: "none", padding: "7px 0" }} />
+                    <span style={{ color: "#78716c", fontSize: 11 }}>CAD</span>
+                  </div>
+                  <button disabled={donationLoading || !donationAmount || parseFloat(donationAmount) < 1} onClick={async () => {
+                    setDonationLoading(true);
+                    try {
+                      const res = await fetch("https://rcqlohlftafxicmfjkuf.supabase.co/functions/v1/create-donation-checkout", {
+                        method: "POST",
+                        headers: { "Content-Type": "application/json", "Authorization": `Bearer ${SUPABASE_KEY}` },
+                        body: JSON.stringify({ amount: parseFloat(donationAmount), name: donationName, message: donationMessage })
+                      });
+                      const data = await res.json();
+                      if (data.url) window.location.href = data.url;
+                      else alert("Something went wrong. Please try again.");
+                    } catch(e) { alert("Error. Please try again."); }
+                    setDonationLoading(false);
+                  }} style={{ background: donationAmount && parseFloat(donationAmount) >= 1 ? "#d97706" : "rgba(255,255,255,0.1)", color: "white", border: "none", padding: "10px 20px", borderRadius: 8, fontSize: 14, fontWeight: 700, cursor: donationAmount && parseFloat(donationAmount) >= 1 ? "pointer" : "default", fontFamily: "'Cormorant Garamond', serif", width: "100%" }}>
+                    {donationLoading ? "Setting up…" : `💝 Donate${donationAmount ? " $"+donationAmount : ""} CAD`}
+                  </button>
+                  <p style={{ fontSize: 10, color: "#44403c", marginTop: 8 }}>🔒 Secure via Stripe</p>
+                </>
+              )}
+            </div>
           </div>
         </main>
       )}
