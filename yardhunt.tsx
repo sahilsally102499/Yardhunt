@@ -163,6 +163,7 @@ export default function App() {
   const [allSubscribers, setAllSubscribers] = useState([]);
   const [allReviews, setAllReviews] = useState([]);
   const [adminLoading, setAdminLoading] = useState(false);
+  const [allUsers, setAllUsers] = useState([]);
   const [darkMode, setDarkMode] = useState(false);
   const [installPrompt, setInstallPrompt] = useState(null);
   const [showInstallBanner, setShowInstallBanner] = useState(false);
@@ -320,6 +321,12 @@ export default function App() {
       setAllSales(Array.isArray(s) ? s : []);
       setAllSubscribers(Array.isArray(sub) ? sub : []);
       setAllReviews(Array.isArray(rev) ? rev : []);
+      // Fetch users via Supabase admin API
+      const usersRes = await fetch(`${SUPABASE_URL}/auth/v1/admin/users?per_page=500`, {
+        headers: { apikey: SUPABASE_KEY, Authorization: `Bearer ${SUPABASE_KEY}` }
+      });
+      const usersData = await usersRes.json();
+      setAllUsers(Array.isArray(usersData.users) ? usersData.users : []);
     } catch(e) {}
     setAdminLoading(false);
   };
@@ -1282,6 +1289,7 @@ export default function App() {
               {/* Stats */}
               <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(180px, 1fr))", gap: 16, marginBottom: 36 }}>
                 {[
+                  { label: "Total Users", value: allUsers.length, icon: "👥", color: "#2563eb" },
                   { label: "Total Listings", value: allSales.length, icon: "🏠", color: "#b91c1c" },
                   { label: "Active Today", value: allSales.filter(s => s.date >= new Date().toISOString().split("T")[0]).length, icon: "📅", color: "#d97706" },
                   { label: "Subscribers", value: allSubscribers.length, icon: "🔔", color: "#059669" },
@@ -1313,6 +1321,117 @@ export default function App() {
                   ))}
                 </div>
                 <p style={{ fontSize: 12, color: "#f5ddb455", marginTop: 14 }}>💡 Check Stripe dashboard for actual payment totals</p>
+              </div>
+
+              {/* Sales by City */}
+              <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 16, marginBottom: 36 }}>
+                <div style={{ background: "white", borderRadius: 12, border: "1px solid #e7e5e4", padding: 20 }}>
+                  <h3 style={{ fontFamily: "'Cormorant Garamond', serif", fontSize: 18, color: "#292524", marginBottom: 14 }}>📍 Sales by City</h3>
+                  {Object.entries(allSales.reduce((acc, s) => { acc[s.city] = (acc[s.city] || 0) + 1; return acc; }, {}))
+                    .sort((a, b) => b[1] - a[1]).slice(0, 8)
+                    .map(([city, count]) => (
+                      <div key={city} style={{ display: "flex", justifyContent: "space-between", alignItems: "center", padding: "8px 0", borderBottom: "1px solid #f5f5f4" }}>
+                        <span style={{ fontSize: 13, color: "#292524" }}>{city}</span>
+                        <span style={{ fontSize: 13, fontWeight: 700, color: "#b91c1c", background: "#fef2f2", padding: "2px 10px", borderRadius: 20 }}>{count}</span>
+                      </div>
+                    ))
+                  }
+                  {allSales.length === 0 && <p style={{ color: "#78716c", fontSize: 13 }}>No data yet</p>}
+                </div>
+                <div style={{ background: "white", borderRadius: 12, border: "1px solid #e7e5e4", padding: 20 }}>
+                  <h3 style={{ fontFamily: "'Cormorant Garamond', serif", fontSize: 18, color: "#292524", marginBottom: 14 }}>🗺️ Sales by Province</h3>
+                  {Object.entries(allSales.reduce((acc, s) => { acc[s.province] = (acc[s.province] || 0) + 1; return acc; }, {}))
+                    .sort((a, b) => b[1] - a[1])
+                    .map(([province, count]) => (
+                      <div key={province} style={{ display: "flex", justifyContent: "space-between", alignItems: "center", padding: "8px 0", borderBottom: "1px solid #f5f5f4" }}>
+                        <span style={{ fontSize: 13, color: "#292524" }}>{province}</span>
+                        <span style={{ fontSize: 13, fontWeight: 700, color: "#d97706", background: "#fffbeb", padding: "2px 10px", borderRadius: 20 }}>{count}</span>
+                      </div>
+                    ))
+                  }
+                  {allSales.length === 0 && <p style={{ color: "#78716c", fontSize: 13 }}>No data yet</p>}
+                </div>
+              </div>
+
+              {/* Featured Purchases */}
+              <div style={{ background: "white", borderRadius: 12, border: "1px solid #e7e5e4", padding: 20, marginBottom: 36 }}>
+                <h3 style={{ fontFamily: "'Cormorant Garamond', serif", fontSize: 18, color: "#292524", marginBottom: 14 }}>💰 Featured Listings</h3>
+                <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(160px, 1fr))", gap: 12 }}>
+                  {[
+                    { label: "Basic Featured", icon: "⭐", price: "$9.99", count: allSales.filter(s => s.is_featured === "basic").length, color: "#d97706" },
+                    { label: "Premium Featured", icon: "🌟", price: "$14.99", count: allSales.filter(s => s.is_featured === "premium").length, color: "#7c3aed" },
+                    { label: "Verified Badge", icon: "✅", price: "$4.99", count: allSales.filter(s => s.is_verified).length, color: "#059669" },
+                  ].map(item => (
+                    <div key={item.label} style={{ background: "#fdfaf5", borderRadius: 10, padding: "16px", border: "1px solid #e7e5e4", textAlign: "center" }}>
+                      <p style={{ fontSize: 24, marginBottom: 6 }}>{item.icon}</p>
+                      <p style={{ fontSize: 22, fontWeight: 700, color: item.color, fontFamily: "'Cormorant Garamond', serif" }}>{item.count}</p>
+                      <p style={{ fontSize: 12, color: "#78716c", marginBottom: 2 }}>{item.label}</p>
+                      <p style={{ fontSize: 11, color: "#a8a29e" }}>{item.price} each</p>
+                    </div>
+                  ))}
+                </div>
+                <p style={{ fontSize: 12, color: "#a8a29e", marginTop: 14 }}>💡 Check Stripe dashboard for exact totals → <a href="https://dashboard.stripe.com" target="_blank" style={{ color: "#d97706" }}>dashboard.stripe.com</a></p>
+                <div style={{ marginTop: 16, padding: "16px", background: "linear-gradient(135deg, #1c1009, #3b0f0f)", borderRadius: 10, color: "white" }}>
+                  <p style={{ fontSize: 13, color: "#f5ddb4", marginBottom: 8, fontWeight: 600 }}>💰 Estimated Total Revenue</p>
+                  {(() => {
+                    const basic = allSales.filter(s => s.is_featured === "basic").length * 9.99;
+                    const premium = allSales.filter(s => s.is_featured === "premium").length * 14.99;
+                    const verified = allSales.filter(s => s.is_verified).length * 4.99;
+                    const total = basic + premium + verified;
+                    return (
+                      <div>
+                        <div style={{ display: "flex", justifyContent: "space-between", fontSize: 12, color: "#f5ddb499", marginBottom: 4 }}>
+                          <span>Basic Featured ({allSales.filter(s => s.is_featured === "basic").length} × $9.99)</span>
+                          <span>${basic.toFixed(2)}</span>
+                        </div>
+                        <div style={{ display: "flex", justifyContent: "space-between", fontSize: 12, color: "#f5ddb499", marginBottom: 4 }}>
+                          <span>Premium Featured ({allSales.filter(s => s.is_featured === "premium").length} × $14.99)</span>
+                          <span>${premium.toFixed(2)}</span>
+                        </div>
+                        <div style={{ display: "flex", justifyContent: "space-between", fontSize: 12, color: "#f5ddb499", marginBottom: 8 }}>
+                          <span>Verified Badge ({allSales.filter(s => s.is_verified).length} × $4.99)</span>
+                          <span>${verified.toFixed(2)}</span>
+                        </div>
+                        <div style={{ display: "flex", justifyContent: "space-between", fontSize: 18, fontWeight: 700, color: "#d97706", borderTop: "1px solid rgba(255,255,255,0.1)", paddingTop: 8 }}>
+                          <span>Total Estimated</span>
+                          <span>${total.toFixed(2)} CAD</span>
+                        </div>
+                      </div>
+                    );
+                  })()}
+                </div>
+              </div>
+
+              {/* All Users */}
+              <div style={{ marginBottom: 36 }}>
+                <h3 style={{ fontFamily: "'Cormorant Garamond', serif", fontSize: 22, color: "#292524", marginBottom: 16 }}>👥 Registered Users ({allUsers.length})</h3>
+                <div style={{ background: "white", borderRadius: 12, border: "1px solid #e7e5e4", overflow: "hidden" }}>
+                  {allUsers.length === 0 ? <p style={{ padding: "20px", color: "#78716c", textAlign: "center" }}>No users yet</p> : (
+                    <table style={{ width: "100%", borderCollapse: "collapse" }}>
+                      <thead>
+                        <tr style={{ background: "#fdfaf5", borderBottom: "1px solid #e7e5e4" }}>
+                          {["Email", "Status", "Signed Up", "Last Sign In"].map(h => (
+                            <th key={h} style={{ padding: "12px 16px", textAlign: "left", fontSize: 11, fontWeight: 600, color: "#78716c", letterSpacing: 0.8, textTransform: "uppercase" }}>{h}</th>
+                          ))}
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {allUsers.map((u, i) => (
+                          <tr key={u.id} style={{ borderBottom: "1px solid #f5f5f4", background: i % 2 === 0 ? "white" : "#fdfaf5" }}>
+                            <td style={{ padding: "12px 16px", fontSize: 14, color: "#292524", fontWeight: 500 }}>{u.email}</td>
+                            <td style={{ padding: "12px 16px", fontSize: 12 }}>
+                              <span style={{ background: u.email_confirmed_at ? "#dcfce7" : "#fef9c3", color: u.email_confirmed_at ? "#15803d" : "#a16207", padding: "2px 8px", borderRadius: 20, fontWeight: 600 }}>
+                                {u.email_confirmed_at ? "✅ Confirmed" : "⏳ Pending"}
+                              </span>
+                            </td>
+                            <td style={{ padding: "12px 16px", fontSize: 13, color: "#78716c" }}>{u.created_at ? new Date(u.created_at).toLocaleDateString("en-CA") : "—"}</td>
+                            <td style={{ padding: "12px 16px", fontSize: 13, color: "#a8a29e" }}>{u.last_sign_in_at ? new Date(u.last_sign_in_at).toLocaleDateString("en-CA") : "Never"}</td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  )}
+                </div>
               </div>
 
               {/* All Listings */}
