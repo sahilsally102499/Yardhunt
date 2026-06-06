@@ -861,26 +861,43 @@ export default function App() {
               </div>
               <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(300px, 1fr))", gap: 24 }}>
                 {filtered.reduce((acc, sale, idx) => {
-                  // Insert a sponsored ad every 4 listings
-                  if (idx > 0 && idx % 4 === 0) {
-                    const cityAds = ads.filter(a => a.city?.toLowerCase() === (sale.city||"").toLowerCase() || !a.city);
-                    const ad = cityAds[Math.floor(idx/4 - 1) % cityAds.length];
-                    if (ad) acc.push(
-                      <div key={`ad-${ad.id}-${idx}`} style={{ background: "linear-gradient(135deg, #1c1009, #2d1b0e)", borderRadius: 8, overflow: "hidden", boxShadow: "0 2px 12px rgba(0,0,0,0.15)", border: "2px solid #d97706", position: "relative" }}>
-                        <div style={{ position: "absolute", top: 10, right: 10, background: "#d97706", color: "white", fontSize: 10, fontWeight: 700, padding: "2px 8px", borderRadius: 10, letterSpacing: 0.8 }}>SPONSORED</div>
-                        {ad.logo_url && <img src={ad.logo_url} alt={ad.business_name} style={{ width: "100%", height: 140, objectFit: "cover", opacity: 0.9 }} />}
-                        {!ad.logo_url && <div style={{ height: 80, display: "flex", alignItems: "center", justifyContent: "center", fontSize: 40 }}>📢</div>}
-                        <div style={{ padding: "16px 20px" }}>
-                          <p style={{ fontFamily: "'Cormorant Garamond', serif", fontSize: 18, fontWeight: 700, color: "#f5ddb4", marginBottom: 6 }}>{ad.business_name}</p>
-                          <p style={{ fontSize: 13, color: "#a8a29e", marginBottom: 10, lineHeight: 1.5 }}>{ad.description}</p>
-                          <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
-                            <span style={{ fontSize: 11, color: "#78716c" }}>📍 {ad.city}</span>
-                            <a href={ad.website} target="_blank" rel="noreferrer" style={{ background: "#d97706", color: "white", padding: "7px 14px", borderRadius: 6, fontSize: 12, fontWeight: 700, textDecoration: "none" }}>Visit →</a>
-                          </div>
+                  // Starter = every 4, City = every 3, Premium = every 2 (province-wide)
+                  const starterAds = ads.filter(a => a.package_type === "Starter" && a.city?.toLowerCase() === (sale.city||"").toLowerCase());
+                  const cityAds = ads.filter(a => a.package_type === "City" && a.city?.toLowerCase() === (sale.city||"").toLowerCase());
+                  const premiumAds = ads.filter(a => a.package_type === "Premium" && (a.province === sale.province || !a.province));
+
+                  const renderAd = (ad, border, badgeColor, badgeLabel) => (
+                    <div key={`ad-${ad.id}-${idx}`} style={{ background: "linear-gradient(135deg, #1c1009, #2d1b0e)", borderRadius: 8, overflow: "hidden", boxShadow: "0 2px 12px rgba(0,0,0,0.15)", border: `2px solid ${border}`, position: "relative" }}>
+                      <div style={{ position: "absolute", top: 10, right: 10, background: badgeColor, color: "white", fontSize: 10, fontWeight: 700, padding: "2px 8px", borderRadius: 10, letterSpacing: 0.8 }}>{badgeLabel}</div>
+                      {ad.logo_url && <img src={ad.logo_url} alt={ad.business_name} style={{ width: "100%", height: 140, objectFit: "cover", opacity: 0.9 }} />}
+                      {!ad.logo_url && <div style={{ height: 80, display: "flex", alignItems: "center", justifyContent: "center", fontSize: 40 }}>📢</div>}
+                      <div style={{ padding: "16px 20px" }}>
+                        <p style={{ fontFamily: "'Cormorant Garamond', serif", fontSize: 18, fontWeight: 700, color: "#f5ddb4", marginBottom: 6 }}>{ad.business_name}</p>
+                        <p style={{ fontSize: 13, color: "#a8a29e", marginBottom: 10, lineHeight: 1.5 }}>{ad.description}</p>
+                        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+                          <span style={{ fontSize: 11, color: "#78716c" }}>📍 {ad.city || ad.province}</span>
+                          <a href={ad.website} target="_blank" rel="noreferrer" style={{ background: badgeColor, color: "white", padding: "7px 14px", borderRadius: 6, fontSize: 12, fontWeight: 700, textDecoration: "none" }}>Visit →</a>
                         </div>
                       </div>
-                    );
+                    </div>
+                  );
+
+                  // Premium: every 2 listings (province-wide)
+                  if (idx > 0 && idx % 2 === 0 && premiumAds.length > 0) {
+                    const ad = premiumAds[Math.floor(idx/2 - 1) % premiumAds.length];
+                    acc.push(renderAd(ad, "#b91c1c", "#b91c1c", "💎 PREMIUM"));
                   }
+                  // City: every 3 listings
+                  else if (idx > 0 && idx % 3 === 0 && cityAds.length > 0) {
+                    const ad = cityAds[Math.floor(idx/3 - 1) % cityAds.length];
+                    acc.push(renderAd(ad, "#7c3aed", "#7c3aed", "🌟 SPONSORED"));
+                  }
+                  // Starter: every 4 listings
+                  else if (idx > 0 && idx % 4 === 0 && starterAds.length > 0) {
+                    const ad = starterAds[Math.floor(idx/4 - 1) % starterAds.length];
+                    acc.push(renderAd(ad, "#d97706", "#d97706", "⭐ SPONSORED"));
+                  }
+
                   acc.push(
                   <div key={sale.id} className="card-hover" onClick={() => { setSelectedSale(sale); setPhotoIndex(0); loadReviews(sale.id); loadQuestions(sale.id); trackView(sale.id); setReviewSuccess(false); setReviewComment(''); setReviewRating(5); setQuestionText(""); }} style={{ background: "white", borderRadius: 8, overflow: "hidden", boxShadow: "0 2px 12px rgba(0,0,0,0.08)", border: "1px solid #e8d9c4" }}>
                     {sale.photos && sale.photos.length > 0 ? (
