@@ -107,6 +107,20 @@ const api = {
       body: JSON.stringify({ is_featured: level })
     });
   },
+  async markVerified(userId) {
+    await fetch(`${SUPABASE_URL}/rest/v1/sales?user_id=eq.${userId}`, {
+      method: "PATCH",
+      headers: { apikey: SUPABASE_KEY, Authorization: `Bearer ${SUPABASE_KEY}`, "Content-Type": "application/json" },
+      body: JSON.stringify({ is_verified: true })
+    });
+  },
+  async markPhotoPackUnlocked(id) {
+    await fetch(`${SUPABASE_URL}/rest/v1/sales?id=eq.${id}`, {
+      method: "PATCH",
+      headers: { apikey: SUPABASE_KEY, Authorization: `Bearer ${SUPABASE_KEY}`, "Content-Type": "application/json" },
+      body: JSON.stringify({ photo_pack_unlocked: true })
+    });
+  },
   async deleteReview(id) {
     await fetch(`${SUPABASE_URL}/rest/v1/reviews?id=eq.${id}`, {
       method: "DELETE",
@@ -337,36 +351,77 @@ export default function App() {
   }, [view, sales, user]);
 
   useEffect(() => {
-    loadAds();
-    loadAdPricing();
-    api.getListingPricing().then(data => {
-      const row = Array.isArray(data) ? data[0] : data;
-      if (row) setListingPricing({
-        basic_featured: row.basic_featured ?? 9.99,
-        premium_featured: row.premium_featured ?? 14.99,
-        extra_photos: row.extra_photos ?? 1.99,
-        photo_unlock: row.photo_unlock ?? 1.99,
-        verified_badge: row.verified_badge ?? 4.99
+    const init = async () => {
+      loadAds();
+      loadAdPricing();
+      api.getListingPricing().then(data => {
+        const row = Array.isArray(data) ? data[0] : data;
+        if (row) setListingPricing({
+          basic_featured: row.basic_featured ?? 9.99,
+          premium_featured: row.premium_featured ?? 14.99,
+          extra_photos: row.extra_photos ?? 1.99,
+          photo_unlock: row.photo_unlock ?? 1.99,
+          verified_badge: row.verified_badge ?? 4.99
+        });
       });
-    });
-    // Check for ad success
-    const params = new URLSearchParams(window.location.search);
-    if (params.get("ad_success")) { setAdSuccess(true); setView("advertise"); }
-    loadSales().then(() => {
-      // Check if URL has a sale ID to open directly (from shared links)
+
+      // Check for ad success
       const params = new URLSearchParams(window.location.search);
-      const saleId = params.get("sale");
-      if (saleId) {
-        // Will be handled after sales load
-        sessionStorage.setItem("openSaleId", saleId);
+      if (params.get("ad_success")) { setAdSuccess(true); setView("advertise"); }
+
+      // Handle listing payment success
+      const product = params.get("product");
+      const saleIdParam = params.get("sale_id");
+      const savedUser = localStorage.getItem("yh_user");
+      const savedUserObj = savedUser ? JSON.parse(savedUser) : null;
+
+      if (product && product !== "") {
+        if (product === "basic_featured" && saleIdParam) {
+          await fetch(`${SUPABASE_URL}/rest/v1/sales?id=eq.${saleIdParam}`, {
+            method: "PATCH",
+            headers: { apikey: SUPABASE_KEY, Authorization: `Bearer ${SUPABASE_KEY}`, "Content-Type": "application/json" },
+            body: JSON.stringify({ is_featured: "basic" })
+          });
+        } else if (product === "premium_featured" && saleIdParam) {
+          await fetch(`${SUPABASE_URL}/rest/v1/sales?id=eq.${saleIdParam}`, {
+            method: "PATCH",
+            headers: { apikey: SUPABASE_KEY, Authorization: `Bearer ${SUPABASE_KEY}`, "Content-Type": "application/json" },
+            body: JSON.stringify({ is_featured: "premium" })
+          });
+        } else if (product === "verified_badge" && savedUserObj?.id) {
+          await fetch(`${SUPABASE_URL}/rest/v1/sales?user_id=eq.${savedUserObj.id}`, {
+            method: "PATCH",
+            headers: { apikey: SUPABASE_KEY, Authorization: `Bearer ${SUPABASE_KEY}`, "Content-Type": "application/json" },
+            body: JSON.stringify({ is_verified: true })
+          });
+          setVerified(true);
+        } else if (product === "extra_photos" && saleIdParam) {
+          await fetch(`${SUPABASE_URL}/rest/v1/sales?id=eq.${saleIdParam}`, {
+            method: "PATCH",
+            headers: { apikey: SUPABASE_KEY, Authorization: `Bearer ${SUPABASE_KEY}`, "Content-Type": "application/json" },
+            body: JSON.stringify({ photo_pack_unlocked: true })
+          });
+          setPhotoPackUnlocked(true);
+        } else if (product === "photo_unlock" && saleIdParam) {
+          setUnlockedSales(u => [...u, parseInt(saleIdParam)]);
+        }
+        window.history.replaceState({}, "", window.location.pathname);
+        alert(`✅ Payment successful! Your ${product.replace(/_/g, " ")} is now active.`);
       }
-    });
-    const saved = localStorage.getItem("yh_user");
-    const savedToken = localStorage.getItem("yh_token");
-    if (saved && savedToken) {
-      setUser(JSON.parse(saved));
-      setToken(savedToken);
-    }
+
+      loadSales().then(() => {
+        const params = new URLSearchParams(window.location.search);
+        const saleId = params.get("sale");
+        if (saleId) sessionStorage.setItem("openSaleId", saleId);
+      });
+      const saved = localStorage.getItem("yh_user");
+      const savedToken = localStorage.getItem("yh_token");
+      if (saved && savedToken) {
+        setUser(JSON.parse(saved));
+        setToken(savedToken);
+      }
+    };
+    init();
   }, []);
 
   const createListingCheckout = async (product_type, sale_id = null) => {
@@ -502,6 +557,9 @@ export default function App() {
     const matchNear = !nearMe || s.city?.toLowerCase().includes(nearMe.toLowerCase()) || s.province?.toLowerCase().includes(nearMe.toLowerCase());
     const matchNeighbourhood = !neighbourhoodFilter || s.neighbourhood === neighbourhoodFilter;
     return matchSearch && matchProv && matchNear && matchNeighbourhood;
+  }).sort((a, b) => {
+    const rank = (s) => s.is_featured === "premium" ? 0 : s.is_featured === "basic" ? 1 : 2;
+    return rank(a) - rank(b);
   });
 
   const mySales = sales.filter(s => user && s.user_id === user.id);
@@ -935,7 +993,9 @@ export default function App() {
                     );
                   }
                   acc.push(
-                  <div key={sale.id} className="card-hover" onClick={() => { setSelectedSale(sale); setPhotoIndex(0); loadReviews(sale.id); loadQuestions(sale.id); trackView(sale.id); setReviewSuccess(false); setReviewComment(''); setReviewRating(5); setQuestionText(""); }} style={{ background: "white", borderRadius: 8, overflow: "hidden", boxShadow: "0 2px 12px rgba(0,0,0,0.08)", border: "1px solid #e8d9c4" }}>
+                  <div key={sale.id} className="card-hover" onClick={() => { setSelectedSale(sale); setPhotoIndex(0); loadReviews(sale.id); loadQuestions(sale.id); trackView(sale.id); setReviewSuccess(false); setReviewComment(''); setReviewRating(5); setQuestionText(""); }} style={{ background: "white", borderRadius: 8, overflow: "hidden", boxShadow: sale.is_featured === "premium" ? "0 4px 20px rgba(185,28,28,0.25)" : sale.is_featured === "basic" ? "0 4px 16px rgba(217,119,6,0.2)" : "0 2px 12px rgba(0,0,0,0.08)", border: sale.is_featured === "premium" ? "2px solid #b91c1c" : sale.is_featured === "basic" ? "2px solid #d97706" : "1px solid #e8d9c4", position: "relative" }}>
+                    {sale.is_featured === "premium" && <div style={{ position: "absolute", top: 0, left: 0, right: 0, background: "linear-gradient(90deg, #b91c1c, #7f1d1d)", color: "white", fontSize: 10, fontWeight: 700, padding: "3px 10px", textAlign: "center", letterSpacing: 1, zIndex: 2 }}>🌟 PREMIUM FEATURED</div>}
+                    {sale.is_featured === "basic" && <div style={{ position: "absolute", top: 0, left: 0, right: 0, background: "linear-gradient(90deg, #d97706, #92400e)", color: "white", fontSize: 10, fontWeight: 700, padding: "3px 10px", textAlign: "center", letterSpacing: 1, zIndex: 2 }}>⭐ FEATURED</div>}
                     {sale.photos && sale.photos.length > 0 ? (
                       <div style={{ position: "relative", height: 160, overflow: "hidden" }}>
                         <img src={sale.photos[0]} alt="" style={{ width: "100%", height: "100%", objectFit: "cover" }} />
