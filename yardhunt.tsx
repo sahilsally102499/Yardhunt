@@ -40,6 +40,14 @@ const api = {
     });
     return res.json();
   },
+  async resetPassword(email: string) {
+    const res = await fetch(`${SUPABASE_URL}/auth/v1/recover`, {
+      method: "POST",
+      headers: { apikey: SUPABASE_KEY, "Content-Type": "application/json" },
+      body: JSON.stringify({ email })
+    });
+    return res.json();
+  },
   async signOut(token: string) {
     await fetch(`${SUPABASE_URL}/auth/v1/logout`, {
       method: "POST",
@@ -130,6 +138,10 @@ export default function App() {
   const [authError, setAuthError] = useState("");
   const [authLoading, setAuthLoading] = useState(false);
   const [authSuccess, setAuthSuccess] = useState("");
+  const [forgotMode, setForgotMode] = useState(false);
+  const [forgotEmail, setForgotEmail] = useState("");
+  const [forgotLoading, setForgotLoading] = useState(false);
+  const [forgotSuccess, setForgotSuccess] = useState(false);
   const [nearMe, setNearMe] = useState("");
   const [copied, setCopied] = useState(false);
   const [deleteConfirm, setDeleteConfirm] = useState<number|null>(null);
@@ -452,8 +464,32 @@ export default function App() {
               <h2 style={{ fontFamily: "'Cormorant Garamond', serif", fontSize: 30, fontWeight: 700, color: "#292524", marginBottom: 6 }}>{authMode === "login" ? "Welcome Back" : "Create Account"}</h2>
               <p style={{ color: "#78716c", fontSize: 15 }}>{authMode === "login" ? "Sign in to post your sale" : "Join Canada's garage sale community"}</p>
             </div>
-            {authSuccess && <div style={{ background: "#f0fdf4", border: "1px solid #86efac", borderRadius: 6, padding: "12px 14px", marginBottom: 16, fontSize: 14, color: "#166534" }}>{authSuccess}</div>}
-            {authError && <div style={{ background: "#fef2f2", border: "1px solid #fca5a5", borderRadius: 6, padding: "12px 14px", marginBottom: 16, fontSize: 14, color: "#991b1b" }}>{authError}</div>}
+            {authSuccess && <div style={{ background: "#f0fdf4", border: "1px solid #86efac", borderRadius: 8, padding: "12px 14px", marginBottom: 16, fontSize: 14, color: "#166534" }}>{authSuccess}</div>}
+            {authError && <div style={{ background: "#fef2f2", border: "1px solid #fca5a5", borderRadius: 8, padding: "12px 14px", marginBottom: 16, fontSize: 14, color: "#991b1b" }}>{authError}</div>}
+
+            {forgotMode ? (
+              <div style={{ display: "flex", flexDirection: "column", gap: 16 }}>
+                <p style={{ fontSize: 14, color: "#78716c", textAlign: "center" }}>Enter your email and we'll send you a reset link</p>
+                {forgotSuccess ? (
+                  <div style={{ background: "#f0fdf4", border: "1px solid #86efac", borderRadius: 8, padding: "16px", textAlign: "center" }}>
+                    <p style={{ fontSize: 20, marginBottom: 8 }}>✅</p>
+                    <p style={{ fontSize: 15, color: "#166534", fontWeight: 600 }}>Reset email sent!</p>
+                    <p style={{ fontSize: 13, color: "#166534", marginTop: 4 }}>Check your inbox and follow the link to reset your password.</p>
+                  </div>
+                ) : (
+                  <>
+                    <div>
+                      <label>Email</label>
+                      <input type="email" placeholder="your@email.com" value={forgotEmail} onChange={e => setForgotEmail(e.target.value)} />
+                    </div>
+                    <button className="btn-primary" onClick={async () => { setForgotLoading(true); await api.resetPassword(forgotEmail); setForgotSuccess(true); setForgotLoading(false); }} disabled={forgotLoading || !forgotEmail} style={{ width: "100%", padding: "13px", fontSize: 16, opacity: forgotLoading || !forgotEmail ? 0.7 : 1 }}>
+                      {forgotLoading ? "Sending…" : "📧 Send Reset Link"}
+                    </button>
+                  </>
+                )}
+                <p style={{ textAlign: "center", fontSize: 14, color: "#78716c", cursor: "pointer" }} onClick={() => { setForgotMode(false); setForgotSuccess(false); setForgotEmail(""); }}>← Back to Sign In</p>
+              </div>
+            ) : (
             <div style={{ display: "flex", flexDirection: "column", gap: 16 }}>
               <div>
                 <label>Email</label>
@@ -466,13 +502,19 @@ export default function App() {
               <button className="btn-primary" onClick={handleAuth} disabled={authLoading} style={{ width: "100%", padding: "13px", fontSize: 16, marginTop: 4, opacity: authLoading ? 0.7 : 1 }}>
                 {authLoading ? "Please wait…" : authMode === "login" ? "🍁 Sign In" : "🍁 Create Account"}
               </button>
-              <p style={{ textAlign: "center", fontSize: 14, color: "#7a5c3a" }}>
+              {authMode === "login" && (
+                <p style={{ textAlign: "center", fontSize: 14, color: "#78716c", cursor: "pointer" }} onClick={() => { setForgotMode(true); setAuthError(""); setAuthSuccess(""); }}>
+                  Forgot your password?
+                </p>
+              )}
+              <p style={{ textAlign: "center", fontSize: 14, color: "#78716c" }}>
                 {authMode === "login" ? "Don't have an account? " : "Already have an account? "}
-                <span style={{ color: "#c0392b", cursor: "pointer", fontWeight: 700 }} onClick={() => { setAuthMode(authMode === "login" ? "signup" : "login"); setAuthError(""); setAuthSuccess(""); }}>
+                <span style={{ color: "#b91c1c", cursor: "pointer", fontWeight: 600 }} onClick={() => { setAuthMode(authMode === "login" ? "signup" : "login"); setAuthError(""); setAuthSuccess(""); setForgotMode(false); }}>
                   {authMode === "login" ? "Sign up free" : "Sign in"}
                 </span>
               </p>
             </div>
+            )}
           </div>
         </main>
       )}
