@@ -66,6 +66,24 @@ const api = {
     });
     return res.json();
   },
+  async getAllSales() {
+    const res = await fetch(`${SUPABASE_URL}/rest/v1/sales?order=created_at.desc`, {
+      headers: { apikey: SUPABASE_KEY, Authorization: `Bearer ${SUPABASE_KEY}` }
+    });
+    return res.json();
+  },
+  async getAllSubscribers() {
+    const res = await fetch(`${SUPABASE_URL}/rest/v1/subscribers?order=created_at.desc`, {
+      headers: { apikey: SUPABASE_KEY, Authorization: `Bearer ${SUPABASE_KEY}` }
+    });
+    return res.json();
+  },
+  async getAllReviews() {
+    const res = await fetch(`${SUPABASE_URL}/rest/v1/reviews?order=created_at.desc`, {
+      headers: { apikey: SUPABASE_KEY, Authorization: `Bearer ${SUPABASE_KEY}` }
+    });
+    return res.json();
+  },
   async subscribe(email: string, city: string, province: string) {
     const res = await fetch(`${SUPABASE_URL}/rest/v1/subscribers`, {
       method: "POST",
@@ -126,6 +144,13 @@ export default function App() {
   const [subLoading, setSubLoading] = useState(false);
   const [subSuccess, setSubSuccess] = useState(false);
   const [menuOpen, setMenuOpen] = useState(false);
+  const [adminUnlocked, setAdminUnlocked] = useState(false);
+  const [adminPassword, setAdminPassword] = useState("");
+  const [adminError, setAdminError] = useState("");
+  const [allSales, setAllSales] = useState<any[]>([]);
+  const [allSubscribers, setAllSubscribers] = useState<any[]>([]);
+  const [allReviews, setAllReviews] = useState<any[]>([]);
+  const [adminLoading, setAdminLoading] = useState(false);
   const [unlockedSales, setUnlockedSales] = useState<number[]>([]);
   const [photoPackUnlocked, setPhotoPackUnlocked] = useState(false);
   const [form, setForm] = useState({ title:"",name:"",address:"",city:"",province:"",date:"",startTime:"",endTime:"",description:"",tags:[] as string[],photos:[] as string[] });
@@ -245,6 +270,24 @@ export default function App() {
   });
 
   const mySales = sales.filter(s => user && s.user_id === user.id);
+
+  const loadAdminData = async () => {
+    setAdminLoading(true);
+    try {
+      const [s, sub, rev] = await Promise.all([api.getAllSales(), api.getAllSubscribers(), api.getAllReviews()]);
+      setAllSales(Array.isArray(s) ? s : []);
+      setAllSubscribers(Array.isArray(sub) ? sub : []);
+      setAllReviews(Array.isArray(rev) ? rev : []);
+    } catch(e) {}
+    setAdminLoading(false);
+  };
+
+  // Check for /admin URL
+  useEffect(() => {
+    if (window.location.pathname === '/admin') {
+      setView('admin');
+    }
+  }, []);
 
   const loadReviews = async (saleId: number) => {
     try {
@@ -996,6 +1039,156 @@ export default function App() {
                     </div>
                   </div>
                 ))}
+              </div>
+            </>
+          )}
+        </main>
+      )}
+
+
+      {/* Admin Panel */}
+      {view === "admin" && (
+        <main style={{ maxWidth: 1000, margin: "0 auto", padding: "40px 20px" }}>
+          {!adminUnlocked ? (
+            <div style={{ maxWidth: 400, margin: "60px auto", background: "white", borderRadius: 16, padding: "40px 32px", boxShadow: "0 8px 48px rgba(41,37,36,0.12)", border: "1px solid #e7e5e4", textAlign: "center" }}>
+              <div style={{ fontSize: 48, marginBottom: 16 }}>🔐</div>
+              <h2 style={{ fontFamily: "'Cormorant Garamond', serif", fontSize: 28, fontWeight: 700, color: "#292524", marginBottom: 8 }}>Admin Access</h2>
+              <p style={{ color: "#78716c", fontSize: 14, marginBottom: 24 }}>Enter your admin password to continue</p>
+              {adminError && <p style={{ color: "#b91c1c", fontSize: 14, marginBottom: 12 }}>{adminError}</p>}
+              <input type="password" placeholder="Admin password" value={adminPassword} onChange={e => setAdminPassword(e.target.value)} onKeyDown={e => { if (e.key === "Enter") { if (adminPassword === "@Sainii999") { setAdminUnlocked(true); loadAdminData(); } else { setAdminError("Incorrect password"); } } }} style={{ marginBottom: 14 }} />
+              <button className="btn-primary" style={{ width: "100%" }} onClick={() => { if (adminPassword === "@Sainii999") { setAdminUnlocked(true); loadAdminData(); } else { setAdminError("Incorrect password"); } }}>
+                🔐 Enter Admin Panel
+              </button>
+            </div>
+          ) : (
+            <>
+              <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 32 }}>
+                <div>
+                  <h2 style={{ fontFamily: "'Cormorant Garamond', serif", fontSize: 32, fontWeight: 700, color: "#292524" }}>📊 Admin Panel</h2>
+                  <p style={{ color: "#78716c", fontSize: 14, marginTop: 4 }}>Yardhunt.ca Dashboard</p>
+                </div>
+                <button onClick={loadAdminData} className="btn-secondary" disabled={adminLoading}>{adminLoading ? "Loading…" : "🔄 Refresh"}</button>
+              </div>
+
+              {/* Stats */}
+              <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(180px, 1fr))", gap: 16, marginBottom: 36 }}>
+                {[
+                  { label: "Total Listings", value: allSales.length, icon: "🏠", color: "#b91c1c" },
+                  { label: "Active Today", value: allSales.filter(s => s.date >= new Date().toISOString().split("T")[0]).length, icon: "📅", color: "#d97706" },
+                  { label: "Subscribers", value: allSubscribers.length, icon: "🔔", color: "#059669" },
+                  { label: "Reviews", value: allReviews.length, icon: "⭐", color: "#7c3aed" },
+                ].map(stat => (
+                  <div key={stat.label} style={{ background: "white", borderRadius: 12, padding: "20px", border: "1px solid #e7e5e4", boxShadow: "0 2px 8px rgba(0,0,0,0.04)" }}>
+                    <div style={{ fontSize: 28, marginBottom: 8 }}>{stat.icon}</div>
+                    <p style={{ fontSize: 28, fontWeight: 700, color: stat.color, fontFamily: "'Cormorant Garamond', serif" }}>{stat.value}</p>
+                    <p style={{ fontSize: 12, color: "#78716c", fontWeight: 500 }}>{stat.label}</p>
+                  </div>
+                ))}
+              </div>
+
+              {/* Revenue Summary */}
+              <div style={{ background: "linear-gradient(135deg, #1c1009, #3b0f0f)", borderRadius: 12, padding: "24px", marginBottom: 32, color: "white" }}>
+                <h3 style={{ fontFamily: "'Cormorant Garamond', serif", fontSize: 22, marginBottom: 16 }}>💰 Revenue Streams</h3>
+                <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(160px, 1fr))", gap: 12 }}>
+                  {[
+                    { label: "Basic Featured", price: "$9.99", icon: "⭐" },
+                    { label: "Premium Featured", price: "$14.99", icon: "🌟" },
+                    { label: "Extra Photos", price: "$1.99", icon: "📸" },
+                    { label: "Photo Unlock", price: "$1.99", icon: "🔓" },
+                  ].map(r => (
+                    <div key={r.label} style={{ background: "rgba(255,255,255,0.08)", borderRadius: 8, padding: "12px 14px" }}>
+                      <p style={{ fontSize: 18, marginBottom: 4 }}>{r.icon}</p>
+                      <p style={{ fontSize: 16, fontWeight: 700, color: "#d97706" }}>{r.price}</p>
+                      <p style={{ fontSize: 11, color: "#f5ddb499" }}>{r.label}</p>
+                    </div>
+                  ))}
+                </div>
+                <p style={{ fontSize: 12, color: "#f5ddb455", marginTop: 14 }}>💡 Check Stripe dashboard for actual payment totals</p>
+              </div>
+
+              {/* All Listings */}
+              <div style={{ marginBottom: 36 }}>
+                <h3 style={{ fontFamily: "'Cormorant Garamond', serif", fontSize: 22, color: "#292524", marginBottom: 16 }}>🏠 All Listings ({allSales.length})</h3>
+                <div style={{ background: "white", borderRadius: 12, border: "1px solid #e7e5e4", overflow: "hidden" }}>
+                  {allSales.length === 0 ? <p style={{ padding: "20px", color: "#78716c", textAlign: "center" }}>No listings yet</p> : (
+                    <table style={{ width: "100%", borderCollapse: "collapse" }}>
+                      <thead>
+                        <tr style={{ background: "#fdfaf5", borderBottom: "1px solid #e7e5e4" }}>
+                          {["Title", "City", "Province", "Date", "Posted"].map(h => (
+                            <th key={h} style={{ padding: "12px 16px", textAlign: "left", fontSize: 11, fontWeight: 600, color: "#78716c", letterSpacing: 0.8, textTransform: "uppercase" }}>{h}</th>
+                          ))}
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {allSales.map((s, i) => (
+                          <tr key={s.id} style={{ borderBottom: "1px solid #f5f5f4", background: i % 2 === 0 ? "white" : "#fdfaf5" }}>
+                            <td style={{ padding: "12px 16px", fontSize: 14, color: "#292524", fontWeight: 500 }}>{s.title}</td>
+                            <td style={{ padding: "12px 16px", fontSize: 14, color: "#78716c" }}>{s.city}</td>
+                            <td style={{ padding: "12px 16px", fontSize: 14, color: "#78716c" }}>{s.province}</td>
+                            <td style={{ padding: "12px 16px", fontSize: 14, color: "#78716c" }}>{s.date}</td>
+                            <td style={{ padding: "12px 16px", fontSize: 12, color: "#a8a29e" }}>{new Date(s.created_at).toLocaleDateString("en-CA")}</td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  )}
+                </div>
+              </div>
+
+              {/* All Subscribers */}
+              <div style={{ marginBottom: 36 }}>
+                <h3 style={{ fontFamily: "'Cormorant Garamond', serif", fontSize: 22, color: "#292524", marginBottom: 16 }}>🔔 Subscribers ({allSubscribers.length})</h3>
+                <div style={{ background: "white", borderRadius: 12, border: "1px solid #e7e5e4", overflow: "hidden" }}>
+                  {allSubscribers.length === 0 ? <p style={{ padding: "20px", color: "#78716c", textAlign: "center" }}>No subscribers yet</p> : (
+                    <table style={{ width: "100%", borderCollapse: "collapse" }}>
+                      <thead>
+                        <tr style={{ background: "#fdfaf5", borderBottom: "1px solid #e7e5e4" }}>
+                          {["Email", "City", "Province", "Joined"].map(h => (
+                            <th key={h} style={{ padding: "12px 16px", textAlign: "left", fontSize: 11, fontWeight: 600, color: "#78716c", letterSpacing: 0.8, textTransform: "uppercase" }}>{h}</th>
+                          ))}
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {allSubscribers.map((s, i) => (
+                          <tr key={s.id} style={{ borderBottom: "1px solid #f5f5f4", background: i % 2 === 0 ? "white" : "#fdfaf5" }}>
+                            <td style={{ padding: "12px 16px", fontSize: 14, color: "#292524" }}>{s.email}</td>
+                            <td style={{ padding: "12px 16px", fontSize: 14, color: "#78716c" }}>{s.city}</td>
+                            <td style={{ padding: "12px 16px", fontSize: 14, color: "#78716c" }}>{s.province || "—"}</td>
+                            <td style={{ padding: "12px 16px", fontSize: 12, color: "#a8a29e" }}>{new Date(s.created_at).toLocaleDateString("en-CA")}</td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  )}
+                </div>
+              </div>
+
+              {/* All Reviews */}
+              <div>
+                <h3 style={{ fontFamily: "'Cormorant Garamond', serif", fontSize: 22, color: "#292524", marginBottom: 16 }}>⭐ Reviews ({allReviews.length})</h3>
+                <div style={{ background: "white", borderRadius: 12, border: "1px solid #e7e5e4", overflow: "hidden" }}>
+                  {allReviews.length === 0 ? <p style={{ padding: "20px", color: "#78716c", textAlign: "center" }}>No reviews yet</p> : (
+                    <table style={{ width: "100%", borderCollapse: "collapse" }}>
+                      <thead>
+                        <tr style={{ background: "#fdfaf5", borderBottom: "1px solid #e7e5e4" }}>
+                          {["Rating", "Comment", "By", "Date"].map(h => (
+                            <th key={h} style={{ padding: "12px 16px", textAlign: "left", fontSize: 11, fontWeight: 600, color: "#78716c", letterSpacing: 0.8, textTransform: "uppercase" }}>{h}</th>
+                          ))}
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {allReviews.map((r, i) => (
+                          <tr key={r.id} style={{ borderBottom: "1px solid #f5f5f4", background: i % 2 === 0 ? "white" : "#fdfaf5" }}>
+                            <td style={{ padding: "12px 16px", fontSize: 16 }}>{"⭐".repeat(r.rating)}</td>
+                            <td style={{ padding: "12px 16px", fontSize: 14, color: "#292524" }}>{r.comment}</td>
+                            <td style={{ padding: "12px 16px", fontSize: 13, color: "#78716c" }}>{r.user_email?.split("@")[0]}</td>
+                            <td style={{ padding: "12px 16px", fontSize: 12, color: "#a8a29e" }}>{new Date(r.created_at).toLocaleDateString("en-CA")}</td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  )}
+                </div>
               </div>
             </>
           )}
