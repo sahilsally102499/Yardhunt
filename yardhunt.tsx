@@ -65,6 +65,14 @@ const api = {
       body: JSON.stringify(review)
     });
     return res.json();
+  },
+  async subscribe(email: string, city: string, province: string) {
+    const res = await fetch(`${SUPABASE_URL}/rest/v1/subscribers`, {
+      method: "POST",
+      headers: { apikey: SUPABASE_KEY, Authorization: `Bearer ${SUPABASE_KEY}`, "Content-Type": "application/json", Prefer: "return=representation" },
+      body: JSON.stringify({ email, city, province })
+    });
+    return res.json();
   }
 };
 
@@ -112,6 +120,11 @@ export default function App() {
   const [reviewComment, setReviewComment] = useState("");
   const [reviewSubmitting, setReviewSubmitting] = useState(false);
   const [reviewSuccess, setReviewSuccess] = useState(false);
+  const [subEmail, setSubEmail] = useState("");
+  const [subCity, setSubCity] = useState("");
+  const [subProvince, setSubProvince] = useState("");
+  const [subLoading, setSubLoading] = useState(false);
+  const [subSuccess, setSubSuccess] = useState(false);
   const [form, setForm] = useState({ title:"",name:"",address:"",city:"",province:"",date:"",startTime:"",endTime:"",description:"",tags:[] as string[],photos:[] as string[] });
   const fileInputRef = useRef<HTMLInputElement>(null);
 
@@ -407,6 +420,38 @@ export default function App() {
               <button className="btn-primary" onClick={() => { setAuthMode("signup"); setView("auth"); }}>🍁 Post Your Sale Free</button>
             </div>
           )}
+
+          {/* Notify Me Section */}
+          <div style={{ marginTop: 40, background: "linear-gradient(135deg, #1a0a05, #6b1a1a)", borderRadius: 12, padding: "32px 28px", textAlign: "center" }}>
+            <span style={{ fontSize: 36 }}>🔔</span>
+            <h3 style={{ fontFamily: "'Playfair Display', serif", fontSize: 24, fontWeight: 900, color: "white", marginTop: 10, marginBottom: 8 }}>Get Notified of Sales Near You</h3>
+            <p style={{ color: "#f5ddb4", fontSize: 14, marginBottom: 24, fontStyle: "italic" }}>Enter your city and we'll email you when new garage sales are posted nearby!</p>
+            {subSuccess ? (
+              <div style={{ background: "rgba(255,255,255,0.15)", borderRadius: 8, padding: "16px", color: "white" }}>
+                <p style={{ fontSize: 20, marginBottom: 6 }}>🎉 You're subscribed!</p>
+                <p style={{ fontSize: 14, color: "#f5ddb4" }}>We'll email you when new sales are posted in {subCity}!</p>
+              </div>
+            ) : (
+              <div style={{ display: "flex", flexDirection: "column", gap: 10, maxWidth: 420, margin: "0 auto" }}>
+                <input type="email" placeholder="Your email address" value={subEmail} onChange={e => setSubEmail(e.target.value)} style={{ padding: "12px 16px", borderRadius: 6, border: "none", fontSize: 15, fontFamily: "'Source Serif 4', serif" }} />
+                <input type="text" placeholder="Your city (e.g. Toronto, Calgary)" value={subCity} onChange={e => setSubCity(e.target.value)} style={{ padding: "12px 16px", borderRadius: 6, border: "none", fontSize: 15, fontFamily: "'Source Serif 4', serif" }} />
+                <select value={subProvince} onChange={e => setSubProvince(e.target.value)} style={{ padding: "12px 16px", borderRadius: 6, border: "none", fontSize: 15, fontFamily: "'Source Serif 4', serif", color: subProvince ? "#3a2c1a" : "#888" }}>
+                  <option value="">Select your province (optional)</option>
+                  {provinces.map(p => <option key={p.code} value={p.code}>{p.name}</option>)}
+                </select>
+                <button onClick={async () => {
+                  if (!subEmail || !subCity) return;
+                  setSubLoading(true);
+                  await api.subscribe(subEmail, subCity, subProvince);
+                  setSubSuccess(true);
+                  setSubLoading(false);
+                }} disabled={subLoading || !subEmail || !subCity} style={{ background: "#c0392b", color: "white", border: "none", padding: "13px", borderRadius: 6, fontFamily: "'Playfair Display', serif", fontWeight: 700, fontSize: 16, cursor: "pointer", opacity: subLoading || !subEmail || !subCity ? 0.6 : 1 }}>
+                  {subLoading ? "Subscribing…" : "🔔 Notify Me of Sales Near Me"}
+                </button>
+                <p style={{ fontSize: 11, color: "#f5ddb455" }}>No spam. Unsubscribe anytime. 🍁</p>
+              </div>
+            )}
+          </div>
         </main>
       )}
 
