@@ -112,6 +112,19 @@ const api = {
       method: "DELETE",
       headers: { apikey: SUPABASE_KEY, Authorization: `Bearer ${SUPABASE_KEY}` }
     });
+  },
+  async updateSale(id, data, token) {
+    await fetch(`${SUPABASE_URL}/rest/v1/sales?id=eq.${id}`, {
+      method: "PATCH",
+      headers: { apikey: SUPABASE_KEY, Authorization: `Bearer ${token}`, "Content-Type": "application/json" },
+      body: JSON.stringify(data)
+    });
+  },
+  async getSalesBySeller(userId) {
+    const res = await fetch(`${SUPABASE_URL}/rest/v1/sales?user_id=eq.${userId}&order=date.desc`, {
+      headers: { apikey: SUPABASE_KEY, Authorization: `Bearer ${SUPABASE_KEY}` }
+    });
+    return res.json();
   }
 };
 
@@ -196,7 +209,13 @@ export default function App() {
   const [viewCounts, setViewCounts] = useState({});
   const [unlockedSales, setUnlockedSales] = useState([]);
   const [photoPackUnlocked, setPhotoPackUnlocked] = useState(false);
-  const [form, setForm] = useState({ title:"",name:"",address:"",city:"",province:"",date:"",startTime:"",endTime:"",description:"",tags:[],photos:[] });
+  const [form, setForm] = useState({ title:"",name:"",address:"",city:"",province:"",date:"",startTime:"",endTime:"",description:"",tags:[],photos:[],extraDate:"",extraDateEnd:"" });
+  const [favourites, setFavourites] = useState(() => { try { return JSON.parse(localStorage.getItem("yh_favs")||"[]"); } catch { return []; }});
+  const [reminderSales, setReminderSales] = useState(() => { try { return JSON.parse(localStorage.getItem("yh_reminders")||"[]"); } catch { return []; }});
+  const [editingSale, setEditingSale] = useState(null);
+  const [editForm, setEditForm] = useState(null);
+  const [editSubmitting, setEditSubmitting] = useState(false);
+  const [sellerProfileId, setSellerProfileId] = useState(null);
   const fileInputRef = useRef(null);
 
   useEffect(() => {
@@ -359,6 +378,10 @@ export default function App() {
     window.addEventListener("beforeinstallprompt", handler);
     return () => window.removeEventListener("beforeinstallprompt", handler);
   }, []);
+
+  // Save favourites + reminders to localStorage
+  useEffect(() => { localStorage.setItem("yh_favs", JSON.stringify(favourites)); }, [favourites]);
+  useEffect(() => { localStorage.setItem("yh_reminders", JSON.stringify(reminderSales)); }, [reminderSales]);
 
   // Check for /admin URL
   useEffect(() => {
@@ -525,6 +548,7 @@ export default function App() {
           <div style={{ padding: "8px 0" }}>
             {[
               { label: "Browse Sales", icon: "🏠", view: "browse", action: () => { setView("browse"); setSelectedSale(null); } },
+              { label: "Saved Sales", icon: "❤️", view: "favourites", action: () => setView("favourites") },
               { label: "Categories", icon: "🗂️", view: "categories", action: () => setView("categories") },
               { label: "Map View", icon: "🗺️", view: "map", action: () => setView("map") },
             ].map(item => (
@@ -660,6 +684,9 @@ export default function App() {
                   <option value="">All Provinces</option>
                   {provinces.map(p => <option key={p.code} value={p.code}>{p.code} – {p.name}</option>)}
                 </select>
+                <button onClick={() => setView("favourites")} style={{ padding: "10px 14px", borderRadius: 10, border: "none", background: favourites.length > 0 ? "#fff1f2" : "rgba(255,255,255,0.15)", color: favourites.length > 0 ? "#e11d48" : "white", fontSize: 13, cursor: "pointer", fontWeight: 700, whiteSpace: "nowrap", boxShadow: "0 4px 20px rgba(0,0,0,0.2)" }}>
+                  ❤️ {favourites.length > 0 ? favourites.length : ""} Saved
+                </button>
               </div>
               <div style={{ display: "flex", gap: 8 }}>
                 <div style={{ flex: 1, position: "relative" }}>
@@ -734,8 +761,14 @@ export default function App() {
                         )}
                       </div>
                       <p style={{ fontSize: 14, color: "#5a4030", lineHeight: 1.5, marginBottom: 10, display: "-webkit-box", WebkitLineClamp: 2, WebkitBoxOrient: "vertical", overflow: "hidden" }}>{sale.description}</p>
-                      <div style={{ display: "flex", flexWrap: "wrap", gap: 5 }}>
+                      <div style={{ display: "flex", flexWrap: "wrap", gap: 5, marginBottom: 8 }}>
                         {(sale.tags||[]).map((tag) => <span key={tag} className="tag-pill" style={{ background: (tagColors[tag]||"#a08060")+"22", color: tagColors[tag]||"#a08060", border: `1px solid ${tagColors[tag]||"#a08060"}55` }}>{tag}</span>)}
+                      </div>
+                      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+                        <span style={{ fontSize: 12, color: "#a8a29e" }}>{viewCounts[sale.id] ? `👁️ ${viewCounts[sale.id]}` : ""}</span>
+                        <button onClick={e => { e.stopPropagation(); setFavourites(f => f.includes(sale.id) ? f.filter(id=>id!==sale.id) : [...f, sale.id]); }} style={{ background: "none", border: "none", cursor: "pointer", fontSize: 18, padding: "2px 4px" }}>
+                          {favourites.includes(sale.id) ? "❤️" : "🤍"}
+                        </button>
                       </div>
                     </div>
                   </div>
@@ -878,11 +911,46 @@ export default function App() {
               )}
 
               {/* I'm Going button */}
-              <div style={{ marginTop: 12 }}>
-                <button onClick={() => setGoingList(g => g.includes(selectedSale.id) ? g.filter(id => id !== selectedSale.id) : [...g, selectedSale.id])} style={{ width: "100%", padding: "13px", borderRadius: 10, border: goingList.includes(selectedSale.id) ? "2px solid #059669" : "2px solid #e7e5e4", background: goingList.includes(selectedSale.id) ? "#f0fdf4" : "white", color: goingList.includes(selectedSale.id) ? "#059669" : "#78716c", fontFamily: "'Cormorant Garamond', serif", fontWeight: 700, fontSize: 17, cursor: "pointer", transition: "all 0.2s" }}>
-                  {goingList.includes(selectedSale.id) ? "✅ I'm Going! (tap to remove)" : "👍 I'm Going to This Sale!"}
+              <div style={{ marginTop: 12, display: "grid", gridTemplateColumns: "1fr 1fr", gap: 10 }}>
+                <button onClick={() => setGoingList(g => g.includes(selectedSale.id) ? g.filter(id => id !== selectedSale.id) : [...g, selectedSale.id])} style={{ padding: "13px", borderRadius: 10, border: goingList.includes(selectedSale.id) ? "2px solid #059669" : "2px solid #e7e5e4", background: goingList.includes(selectedSale.id) ? "#f0fdf4" : "white", color: goingList.includes(selectedSale.id) ? "#059669" : "#78716c", fontFamily: "'Cormorant Garamond', serif", fontWeight: 700, fontSize: 15, cursor: "pointer" }}>
+                  {goingList.includes(selectedSale.id) ? "✅ Going!" : "👍 I'm Going!"}
+                </button>
+                <button onClick={() => setFavourites(f => { const n = f.includes(selectedSale.id) ? f.filter(id=>id!==selectedSale.id) : [...f, selectedSale.id]; return n; })} style={{ padding: "13px", borderRadius: 10, border: favourites.includes(selectedSale.id) ? "2px solid #e11d48" : "2px solid #e7e5e4", background: favourites.includes(selectedSale.id) ? "#fff1f2" : "white", color: favourites.includes(selectedSale.id) ? "#e11d48" : "#78716c", fontFamily: "'Cormorant Garamond', serif", fontWeight: 700, fontSize: 15, cursor: "pointer" }}>
+                  {favourites.includes(selectedSale.id) ? "❤️ Saved!" : "🤍 Save Sale"}
                 </button>
               </div>
+              {/* Get Directions + Reminder */}
+              <div style={{ marginTop: 10, display: "grid", gridTemplateColumns: "1fr 1fr", gap: 10 }}>
+                <a href={`https://www.google.com/maps/dir/?api=1&destination=${encodeURIComponent(selectedSale.address+", "+selectedSale.city+", "+selectedSale.province)}`} target="_blank" rel="noreferrer" style={{ padding: "12px", borderRadius: 10, border: "2px solid #2563eb", background: "#eff6ff", color: "#2563eb", fontFamily: "'Cormorant Garamond', serif", fontWeight: 700, fontSize: 15, cursor: "pointer", textDecoration: "none", textAlign: "center", display: "block" }}>
+                  🗺️ Get Directions
+                </a>
+                <button onClick={() => {
+                  const isReminded = reminderSales.includes(selectedSale.id);
+                  setReminderSales(r => isReminded ? r.filter(id=>id!==selectedSale.id) : [...r, selectedSale.id]);
+                  if (!isReminded) alert("✅ Reminder set! We'll remind you the day before this sale.");
+                }} style={{ padding: "12px", borderRadius: 10, border: reminderSales.includes(selectedSale.id) ? "2px solid #d97706" : "2px solid #e7e5e4", background: reminderSales.includes(selectedSale.id) ? "#fffbeb" : "white", color: reminderSales.includes(selectedSale.id) ? "#d97706" : "#78716c", fontFamily: "'Cormorant Garamond', serif", fontWeight: 700, fontSize: 15, cursor: "pointer" }}>
+                  {reminderSales.includes(selectedSale.id) ? "⏰ Reminded!" : "⏰ Remind Me"}
+                </button>
+              </div>
+              {/* Share to WhatsApp/Facebook */}
+              <div style={{ marginTop: 10, display: "grid", gridTemplateColumns: "1fr 1fr", gap: 10 }}>
+                <a href={`https://wa.me/?text=${encodeURIComponent("Check out this garage sale: "+selectedSale.title+" in "+selectedSale.city+" — https://yardhunt.ca?sale="+selectedSale.id)}`} target="_blank" rel="noreferrer" style={{ padding: "11px", borderRadius: 10, border: "2px solid #25d366", background: "#f0fdf4", color: "#25d366", fontFamily: "'Cormorant Garamond', serif", fontWeight: 700, fontSize: 14, cursor: "pointer", textDecoration: "none", textAlign: "center", display: "block" }}>
+                  💬 Share on WhatsApp
+                </a>
+                <a href={`https://www.facebook.com/sharer/sharer.php?u=${encodeURIComponent("https://yardhunt.ca?sale="+selectedSale.id)}`} target="_blank" rel="noreferrer" style={{ padding: "11px", borderRadius: 10, border: "2px solid #1877f2", background: "#eff6ff", color: "#1877f2", fontFamily: "'Cormorant Garamond', serif", fontWeight: 700, fontSize: 14, cursor: "pointer", textDecoration: "none", textAlign: "center", display: "block" }}>
+                  📘 Share on Facebook
+                </a>
+              </div>
+              {/* Seller Profile link */}
+              {selectedSale.user_id && (
+                <button onClick={() => setSellerProfileId(selectedSale.user_id)} style={{ marginTop: 10, width: "100%", padding: "11px", borderRadius: 10, border: "2px solid #e7e5e4", background: "white", color: "#78716c", fontFamily: "'Cormorant Garamond', serif", fontWeight: 700, fontSize: 15, cursor: "pointer" }}>
+                  👤 View Seller Profile
+                </button>
+              )}
+              {/* View count */}
+              {viewCounts[selectedSale.id] > 0 && (
+                <p style={{ textAlign: "center", fontSize: 12, color: "#a8a29e", marginTop: 8 }}>👁️ {viewCounts[selectedSale.id]} view{viewCounts[selectedSale.id]>1?"s":""} this session</p>
+              )}
 
               <div style={{ marginTop: 16, display: "flex", gap: 10 }}>
                 <button onClick={() => {
@@ -1117,6 +1185,7 @@ export default function App() {
                     </div>
                     <div style={{ display: "flex", flexDirection: "column", gap: 8, flexShrink: 0 }}>
                       <button onClick={() => { setSelectedSale(sale); setView("browse"); }} style={{ background: "#fdf6ec", color: "#7a5c3a", border: "1px solid #e8d9c4", padding: "8px 14px", borderRadius: 6, cursor: "pointer", fontSize: 13, fontWeight: 600 }}>👁 View</button>
+                      <button onClick={() => { setEditingSale(sale.id); setEditForm({ title: sale.title, address: sale.address, city: sale.city, province: sale.province, date: sale.date, startTime: sale.start_time||"", endTime: sale.end_time||"", description: sale.description||"", tags: sale.tags||[] }); }} style={{ background: "#eff6ff", color: "#2563eb", border: "1px solid #bfdbfe", padding: "8px 14px", borderRadius: 6, cursor: "pointer", fontSize: 13, fontWeight: 600 }}>✏️ Edit</button>
                       <a href="https://buy.stripe.com/fZu7sLdkZ12K1QJbRq1Jm00" target="_blank" rel="noreferrer" style={{ background: "#f5a623", color: "white", border: "none", padding: "8px 14px", borderRadius: 6, cursor: "pointer", fontSize: 13, fontWeight: 600, textDecoration: "none", textAlign: "center" }}>⭐ $9.99</a>
                       <a href="https://buy.stripe.com/cNi4gzep3dPwcvn08I1Jm01" target="_blank" rel="noreferrer" style={{ background: "#c0392b", color: "white", border: "none", padding: "8px 14px", borderRadius: 6, cursor: "pointer", fontSize: 13, fontWeight: 600, textDecoration: "none", textAlign: "center" }}>🌟 $14.99</a>
                       {deleteConfirm === sale.id ? (
@@ -1162,6 +1231,106 @@ export default function App() {
 
 
       {/* Categories View */}
+      {/* ===== SAVED SALES VIEW ===== */}
+      {view === "favourites" && (
+        <main style={{ maxWidth: 900, margin: "0 auto", padding: "36px 20px" }}>
+          <h2 style={{ fontFamily: "'Playfair Display', serif", fontSize: 30, fontWeight: 900, color: "#2d1b0e", marginBottom: 8 }}>❤️ Saved Sales</h2>
+          <p style={{ color: "#78716c", fontSize: 14, marginBottom: 28 }}>Sales you've saved for later</p>
+          {favourites.length === 0 ? (
+            <div style={{ textAlign: "center", padding: "60px 20px", background: "white", borderRadius: 12, border: "1px solid #e7e5e4" }}>
+              <p style={{ fontSize: 40, marginBottom: 12 }}>🤍</p>
+              <p style={{ fontFamily: "'Cormorant Garamond', serif", fontSize: 22, color: "#292524", marginBottom: 8 }}>No saved sales yet</p>
+              <p style={{ color: "#78716c", fontSize: 14, marginBottom: 20 }}>Tap the 🤍 on any sale card to save it here</p>
+              <button className="btn-primary" onClick={() => setView("browse")}>Browse Sales</button>
+            </div>
+          ) : (
+            <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(300px, 1fr))", gap: 24 }}>
+              {sales.filter(s => favourites.includes(s.id)).map(sale => (
+                <div key={sale.id} className="card-hover" onClick={() => { setSelectedSale(sale); setPhotoIndex(0); loadReviews(sale.id); trackView(sale.id); setView("browse"); }} style={{ background: "white", borderRadius: 8, overflow: "hidden", boxShadow: "0 2px 12px rgba(0,0,0,0.08)", border: "2px solid #fecdd3" }}>
+                  {sale.photos && sale.photos.length > 0 ? (
+                    <img src={sale.photos[0]} alt="" style={{ width: "100%", height: 160, objectFit: "cover" }} />
+                  ) : (
+                    <div style={{ background: "linear-gradient(135deg, #6b1a1a, #c0392b)", padding: "20px", display: "flex", alignItems: "center", gap: 12 }}>
+                      <span style={{ fontSize: 32 }}>{sale.emoji || "🏠"}</span>
+                      <p style={{ fontFamily: "'Cormorant Garamond', serif", fontSize: 17, fontWeight: 700, color: "white" }}>{sale.title}</p>
+                    </div>
+                  )}
+                  <div style={{ padding: "16px 20px" }}>
+                    <p style={{ fontFamily: "'Cormorant Garamond', serif", fontSize: 16, fontWeight: 700, color: "#2d1b0e", marginBottom: 6 }}>{sale.title}</p>
+                    <p style={{ fontSize: 13, color: "#7a5c3a", marginBottom: 4 }}>📍 {sale.city}, {sale.province}</p>
+                    <p style={{ fontSize: 13, color: "#7a5c3a", marginBottom: 10 }}>📅 {new Date(sale.date+"T12:00:00").toLocaleDateString("en-CA",{month:"short",day:"numeric"})}</p>
+                    <button onClick={e => { e.stopPropagation(); setFavourites(f => f.filter(id=>id!==sale.id)); }} style={{ fontSize: 12, color: "#e11d48", background: "#fff1f2", border: "1px solid #fecdd3", padding: "4px 12px", borderRadius: 20, cursor: "pointer" }}>❤️ Remove</button>
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
+        </main>
+      )}
+
+      {/* ===== SELLER PROFILE MODAL ===== */}
+      {sellerProfileId && (
+        <div style={{ position: "fixed", inset: 0, background: "rgba(0,0,0,0.6)", zIndex: 999, display: "flex", alignItems: "center", justifyContent: "center", padding: 20 }} onClick={() => setSellerProfileId(null)}>
+          <div style={{ background: "white", borderRadius: 16, padding: 28, maxWidth: 560, width: "100%", maxHeight: "80vh", overflowY: "auto" }} onClick={e => e.stopPropagation()}>
+            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 20 }}>
+              <div>
+                <p style={{ fontSize: 40 }}>👤</p>
+                <h3 style={{ fontFamily: "'Cormorant Garamond', serif", fontSize: 24, color: "#292524" }}>Seller Profile</h3>
+              </div>
+              <button onClick={() => setSellerProfileId(null)} style={{ background: "none", border: "none", fontSize: 24, cursor: "pointer", color: "#78716c" }}>✕</button>
+            </div>
+            <div>
+              <p style={{ color: "#78716c", fontSize: 14, marginBottom: 16 }}>All sales from this seller:</p>
+              {sales.filter(s => s.user_id === sellerProfileId).length === 0 ? (
+                <p style={{ color: "#a8a29e", fontSize: 14 }}>No active sales from this seller.</p>
+              ) : (
+                sales.filter(s => s.user_id === sellerProfileId).map(sale => (
+                  <div key={sale.id} onClick={() => { setSelectedSale(sale); setSellerProfileId(null); setPhotoIndex(0); loadReviews(sale.id); }} style={{ padding: "14px", borderRadius: 10, border: "1px solid #e7e5e4", marginBottom: 10, cursor: "pointer", background: "#fdfaf5" }}>
+                    <p style={{ fontFamily: "'Cormorant Garamond', serif", fontSize: 16, fontWeight: 700, color: "#292524", marginBottom: 4 }}>{sale.title}</p>
+                    <p style={{ fontSize: 13, color: "#78716c" }}>📍 {sale.city} · 📅 {new Date(sale.date+"T12:00:00").toLocaleDateString("en-CA",{month:"short",day:"numeric"})}</p>
+                  </div>
+                ))
+              )}
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* ===== EDIT LISTING MODAL ===== */}
+      {editingSale && editForm && (
+        <div style={{ position: "fixed", inset: 0, background: "rgba(0,0,0,0.6)", zIndex: 999, display: "flex", alignItems: "center", justifyContent: "center", padding: 20 }} onClick={() => setEditingSale(null)}>
+          <div style={{ background: "white", borderRadius: 16, padding: 28, maxWidth: 560, width: "100%", maxHeight: "90vh", overflowY: "auto" }} onClick={e => e.stopPropagation()}>
+            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 20 }}>
+              <h3 style={{ fontFamily: "'Cormorant Garamond', serif", fontSize: 24, color: "#292524" }}>✏️ Edit Listing</h3>
+              <button onClick={() => setEditingSale(null)} style={{ background: "none", border: "none", fontSize: 24, cursor: "pointer", color: "#78716c" }}>✕</button>
+            </div>
+            <div style={{ display: "flex", flexDirection: "column", gap: 14 }}>
+              <div><label>Sale Title *</label><input value={editForm.title} onChange={e=>setEditForm(f=>({...f,title:e.target.value}))} /></div>
+              <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12 }}>
+                <div><label>Street Address</label><input value={editForm.address} onChange={e=>setEditForm(f=>({...f,address:e.target.value}))} /></div>
+                <div><label>City</label><input value={editForm.city} onChange={e=>setEditForm(f=>({...f,city:e.target.value}))} /></div>
+              </div>
+              <div><label>Date *</label><input type="date" value={editForm.date} onChange={e=>setEditForm(f=>({...f,date:e.target.value}))} /></div>
+              <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12 }}>
+                <div><label>Start Time</label><input type="time" value={editForm.startTime} onChange={e=>setEditForm(f=>({...f,startTime:e.target.value}))} /></div>
+                <div><label>End Time</label><input type="time" value={editForm.endTime} onChange={e=>setEditForm(f=>({...f,endTime:e.target.value}))} /></div>
+              </div>
+              <div><label>Description</label><textarea value={editForm.description} onChange={e=>setEditForm(f=>({...f,description:e.target.value}))} rows={4} style={{ padding:"12px",borderRadius:8,border:"1px solid #e7e5e4",fontSize:14,width:"100%",boxSizing:"border-box" }} /></div>
+              <button disabled={editSubmitting} onClick={async () => {
+                setEditSubmitting(true);
+                await api.updateSale(editingSale, { title:editForm.title, address:editForm.address, city:editForm.city, province:editForm.province, date:editForm.date, start_time:editForm.startTime, end_time:editForm.endTime, description:editForm.description, tags:editForm.tags }, token);
+                await loadSales();
+                setEditingSale(null);
+                setEditSubmitting(false);
+                alert("✅ Listing updated!");
+              }} className="btn-primary" style={{ width: "100%" }}>
+                {editSubmitting ? "Saving…" : "✅ Save Changes"}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
       {view === "categories" && (
         <main style={{ maxWidth: 1100, margin: "0 auto", padding: "36px 20px" }}>
           <h2 style={{ fontFamily: "'Playfair Display', serif", fontSize: 30, fontWeight: 900, color: "#2d1b0e", marginBottom: 8 }}>🗂️ Browse by Category</h2>
