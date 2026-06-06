@@ -168,9 +168,9 @@ export default function App() {
   const [showInstallBanner, setShowInstallBanner] = useState(false);
   const [goingList, setGoingList] = useState<number[]>([]);
   const [verified, setVerified] = useState(false);
-  const [searchSuggestions, setSearchSuggestions] = useState<string[]>([]);
+  const [searchSuggestions, setSearchSuggestions] = useState<any[]>([]);
   const [showSuggestions, setShowSuggestions] = useState(false);
-  const [viewCounts, setViewCounts] = useState<Record<number, number>>({});
+  const [viewCounts, setViewCounts] = useState<any>({});
   const [unlockedSales, setUnlockedSales] = useState<number[]>([]);
   const [photoPackUnlocked, setPhotoPackUnlocked] = useState(false);
   const [form, setForm] = useState({ title:"",name:"",address:"",city:"",province:"",date:"",startTime:"",endTime:"",description:"",tags:[] as string[],photos:[] as string[] });
@@ -362,7 +362,7 @@ export default function App() {
   };
 
   return (
-    <div style={{ fontFamily: "'Georgia', serif", minHeight: "100vh", background: "#fdf6ec" }}>
+    <div style={{ fontFamily: "'DM Sans', sans-serif", minHeight: "100vh", background: darkMode ? "#0f0a07" : "var(--cream)", transition: "background 0.3s" }}>
       <style>{`
         @import url('https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,400;0,600;0,700;1,400;1,600&family=DM+Sans:wght@300;400;500;600&display=swap');
         
