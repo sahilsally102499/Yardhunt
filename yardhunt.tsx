@@ -146,6 +146,14 @@ const api = {
       headers: { apikey: SUPABASE_KEY, Authorization: `Bearer ${SUPABASE_KEY}`, "Content-Type": "application/json" },
       body: JSON.stringify({ answer })
     });
+  },
+  async getMyQuestions(saleIds) {
+    if (!saleIds.length) return [];
+    const ids = saleIds.join(",");
+    const res = await fetch(`${SUPABASE_URL}/rest/v1/questions?sale_id=in.(${ids})&order=created_at.desc`, {
+      headers: { apikey: SUPABASE_KEY, Authorization: `Bearer ${SUPABASE_KEY}` }
+    });
+    return res.json();
   }
 };
 
@@ -232,6 +240,8 @@ export default function App() {
   const [photoPackUnlocked, setPhotoPackUnlocked] = useState(false);
   const [form, setForm] = useState({ title:"",name:"",address:"",city:"",province:"",date:"",startTime:"",endTime:"",description:"",tags:[],photos:[],extraDate:"",extraDateStart:"",extraDateEnd:"" });
   const [questions, setQuestions] = useState([]);
+  const [myQuestions, setMyQuestions] = useState([]);
+  const [dashTab, setDashTab] = useState("listings");
   const [questionText, setQuestionText] = useState("");
   const [questionSubmitting, setQuestionSubmitting] = useState(false);
   const [answerText, setAnswerText] = useState({});
@@ -243,6 +253,16 @@ export default function App() {
   const [editSubmitting, setEditSubmitting] = useState(false);
   const [sellerProfileId, setSellerProfileId] = useState(null);
   const fileInputRef = useRef(null);
+
+  // Load seller questions when dashboard is viewed (mySales derived below, use sales + user)
+  useEffect(() => {
+    const myS = sales.filter(s => user && s.user_id === user.id);
+    if (view === "dashboard" && user && myS.length > 0) {
+      api.getMyQuestions(myS.map(s => s.id)).then(data => {
+        setMyQuestions(Array.isArray(data) ? data : []);
+      });
+    }
+  }, [view, sales, user]);
 
   useEffect(() => {
     loadSales().then(() => {
@@ -1272,9 +1292,19 @@ export default function App() {
       {/* Seller Dashboard */}
       {view === "dashboard" && user && (
         <main style={{ maxWidth: 800, margin: "0 auto", padding: "36px 20px" }}>
-          <h2 style={{ fontFamily: "'Playfair Display', serif", fontSize: 30, fontWeight: 900, color: "#2d1b0e", marginBottom: 6 }}>My Sales</h2>
-          <p style={{ color: "#7a5c3a", fontSize: 14, fontStyle: "italic", marginBottom: 28 }}>Manage your listings — {mySales.length} active sale{mySales.length !== 1 ? "s" : ""}</p>
-          {mySales.length === 0 ? (
+          <h2 style={{ fontFamily: "'Playfair Display', serif", fontSize: 30, fontWeight: 900, color: "#2d1b0e", marginBottom: 6 }}>My Dashboard</h2>
+          <p style={{ color: "#7a5c3a", fontSize: 14, fontStyle: "italic", marginBottom: 20 }}>Manage your listings & questions</p>
+          {/* Dashboard Tabs */}
+          <div style={{ display: "flex", gap: 8, marginBottom: 28 }}>
+            <button onClick={() => setDashTab("listings")} style={{ padding: "9px 20px", borderRadius: 20, border: "none", cursor: "pointer", fontSize: 14, fontWeight: 600, background: dashTab === "listings" ? "#1c1009" : "#f5f5f4", color: dashTab === "listings" ? "#f5ddb4" : "#78716c" }}>
+              🏠 My Listings ({mySales.length})
+            </button>
+            <button onClick={async () => { setDashTab("questions"); const data = await api.getMyQuestions(mySales.map(s=>s.id)); setMyQuestions(Array.isArray(data)?data:[]); }} style={{ padding: "9px 20px", borderRadius: 20, border: "none", cursor: "pointer", fontSize: 14, fontWeight: 600, background: dashTab === "questions" ? "#1c1009" : "#f5f5f4", color: dashTab === "questions" ? "#f5ddb4" : "#78716c", position: "relative" }}>
+              💬 Questions {myQuestions.filter(q=>!q.answer).length > 0 && <span style={{ background: "#b91c1c", color: "white", fontSize: 11, fontWeight: 700, padding: "1px 6px", borderRadius: 10, marginLeft: 4 }}>{myQuestions.filter(q=>!q.answer).length}</span>}
+            </button>
+          </div>
+
+          {dashTab === "listings" && <>{mySales.length === 0 ? (
             <div style={{ textAlign: "center", padding: "60px 20px", background: "white", borderRadius: 8, border: "1px solid #e8d9c4" }}>
               <div style={{ fontSize: 48, marginBottom: 12 }}>🏠</div>
               <p style={{ fontFamily: "'Playfair Display', serif", fontSize: 20, color: "#7a5c3a" }}>No sales posted yet</p>
@@ -1343,7 +1373,55 @@ export default function App() {
               </div>
             </div>
           )}
-        </main>
+          </>}
+
+            {/* Questions Tab */}
+            {dashTab === "questions" && (
+              <div>
+                <h3 style={{ fontFamily: "'Cormorant Garamond', serif", fontSize: 22, color: "#292524", marginBottom: 6 }}>💬 Questions from Buyers</h3>
+                <p style={{ color: "#78716c", fontSize: 13, marginBottom: 20 }}>Buyers can ask questions about your listings. Answer them here!</p>
+                {myQuestions.length === 0 ? (
+                  <div style={{ textAlign: "center", padding: "40px 20px", background: "white", borderRadius: 12, border: "1px solid #e7e5e4" }}>
+                    <p style={{ fontSize: 36, marginBottom: 10 }}>💬</p>
+                    <p style={{ color: "#78716c", fontSize: 14 }}>No questions yet — they'll appear here when buyers ask!</p>
+                  </div>
+                ) : (
+                  <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
+                    {myQuestions.map(q => {
+                      const sale = mySales.find(s => s.id === q.sale_id);
+                      return (
+                        <div key={q.id} style={{ background: "white", borderRadius: 12, padding: "18px 20px", border: q.answer ? "1px solid #e7e5e4" : "2px solid #fca5a5", boxShadow: "0 2px 8px rgba(0,0,0,0.05)" }}>
+                          <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", marginBottom: 8 }}>
+                            <div>
+                              {sale && <p style={{ fontSize: 11, fontWeight: 700, color: "#d97706", textTransform: "uppercase", letterSpacing: 0.8, marginBottom: 4 }}>Re: {sale.title}</p>}
+                              <p style={{ fontSize: 15, color: "#292524", fontWeight: 600 }}>❓ {q.question}</p>
+                              <p style={{ fontSize: 12, color: "#a8a29e", marginTop: 2 }}>Asked by {q.user_email?.split("@")[0]} · {new Date(q.created_at).toLocaleDateString("en-CA")}</p>
+                            </div>
+                            {!q.answer && <span style={{ background: "#fef2f2", color: "#b91c1c", fontSize: 11, fontWeight: 700, padding: "3px 10px", borderRadius: 20, whiteSpace: "nowrap" }}>Needs Reply</span>}
+                            {q.answer && <span style={{ background: "#f0fdf4", color: "#059669", fontSize: 11, fontWeight: 700, padding: "3px 10px", borderRadius: 20, whiteSpace: "nowrap" }}>✅ Answered</span>}
+                          </div>
+                          {q.answer ? (
+                            <p style={{ fontSize: 13, color: "#059669", background: "#f0fdf4", padding: "10px 14px", borderRadius: 8 }}>💬 Your reply: {q.answer}</p>
+                          ) : (
+                            <div style={{ display: "flex", gap: 8, marginTop: 10 }}>
+                              <input placeholder="Type your answer…" value={answerText[q.id]||""} onChange={e => setAnswerText(a=>({...a,[q.id]:e.target.value}))} onKeyDown={async e => { if(e.key==="Enter" && answerText[q.id]) { await api.answerQuestion(q.id, answerText[q.id]); setAnswerText(a=>({...a,[q.id]:""})); const data = await api.getMyQuestions(mySales.map(s=>s.id)); setMyQuestions(Array.isArray(data)?data:[]); }}} style={{ flex: 1, padding: "10px 14px", borderRadius: 8, border: "1px solid #e7e5e4", fontSize: 14 }} />
+                              <button onClick={async () => {
+                                if (!answerText[q.id]) return;
+                                await api.answerQuestion(q.id, answerText[q.id]);
+                                setAnswerText(a=>({...a,[q.id]:""}));
+                                const data = await api.getMyQuestions(mySales.map(s=>s.id));
+                                setMyQuestions(Array.isArray(data)?data:[]);
+                              }} style={{ background: "#059669", color: "white", border: "none", padding: "10px 18px", borderRadius: 8, cursor: "pointer", fontSize: 14, fontWeight: 700 }}>Reply</button>
+                            </div>
+                          )}
+                        </div>
+                      );
+                    })}
+                  </div>
+                )}
+              </div>
+            )}
+          </main>
       )}
 
 
