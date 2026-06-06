@@ -126,6 +126,8 @@ export default function App() {
   const [subLoading, setSubLoading] = useState(false);
   const [subSuccess, setSubSuccess] = useState(false);
   const [menuOpen, setMenuOpen] = useState(false);
+  const [unlockedSales, setUnlockedSales] = useState<number[]>([]);
+  const [photoPackUnlocked, setPhotoPackUnlocked] = useState(false);
   const [form, setForm] = useState({ title:"",name:"",address:"",city:"",province:"",date:"",startTime:"",endTime:"",description:"",tags:[] as string[],photos:[] as string[] });
   const fileInputRef = useRef<HTMLInputElement>(null);
 
@@ -580,22 +582,37 @@ export default function App() {
             {selectedSale.photos && selectedSale.photos.length > 0 ? (
               <div>
                 <div style={{ position: "relative", height: 280, background: "#1a0a05" }}>
-                  <img src={selectedSale.photos[photoIndex]} alt="" style={{ width: "100%", height: "100%", objectFit: "cover" }} />
+                  <img src={selectedSale.photos[Math.min(photoIndex, (unlockedSales.includes(selectedSale.id) ? selectedSale.photos.length : Math.min(selectedSale.photos.length, 6)) - 1)]} alt="" style={{ width: "100%", height: "100%", objectFit: "cover" }} />
                   {selectedSale.photos.length > 1 && (
                     <>
-                      <button className="lightbox-nav" style={{ left: 12 }} onClick={e => { e.stopPropagation(); setPhotoIndex(i => (i-1+selectedSale.photos.length)%selectedSale.photos.length); }}>‹</button>
-                      <button className="lightbox-nav" style={{ right: 12 }} onClick={e => { e.stopPropagation(); setPhotoIndex(i => (i+1)%selectedSale.photos.length); }}>›</button>
-                      <span style={{ position: "absolute", bottom: 10, right: 14, background: "rgba(0,0,0,0.55)", color: "white", fontSize: 12, padding: "3px 10px", borderRadius: 12 }}>{photoIndex+1} / {selectedSale.photos.length}</span>
+                      <button className="lightbox-nav" style={{ left: 12 }} onClick={e => { e.stopPropagation(); const max = unlockedSales.includes(selectedSale.id) ? selectedSale.photos.length : Math.min(selectedSale.photos.length, 6); setPhotoIndex(i => (i-1+max)%max); }}>‹</button>
+                      <button className="lightbox-nav" style={{ right: 12 }} onClick={e => { e.stopPropagation(); const max = unlockedSales.includes(selectedSale.id) ? selectedSale.photos.length : Math.min(selectedSale.photos.length, 6); setPhotoIndex(i => (i+1)%max); }}>›</button>
+                      <span style={{ position: "absolute", bottom: 10, right: 14, background: "rgba(0,0,0,0.55)", color: "white", fontSize: 12, padding: "3px 10px", borderRadius: 12 }}>{photoIndex+1} / {unlockedSales.includes(selectedSale.id) ? selectedSale.photos.length : Math.min(selectedSale.photos.length, 6)}</span>
                     </>
                   )}
                 </div>
                 {selectedSale.photos.length > 1 && (
                   <div style={{ display: "flex", gap: 6, padding: "10px 16px", overflowX: "auto", background: "#f5ece0" }}>
-                    {selectedSale.photos.map((p:string, i:number) => (
-                      <div key={i} onClick={() => setPhotoIndex(i)} style={{ width: 56, height: 56, borderRadius: 4, overflow: "hidden", cursor: "pointer", border: i===photoIndex ? "2px solid #c0392b" : "2px solid transparent", flexShrink: 0 }}>
+                    {selectedSale.photos.slice(0, unlockedSales.includes(selectedSale.id) ? selectedSale.photos.length : 6).map((p:string, i:number) => (
+                      <div key={i} onClick={() => setPhotoIndex(i)} style={{ width: 56, height: 56, borderRadius: 4, overflow: "hidden", cursor: "pointer", border: i===photoIndex ? "2px solid #b91c1c" : "2px solid transparent", flexShrink: 0 }}>
                         <img src={p} alt="" style={{ width: "100%", height: "100%", objectFit: "cover" }} />
                       </div>
                     ))}
+                    {!unlockedSales.includes(selectedSale.id) && selectedSale.photos.length > 6 && (
+                      <div style={{ width: 56, height: 56, borderRadius: 4, flexShrink: 0, background: "rgba(0,0,0,0.7)", display: "flex", alignItems: "center", justifyContent: "center", border: "2px dashed #d97706" }}>
+                        <span style={{ color: "#d97706", fontSize: 10, fontWeight: 700, textAlign: "center", lineHeight: 1.2 }}>+{selectedSale.photos.length - 6}{"
+"}more</span>
+                      </div>
+                    )}
+                  </div>
+                )}
+                {!unlockedSales.includes(selectedSale.id) && selectedSale.photos.length > 6 && (
+                  <div style={{ background: "linear-gradient(135deg, #1c1009, #3b0f0f)", padding: "14px 20px", display: "flex", alignItems: "center", justifyContent: "space-between", gap: 12, flexWrap: "wrap" }}>
+                    <div>
+                      <p style={{ fontFamily: "'Cormorant Garamond', serif", fontSize: 16, fontWeight: 700, color: "white", marginBottom: 2 }}>🔒 {selectedSale.photos.length - 6} more photos locked</p>
+                      <p style={{ fontSize: 12, color: "#f5ddb499" }}>Unlock all for just $1.99</p>
+                    </div>
+                    <a href="https://buy.stripe.com/9B66oH3Kp3aS2UNdZy1Jm03" target="_blank" rel="noreferrer" onClick={() => setTimeout(() => setUnlockedSales(u => [...u, selectedSale.id]), 3000)} style={{ background: "#d97706", color: "white", padding: "10px 18px", borderRadius: 8, fontFamily: "'Cormorant Garamond', serif", fontWeight: 700, fontSize: 14, textDecoration: "none", whiteSpace: "nowrap" }}>📸 Unlock All — $1.99</a>
                   </div>
                 )}
               </div>
@@ -778,11 +795,19 @@ export default function App() {
                       ))}
                     </div>
                   )}
-                  {form.photos.length < 6 && (
+                  {form.photos.length < (photoPackUnlocked ? 20 : 6) && (
                     <div className="upload-zone" onClick={() => fileInputRef.current?.click()}>
                       <div style={{ fontSize: 28, marginBottom: 6 }}>📷</div>
-                      <p style={{ fontSize: 14, color: "#7a5c3a", fontWeight: 600 }}>Click to upload photos</p>
-                      <p style={{ fontSize: 12, color: "#a08060", marginTop: 3 }}>JPG, PNG • {6-form.photos.length} remaining</p>
+                      <p style={{ fontSize: 14, color: "#78716c", fontWeight: 600 }}>Click to upload photos</p>
+                      <p style={{ fontSize: 12, color: "#78716c", marginTop: 3 }}>{photoPackUnlocked ? "🌟 Premium" : "Free"} • {(photoPackUnlocked ? 20 : 6) - form.photos.length} remaining</p>
+                    </div>
+                  )}
+                  {!photoPackUnlocked && form.photos.length >= 6 && (
+                    <div style={{ background: "linear-gradient(135deg, #fef3c7, #fff8e7)", borderRadius: 10, padding: "16px", border: "2px solid #d97706", textAlign: "center", marginTop: 8 }}>
+                      <p style={{ fontFamily: "'Cormorant Garamond', serif", fontSize: 17, fontWeight: 700, color: "#292524", marginBottom: 4 }}>📸 Want More Photos?</p>
+                      <p style={{ fontSize: 13, color: "#78716c", marginBottom: 12 }}>Upgrade to upload up to <strong>20 photos</strong> for just $1.99!</p>
+                      <a href="https://buy.stripe.com/6oU28ra8N26O3YR2gQ1Jm02" target="_blank" rel="noreferrer" onClick={() => setTimeout(() => setPhotoPackUnlocked(true), 3000)} style={{ display: "inline-block", background: "#d97706", color: "white", padding: "10px 20px", borderRadius: 8, fontFamily: "'Cormorant Garamond', serif", fontWeight: 700, fontSize: 15, textDecoration: "none" }}>📸 Unlock 20 Photos — $1.99</a>
+                      <p style={{ fontSize: 11, color: "#a08060", marginTop: 8 }}>After payment, tap the button again to unlock</p>
                     </div>
                   )}
                   <input ref={fileInputRef} type="file" accept="image/*" multiple style={{ display: "none" }} onChange={handlePhotos} />
