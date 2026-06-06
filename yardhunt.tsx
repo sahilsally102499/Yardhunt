@@ -506,7 +506,7 @@ export default function App() {
       if (authMode === "signup") {
         const data = await api.signUp(authEmail, authPassword);
         if (data.error) { setAuthError(data.error.message || data.msg || "Signup failed."); }
-        else { setAuthSuccess("✅ Account created! You can now log in."); setAuthMode("login"); }
+        else { setAuthSuccess("✅ Account created! Please check your email to confirm, then log in."); setAuthMode("login"); }
       } else {
         const data = await api.signIn(authEmail, authPassword);
         if (data.error || !data.access_token) { setAuthError(data.error?.message || data.error_description || "Invalid email or password."); }
