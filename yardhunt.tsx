@@ -182,6 +182,10 @@ export default function App() {
   const [broadcastSending, setBroadcastSending] = useState(false);
   const [broadcastResult, setBroadcastResult] = useState("");
   const [adminTab, setAdminTab] = useState("overview");
+  const [bannedUsers, setBannedUsers] = useState([]);
+  const [flaggedSales, setFlaggedSales] = useState([]);
+  const [reportQueue, setReportQueue] = useState([]);
+  const [notifLog, setNotifLog] = useState([]);
   const [darkMode, setDarkMode] = useState(false);
   const [installPrompt, setInstallPrompt] = useState(null);
   const [showInstallBanner, setShowInstallBanner] = useState(false);
@@ -1307,10 +1311,12 @@ export default function App() {
               <div style={{ display: "flex", gap: 8, marginBottom: 28, flexWrap: "wrap" }}>
                 {[
                   { id: "overview", label: "📊 Overview" },
+                  { id: "analytics", label: "📈 Analytics" },
                   { id: "users", label: "👥 Users" },
                   { id: "listings", label: "🏠 Listings" },
                   { id: "subscribers", label: "🔔 Subscribers" },
                   { id: "broadcast", label: "📧 Broadcast" },
+                  { id: "moderation", label: "🚨 Moderation" },
                   { id: "reviews", label: "⭐ Reviews" },
                 ].map(tab => (
                   <button key={tab.id} onClick={() => setAdminTab(tab.id)} style={{ padding: "8px 16px", borderRadius: 20, border: "none", cursor: "pointer", fontSize: 13, fontWeight: 600, background: adminTab === tab.id ? "#1c1009" : "#f5f5f4", color: adminTab === tab.id ? "#f5ddb4" : "#78716c" }}>
@@ -1476,6 +1482,98 @@ export default function App() {
 
               </>}
 
+              {/* ===== ANALYTICS TAB ===== */}
+              {adminTab === "analytics" && <>
+
+              {/* Sales per day chart */}
+              <div style={{ background: "white", borderRadius: 12, border: "1px solid #e7e5e4", padding: 20, marginBottom: 24 }}>
+                <h3 style={{ fontFamily: "'Cormorant Garamond', serif", fontSize: 20, color: "#292524", marginBottom: 16 }}>📅 Sales Posted — Last 14 Days</h3>
+                {(() => {
+                  const days = Array.from({length: 14}, (_, i) => {
+                    const d = new Date(); d.setDate(d.getDate() - (13 - i));
+                    return d.toISOString().split("T")[0];
+                  });
+                  const counts = days.map(day => ({ day: day.slice(5), count: allSales.filter(s => s.created_at?.slice(0,10) === day).length }));
+                  const max = Math.max(...counts.map(c => c.count), 1);
+                  return (
+                    <div style={{ display: "flex", alignItems: "flex-end", gap: 6, height: 120 }}>
+                      {counts.map(({ day, count }) => (
+                        <div key={day} style={{ flex: 1, display: "flex", flexDirection: "column", alignItems: "center", gap: 4 }}>
+                          <span style={{ fontSize: 10, color: "#b91c1c", fontWeight: 700 }}>{count > 0 ? count : ""}</span>
+                          <div style={{ width: "100%", background: count > 0 ? "#b91c1c" : "#f5f5f4", borderRadius: 4, height: `${Math.max((count / max) * 90, 4)}px`, minHeight: 4 }} />
+                          <span style={{ fontSize: 9, color: "#a8a29e", transform: "rotate(-45deg)", transformOrigin: "top", whiteSpace: "nowrap" }}>{day}</span>
+                        </div>
+                      ))}
+                    </div>
+                  );
+                })()}
+              </div>
+
+              {/* Opportunity Gap */}
+              <div style={{ background: "white", borderRadius: 12, border: "1px solid #e7e5e4", padding: 20, marginBottom: 24 }}>
+                <h3 style={{ fontFamily: "'Cormorant Garamond', serif", fontSize: 20, color: "#292524", marginBottom: 6 }}>🎯 Opportunity Gap</h3>
+                <p style={{ color: "#78716c", fontSize: 13, marginBottom: 16 }}>Cities with most subscribers but fewest sales — target these for marketing!</p>
+                {(() => {
+                  const subCities = allSubscribers.reduce((acc, s) => { acc[s.city] = (acc[s.city] || 0) + 1; return acc; }, {});
+                  const saleCities = allSales.reduce((acc, s) => { acc[s.city] = (acc[s.city] || 0) + 1; return acc; }, {});
+                  const gaps = Object.entries(subCities).map(([city, subs]) => ({ city, subs, sales: saleCities[city] || 0, gap: subs - (saleCities[city] || 0) })).sort((a, b) => b.gap - a.gap).slice(0, 8);
+                  return gaps.length > 0 ? (
+                    <div>
+                      {gaps.map(({ city, subs, sales, gap }) => (
+                        <div key={city} style={{ display: "flex", justifyContent: "space-between", alignItems: "center", padding: "10px 0", borderBottom: "1px solid #f5f5f4" }}>
+                          <span style={{ fontSize: 14, color: "#292524", fontWeight: 500 }}>{city}</span>
+                          <div style={{ display: "flex", gap: 12, alignItems: "center" }}>
+                            <span style={{ fontSize: 12, color: "#059669" }}>🔔 {subs} subs</span>
+                            <span style={{ fontSize: 12, color: "#78716c" }}>🏠 {sales} sales</span>
+                            <span style={{ fontSize: 12, fontWeight: 700, color: "#b91c1c", background: "#fef2f2", padding: "2px 8px", borderRadius: 20 }}>+{gap} gap</span>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  ) : <p style={{ color: "#78716c", fontSize: 13 }}>No data yet</p>;
+                })()}
+              </div>
+
+              {/* Most Active Sellers */}
+              <div style={{ background: "white", borderRadius: 12, border: "1px solid #e7e5e4", padding: 20, marginBottom: 24 }}>
+                <h3 style={{ fontFamily: "'Cormorant Garamond', serif", fontSize: 20, color: "#292524", marginBottom: 16 }}>🏆 Most Active Sellers</h3>
+                {(() => {
+                  const sellers = allSales.reduce((acc, s) => { const key = s.user_id || "guest"; acc[key] = (acc[key] || { count: 0, name: s.name || "Guest" }); acc[key].count++; return acc; }, {});
+                  return Object.entries(sellers).sort((a, b) => b[1].count - a[1].count).slice(0, 10).map(([id, data], i) => (
+                    <div key={id} style={{ display: "flex", justifyContent: "space-between", alignItems: "center", padding: "8px 0", borderBottom: "1px solid #f5f5f4" }}>
+                      <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
+                        <span style={{ fontSize: 16, width: 24, textAlign: "center" }}>{["🥇","🥈","🥉"][i] || "•"}</span>
+                        <span style={{ fontSize: 14, color: "#292524" }}>{data.name}</span>
+                      </div>
+                      <span style={{ fontSize: 13, fontWeight: 700, color: "#d97706", background: "#fffbeb", padding: "2px 10px", borderRadius: 20 }}>{data.count} sale{data.count > 1 ? "s" : ""}</span>
+                    </div>
+                  ));
+                })()}
+                {allSales.length === 0 && <p style={{ color: "#78716c", fontSize: 13 }}>No data yet</p>}
+              </div>
+
+              {/* Peak Posting Times */}
+              <div style={{ background: "white", borderRadius: 12, border: "1px solid #e7e5e4", padding: 20, marginBottom: 24 }}>
+                <h3 style={{ fontFamily: "'Cormorant Garamond', serif", fontSize: 20, color: "#292524", marginBottom: 16 }}>⏰ Peak Posting Days</h3>
+                {(() => {
+                  const days = ["Sun","Mon","Tue","Wed","Thu","Fri","Sat"];
+                  const counts = days.map((day, i) => ({ day, count: allSales.filter(s => s.created_at && new Date(s.created_at).getDay() === i).length }));
+                  const max = Math.max(...counts.map(c => c.count), 1);
+                  return (
+                    <div style={{ display: "flex", gap: 8, alignItems: "flex-end", height: 100 }}>
+                      {counts.map(({ day, count }) => (
+                        <div key={day} style={{ flex: 1, display: "flex", flexDirection: "column", alignItems: "center", gap: 4 }}>
+                          <span style={{ fontSize: 11, color: "#b91c1c", fontWeight: 700 }}>{count > 0 ? count : ""}</span>
+                          <div style={{ width: "100%", background: count > 0 ? "#d97706" : "#f5f5f4", borderRadius: 4, height: `${Math.max((count / max) * 80, 4)}px` }} />
+                          <span style={{ fontSize: 11, color: "#78716c" }}>{day}</span>
+                        </div>
+                      ))}
+                    </div>
+                  );
+                })()}
+              </div>
+              </>}
+
               {/* ===== USERS TAB ===== */}
               {adminTab === "users" && <>
               <div style={{ marginBottom: 36 }}>
@@ -1485,7 +1583,7 @@ export default function App() {
                     <table style={{ width: "100%", borderCollapse: "collapse" }}>
                       <thead>
                         <tr style={{ background: "#fdfaf5", borderBottom: "1px solid #e7e5e4" }}>
-                          {["Email", "Status", "Signed Up", "Last Sign In"].map(h => (
+                          {["Email", "Status", "Signed Up", "Last Sign In", "Action"].map(h => (
                             <th key={h} style={{ padding: "12px 16px", textAlign: "left", fontSize: 11, fontWeight: 600, color: "#78716c", letterSpacing: 0.8, textTransform: "uppercase" }}>{h}</th>
                           ))}
                         </tr>
@@ -1609,6 +1707,71 @@ export default function App() {
               </div>
               <div style={{ background: "#fffbeb", border: "1px solid #fde68a", borderRadius: 10, padding: "14px 18px" }}>
                 <p style={{ fontSize: 13, color: "#92400e" }}>⚠️ This will send a real email to every subscriber. Double-check your message before sending!</p>
+              </div>
+              </>}
+
+              {/* ===== MODERATION TAB ===== */}
+              {adminTab === "moderation" && <>
+              <div style={{ background: "white", borderRadius: 12, border: "1px solid #e7e5e4", padding: 20, marginBottom: 24 }}>
+                <h3 style={{ fontFamily: "'Cormorant Garamond', serif", fontSize: 20, color: "#292524", marginBottom: 6 }}>🚨 Flag a Listing</h3>
+                <p style={{ color: "#78716c", fontSize: 13, marginBottom: 16 }}>Mark listings as inappropriate for review</p>
+                <div style={{ background: "white", borderRadius: 12, border: "1px solid #e7e5e4", overflow: "hidden" }}>
+                  <table style={{ width: "100%", borderCollapse: "collapse" }}>
+                    <thead>
+                      <tr style={{ background: "#fdfaf5", borderBottom: "1px solid #e7e5e4" }}>
+                        {["Title", "City", "Date", "Status", "Action"].map(h => (
+                          <th key={h} style={{ padding: "12px 16px", textAlign: "left", fontSize: 11, fontWeight: 600, color: "#78716c", letterSpacing: 0.8, textTransform: "uppercase" }}>{h}</th>
+                        ))}
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {allSales.map((s, i) => (
+                        <tr key={s.id} style={{ borderBottom: "1px solid #f5f5f4", background: flaggedSales.includes(s.id) ? "#fff7f7" : i % 2 === 0 ? "white" : "#fdfaf5" }}>
+                          <td style={{ padding: "12px 16px", fontSize: 14, color: "#292524", fontWeight: 500 }}>{s.title}</td>
+                          <td style={{ padding: "12px 16px", fontSize: 13, color: "#78716c" }}>{s.city}</td>
+                          <td style={{ padding: "12px 16px", fontSize: 13, color: "#78716c" }}>{s.date}</td>
+                          <td style={{ padding: "12px 16px" }}>
+                            {flaggedSales.includes(s.id) ? (
+                              <span style={{ fontSize: 12, background: "#fef2f2", color: "#b91c1c", padding: "2px 8px", borderRadius: 20, fontWeight: 600 }}>🚩 Flagged</span>
+                            ) : (
+                              <span style={{ fontSize: 12, background: "#f0fdf4", color: "#15803d", padding: "2px 8px", borderRadius: 20 }}>✅ Clean</span>
+                            )}
+                          </td>
+                          <td style={{ padding: "12px 16px" }}>
+                            <div style={{ display: "flex", gap: 6 }}>
+                              {flaggedSales.includes(s.id) ? (
+                                <>
+                                  <button onClick={() => setFlaggedSales(f => f.filter(id => id !== s.id))} style={{ fontSize: 11, padding: "3px 8px", borderRadius: 6, border: "1px solid #059669", background: "#f0fdf4", color: "#059669", cursor: "pointer" }}>✅ Clear</button>
+                                  <button onClick={async () => { if(confirm("Delete this listing permanently?")) { await api.deleteSale(s.id); setFlaggedSales(f => f.filter(id => id !== s.id)); loadAdminData(); }}} style={{ fontSize: 11, padding: "3px 8px", borderRadius: 6, border: "1px solid #b91c1c", background: "#fef2f2", color: "#b91c1c", cursor: "pointer" }}>🗑️ Delete</button>
+                                </>
+                              ) : (
+                                <button onClick={() => setFlaggedSales(f => [...f, s.id])} style={{ fontSize: 11, padding: "3px 8px", borderRadius: 6, border: "1px solid #f59e0b", background: "#fffbeb", color: "#d97706", cursor: "pointer" }}>🚩 Flag</button>
+                              )}
+                            </div>
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                  {allSales.length === 0 && <p style={{ padding: "20px", color: "#78716c", textAlign: "center" }}>No listings yet</p>}
+                </div>
+              </div>
+
+              {/* Banned Users Summary */}
+              <div style={{ background: "white", borderRadius: 12, border: "1px solid #e7e5e4", padding: 20, marginBottom: 24 }}>
+                <h3 style={{ fontFamily: "'Cormorant Garamond', serif", fontSize: 20, color: "#292524", marginBottom: 16 }}>🚫 Banned Users ({bannedUsers.length})</h3>
+                {bannedUsers.length === 0 ? (
+                  <p style={{ color: "#78716c", fontSize: 13 }}>No banned users</p>
+                ) : (
+                  <div>
+                    {allUsers.filter(u => bannedUsers.includes(u.id)).map(u => (
+                      <div key={u.id} style={{ display: "flex", justifyContent: "space-between", alignItems: "center", padding: "10px 0", borderBottom: "1px solid #f5f5f4" }}>
+                        <span style={{ fontSize: 14, color: "#292524" }}>{u.email}</span>
+                        <button onClick={() => setBannedUsers(b => b.filter(id => id !== u.id))} style={{ fontSize: 11, padding: "3px 8px", borderRadius: 6, border: "1px solid #059669", background: "#f0fdf4", color: "#059669", cursor: "pointer" }}>✅ Unban</button>
+                      </div>
+                    ))}
+                  </div>
+                )}
               </div>
               </>}
 
