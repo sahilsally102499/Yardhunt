@@ -163,6 +163,10 @@ export default function App() {
   const [allSubscribers, setAllSubscribers] = useState<any[]>([]);
   const [allReviews, setAllReviews] = useState<any[]>([]);
   const [adminLoading, setAdminLoading] = useState(false);
+  const [darkMode, setDarkMode] = useState(false);
+  const [installPrompt, setInstallPrompt] = useState<any>(null);
+  const [showInstallBanner, setShowInstallBanner] = useState(false);
+  const [goingList, setGoingList] = useState<number[]>([]);
   const [unlockedSales, setUnlockedSales] = useState<number[]>([]);
   const [photoPackUnlocked, setPhotoPackUnlocked] = useState(false);
   const [form, setForm] = useState({ title:"",name:"",address:"",city:"",province:"",date:"",startTime:"",endTime:"",description:"",tags:[] as string[],photos:[] as string[] });
@@ -283,6 +287,20 @@ export default function App() {
 
   const mySales = sales.filter(s => user && s.user_id === user.id);
 
+  // Countdown timer function
+  const getCountdown = (dateStr: string, startTime: string) => {
+    const saleDate = new Date(dateStr + "T" + (startTime || "08:00") + ":00");
+    const now = new Date();
+    const diff = saleDate.getTime() - now.getTime();
+    if (diff <= 0) return null;
+    const days = Math.floor(diff / (1000 * 60 * 60 * 24));
+    const hours = Math.floor((diff % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
+    const mins = Math.floor((diff % (1000 * 60 * 60)) / (1000 * 60));
+    if (days > 0) return `${days}d ${hours}h`;
+    if (hours > 0) return `${hours}h ${mins}m`;
+    return `${mins}m`;
+  };
+
   const loadAdminData = async () => {
     setAdminLoading(true);
     try {
@@ -293,6 +311,13 @@ export default function App() {
     } catch(e) {}
     setAdminLoading(false);
   };
+
+  // PWA install prompt
+  useEffect(() => {
+    const handler = (e: any) => { e.preventDefault(); setInstallPrompt(e); setShowInstallBanner(true); };
+    window.addEventListener("beforeinstallprompt", handler);
+    return () => window.removeEventListener("beforeinstallprompt", handler);
+  }, []);
 
   // Check for /admin URL
   useEffect(() => {
@@ -403,12 +428,34 @@ export default function App() {
             <span style={{ fontFamily: "'Cormorant Garamond', serif", fontSize: 22, fontWeight: 400, color: "#d97706" }}>.ca</span>
           </div>
         </div>
+        <div style={{ display: "flex", gap: 8, alignItems: "center" }}>
+        <button onClick={() => setDarkMode(d => !d)} style={{ background: "transparent", border: "1px solid rgba(255,255,255,0.1)", borderRadius: 8, cursor: "pointer", padding: "8px 10px", fontSize: 16, transition: "all 0.2s" }} title="Toggle dark mode">
+          {darkMode ? "☀️" : "🌙"}
+        </button>
         <button onClick={() => setMenuOpen(m => !m)} style={{ background: menuOpen ? "rgba(185,28,28,0.2)" : "transparent", border: "1px solid rgba(255,255,255,0.1)", borderRadius: 8, cursor: "pointer", padding: "8px 10px", display: "flex", flexDirection: "column", gap: 4, transition: "all 0.2s" }}>
           <span style={{ display: "block", width: 20, height: 1.5, background: "#f5ddb4", transition: "all 0.25s", opacity: menuOpen ? 0 : 1 }}></span>
           <span style={{ display: "block", width: 20, height: 1.5, background: "#f5ddb4", transition: "all 0.25s", transform: menuOpen ? "rotate(45deg) translate(4px, 4px)" : "none" }}></span>
           <span style={{ display: "block", width: 20, height: 1.5, background: "#f5ddb4", transition: "all 0.25s", transform: menuOpen ? "rotate(-45deg) translate(4px, -4px)" : "none" }}></span>
         </button>
+        </div>
       </header>
+
+      {/* PWA Install Banner */}
+      {showInstallBanner && (
+        <div style={{ background: "#1c1009", borderBottom: "1px solid rgba(255,255,255,0.1)", padding: "10px 20px", display: "flex", alignItems: "center", justifyContent: "space-between", gap: 12 }}>
+          <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
+            <span style={{ fontSize: 20 }}>🍁</span>
+            <div>
+              <p style={{ color: "#f5ddb4", fontSize: 13, fontWeight: 600 }}>Add Yardhunt to your home screen!</p>
+              <p style={{ color: "#78716c", fontSize: 11 }}>Browse sales like an app — fast & easy</p>
+            </div>
+          </div>
+          <div style={{ display: "flex", gap: 8, flexShrink: 0 }}>
+            <button onClick={async () => { if (installPrompt) { installPrompt.prompt(); setShowInstallBanner(false); } }} style={{ background: "#b91c1c", color: "white", border: "none", padding: "8px 14px", borderRadius: 6, cursor: "pointer", fontSize: 13, fontWeight: 600, fontFamily: "'DM Sans', sans-serif" }}>Install</button>
+            <button onClick={() => setShowInstallBanner(false)} style={{ background: "transparent", color: "#78716c", border: "none", padding: "8px", cursor: "pointer", fontSize: 16 }}>✕</button>
+          </div>
+        </div>
+      )}
 
       {/* Menu Overlay */}
       {menuOpen && <div className="menu-overlay" onClick={() => setMenuOpen(false)} />}
@@ -606,6 +653,9 @@ export default function App() {
                         <span style={{ fontSize: 13, color: "#7a5c3a" }}>📍 {sale.city}, {sale.province}</span>
                         <span style={{ fontSize: 13, color: "#7a5c3a" }}>📅 {new Date(sale.date + "T12:00:00").toLocaleDateString("en-CA", { month:"short", day:"numeric" })}</span>
                         {sale.start_time && <span style={{ fontSize: 13, color: "#7a5c3a" }}>⏰ {sale.start_time}</span>}
+                        {getCountdown(sale.date, sale.start_time) && (
+                          <span style={{ fontSize: 12, background: "#fef3c7", color: "#d97706", padding: "2px 8px", borderRadius: 10, fontWeight: 600 }}>⏱️ {getCountdown(sale.date, sale.start_time)}</span>
+                        )}
                       </div>
                       <p style={{ fontSize: 14, color: "#5a4030", lineHeight: 1.5, marginBottom: 10, display: "-webkit-box", WebkitLineClamp: 2, WebkitBoxOrient: "vertical", overflow: "hidden" } as any}>{sale.description}</p>
                       <div style={{ display: "flex", flexWrap: "wrap", gap: 5 }}>
@@ -734,6 +784,27 @@ export default function App() {
               <div style={{ marginTop: 24, padding: "14px", background: "#fff3e0", borderRadius: 6, border: "1px solid #f5c27a" }}>
                 <p style={{ fontSize: 13, color: "#7a4a00", fontStyle: "italic" }}>🍁 Tip: Always confirm details with the seller before heading out. Sales can end early!</p>
               </div>
+              {/* Countdown timer in detail */}
+              {getCountdown(selectedSale.date, selectedSale.start_time) && (
+                <div style={{ marginTop: 16, background: "linear-gradient(135deg, #fef3c7, #fff8e7)", borderRadius: 10, padding: "14px 18px", border: "1px solid #d97706", display: "flex", alignItems: "center", justifyContent: "space-between" }}>
+                  <div>
+                    <p style={{ fontSize: 12, color: "#92400e", fontWeight: 600, letterSpacing: 0.8, textTransform: "uppercase" }}>Sale starts in</p>
+                    <p style={{ fontFamily: "'Cormorant Garamond', serif", fontSize: 28, fontWeight: 700, color: "#d97706" }}>⏱️ {getCountdown(selectedSale.date, selectedSale.start_time)}</p>
+                  </div>
+                  <div style={{ textAlign: "right" }}>
+                    <p style={{ fontSize: 12, color: "#92400e" }}>{new Date(selectedSale.date + "T12:00:00").toLocaleDateString("en-CA", { weekday: "long", month: "long", day: "numeric" })}</p>
+                    {selectedSale.start_time && <p style={{ fontSize: 12, color: "#92400e" }}>Starts at {selectedSale.start_time}</p>}
+                  </div>
+                </div>
+              )}
+
+              {/* I'm Going button */}
+              <div style={{ marginTop: 12 }}>
+                <button onClick={() => setGoingList(g => g.includes(selectedSale.id) ? g.filter(id => id !== selectedSale.id) : [...g, selectedSale.id])} style={{ width: "100%", padding: "13px", borderRadius: 10, border: goingList.includes(selectedSale.id) ? "2px solid #059669" : "2px solid #e7e5e4", background: goingList.includes(selectedSale.id) ? "#f0fdf4" : "white", color: goingList.includes(selectedSale.id) ? "#059669" : "#78716c", fontFamily: "'Cormorant Garamond', serif", fontWeight: 700, fontSize: 17, cursor: "pointer", transition: "all 0.2s" }}>
+                  {goingList.includes(selectedSale.id) ? "✅ I'm Going! (tap to remove)" : "👍 I'm Going to This Sale!"}
+                </button>
+              </div>
+
               <div style={{ marginTop: 16, display: "flex", gap: 10 }}>
                 <button onClick={() => {
                   const url = `${window.location.origin}?sale=${selectedSale.id}`;
