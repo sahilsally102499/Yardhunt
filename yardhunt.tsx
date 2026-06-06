@@ -260,6 +260,11 @@ export default function App() {
   const [view, setView] = useState("browse");
   const [viewHistory, setViewHistory] = useState(["browse"]);
   const [seoCity, setSeoCity] = useState("");
+  const [donationAmount, setDonationAmount] = useState("");
+  const [donationName, setDonationName] = useState("");
+  const [donationMessage, setDonationMessage] = useState("");
+  const [donationLoading, setDonationLoading] = useState(false);
+  const [donationSuccess, setDonationSuccess] = useState(false);
   const [seoProvince, setSeoProvince] = useState("");
   const [sales, setSales] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -389,6 +394,7 @@ export default function App() {
       // Check for ad success
       const params = new URLSearchParams(window.location.search);
       if (params.get("ad_success")) { setAdSuccess(true); setView("advertise"); }
+    if (params.get("donation_success")) { setDonationSuccess(true); }
 
       // Handle listing payment success
       const product = params.get("product");
@@ -1135,6 +1141,60 @@ export default function App() {
               <button className="btn-primary" onClick={() => { setAuthMode("signup"); setView("auth"); }}>🍁 Post Your Sale Free</button>
             </div>
           )}
+
+          {/* Donation Box */}
+          <div style={{ marginTop: 40, background: "linear-gradient(135deg, #1c1009, #2d1b0e)", borderRadius: 12, padding: "32px 28px", textAlign: "center" }}>
+            {donationSuccess ? (
+              <div>
+                <p style={{ fontSize: 48, marginBottom: 12 }}>💝</p>
+                <h3 style={{ fontFamily: "'Playfair Display', serif", fontSize: 26, fontWeight: 900, color: "#f5ddb4", marginBottom: 8 }}>Thank You So Much! 🍁</h3>
+                <p style={{ color: "#a8a29e", fontSize: 15 }}>Your support means everything and helps keep Yardhunt.ca free for all Canadians.</p>
+                <button onClick={() => setDonationSuccess(false)} style={{ marginTop: 16, background: "transparent", border: "1px solid #d97706", color: "#d97706", padding: "8px 20px", borderRadius: 8, cursor: "pointer", fontSize: 14 }}>💝 Donate Again</button>
+              </div>
+            ) : (
+              <>
+                <p style={{ fontSize: 40, marginBottom: 10 }}>💝</p>
+                <h3 style={{ fontFamily: "'Playfair Display', serif", fontSize: 26, fontWeight: 900, color: "#f5ddb4", marginBottom: 8 }}>Support Yardhunt.ca</h3>
+                <p style={{ color: "#a8a29e", fontSize: 14, marginBottom: 24, maxWidth: 420, margin: "0 auto 24px" }}>Love using Yardhunt? Help keep it free for all Canadians with a small tip. Every dollar helps! 🍁</p>
+                {/* Preset amounts */}
+                <div style={{ display: "flex", justifyContent: "center", gap: 10, marginBottom: 16, flexWrap: "wrap" }}>
+                  {[3, 5, 10, 25].map(amt => (
+                    <button key={amt} onClick={() => setDonationAmount(String(amt))} style={{ padding: "10px 20px", borderRadius: 20, border: `2px solid ${donationAmount === String(amt) ? "#d97706" : "rgba(255,255,255,0.15)"}`, background: donationAmount === String(amt) ? "#d97706" : "transparent", color: donationAmount === String(amt) ? "white" : "#f5ddb4", fontSize: 15, fontWeight: 700, cursor: "pointer" }}>
+                      ${amt}
+                    </button>
+                  ))}
+                </div>
+                {/* Custom amount */}
+                <div style={{ display: "flex", alignItems: "center", gap: 8, maxWidth: 280, margin: "0 auto 16px", background: "rgba(255,255,255,0.08)", borderRadius: 10, padding: "4px 16px", border: "1px solid rgba(255,255,255,0.15)" }}>
+                  <span style={{ color: "#f5ddb4", fontSize: 18, fontWeight: 700 }}>$</span>
+                  <input type="number" min="1" placeholder="Custom amount" value={donationAmount} onChange={e => setDonationAmount(e.target.value)} style={{ background: "transparent", border: "none", color: "white", fontSize: 16, width: "100%", outline: "none", padding: "10px 0" }} />
+                  <span style={{ color: "#78716c", fontSize: 13 }}>CAD</span>
+                </div>
+                {/* Optional name + message */}
+                <div style={{ display: "flex", flexDirection: "column", gap: 10, maxWidth: 380, margin: "0 auto 20px" }}>
+                  <input placeholder="Your name (optional)" value={donationName} onChange={e => setDonationName(e.target.value)} style={{ padding: "10px 16px", borderRadius: 8, border: "1px solid rgba(255,255,255,0.15)", background: "rgba(255,255,255,0.08)", color: "white", fontSize: 14 }} />
+                  <input placeholder="Leave a message (optional)" value={donationMessage} onChange={e => setDonationMessage(e.target.value)} style={{ padding: "10px 16px", borderRadius: 8, border: "1px solid rgba(255,255,255,0.15)", background: "rgba(255,255,255,0.08)", color: "white", fontSize: 14 }} />
+                </div>
+                <button disabled={donationLoading || !donationAmount || parseFloat(donationAmount) < 1} onClick={async () => {
+                  setDonationLoading(true);
+                  try {
+                    const res = await fetch("https://rcqlohlftafxicmfjkuf.supabase.co/functions/v1/create-donation-checkout", {
+                      method: "POST",
+                      headers: { "Content-Type": "application/json", "Authorization": `Bearer ${SUPABASE_KEY}` },
+                      body: JSON.stringify({ amount: parseFloat(donationAmount), name: donationName, message: donationMessage })
+                    });
+                    const data = await res.json();
+                    if (data.url) window.location.href = data.url;
+                    else alert("Something went wrong. Please try again.");
+                  } catch(e) { alert("Error. Please try again."); }
+                  setDonationLoading(false);
+                }} style={{ background: donationAmount && parseFloat(donationAmount) >= 1 ? "#d97706" : "rgba(255,255,255,0.1)", color: "white", border: "none", padding: "14px 36px", borderRadius: 10, fontSize: 17, fontWeight: 700, cursor: donationAmount && parseFloat(donationAmount) >= 1 ? "pointer" : "default", fontFamily: "'Cormorant Garamond', serif", transition: "all 0.2s" }}>
+                  {donationLoading ? "Setting up…" : `💝 Donate ${donationAmount ? "$"+donationAmount : ""} CAD`}
+                </button>
+                <p style={{ fontSize: 11, color: "#44403c", marginTop: 12 }}>🔒 Secure payment via Stripe · No account needed</p>
+              </>
+            )}
+          </div>
 
           {/* Notify Me Section */}
           <div style={{ marginTop: 40, background: "linear-gradient(135deg, #1a0a05, #6b1a1a)", borderRadius: 12, padding: "32px 28px", textAlign: "center" }}>
