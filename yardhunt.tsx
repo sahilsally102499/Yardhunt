@@ -125,6 +125,7 @@ export default function App() {
   const [subProvince, setSubProvince] = useState("");
   const [subLoading, setSubLoading] = useState(false);
   const [subSuccess, setSubSuccess] = useState(false);
+  const [menuOpen, setMenuOpen] = useState(false);
   const [form, setForm] = useState({ title:"",name:"",address:"",city:"",province:"",date:"",startTime:"",endTime:"",description:"",tags:[] as string[],photos:[] as string[] });
   const fileInputRef = useRef<HTMLInputElement>(null);
 
@@ -259,57 +260,152 @@ export default function App() {
   return (
     <div style={{ fontFamily: "'Georgia', serif", minHeight: "100vh", background: "#fdf6ec" }}>
       <style>{`
-        @import url('https://fonts.googleapis.com/css2?family=Playfair+Display:wght@700;900&family=Source+Serif+4:ital,wght@0,300;0,400;1,300&display=swap');
+        @import url('https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,400;0,600;0,700;1,400;1,600&family=DM+Sans:wght@300;400;500;600&display=swap');
+        
+        :root {
+          --crimson: #b91c1c;
+          --crimson-dark: #7f1d1d;
+          --crimson-light: #fecaca;
+          --gold: #d97706;
+          --gold-light: #fef3c7;
+          --cream: #fdfaf5;
+          --cream-dark: #f5efe3;
+          --bark: #292524;
+          --bark-mid: #44403c;
+          --bark-light: #78716c;
+          --bark-pale: #e7e5e4;
+        }
+
         * { box-sizing: border-box; margin: 0; padding: 0; }
-        body { background: #fdf6ec; }
-        .card-hover { transition: transform 0.2s, box-shadow 0.2s; cursor: pointer; }
-        .card-hover:hover { transform: translateY(-4px); box-shadow: 0 12px 40px rgba(0,0,0,0.12); }
-        input, select, textarea { font-family: 'Source Serif 4', serif; }
-        .tag-pill { display: inline-block; padding: 3px 10px; border-radius: 20px; font-size: 12px; font-weight: 600; }
-        .btn-primary { background: #c0392b; color: white; border: none; padding: 12px 28px; border-radius: 4px; font-size: 15px; cursor: pointer; font-family: 'Playfair Display', serif; font-weight: 700; transition: background 0.2s; }
-        .btn-primary:hover { background: #96281b; }
-        input[type=text], input[type=email], input[type=password], input[type=date], input[type=time], select, textarea { width: 100%; padding: 10px 14px; border: 1.5px solid #d6c4a8; border-radius: 4px; background: #fffdf8; font-size: 15px; color: #3a2c1a; outline: none; transition: border-color 0.2s; }
-        input:focus, select:focus, textarea:focus { border-color: #c0392b; }
-        label { display: block; font-size: 13px; font-weight: 600; color: #7a5c3a; margin-bottom: 5px; letter-spacing: 0.5px; text-transform: uppercase; }
-        .photo-thumb { position: relative; width: 90px; height: 90px; border-radius: 6px; overflow: hidden; border: 2px solid #e8d9c4; flex-shrink: 0; }
+        body { background: var(--cream); font-family: 'DM Sans', sans-serif; }
+
+        /* Typography */
+        .font-display { font-family: 'Cormorant Garamond', serif; }
+
+        /* Cards */
+        .card { background: white; border-radius: 12px; border: 1px solid var(--bark-pale); transition: all 0.25s cubic-bezier(0.4,0,0.2,1); cursor: pointer; overflow: hidden; }
+        .card:hover { transform: translateY(-3px); box-shadow: 0 20px 48px rgba(41,37,36,0.12); border-color: var(--crimson-light); }
+
+        /* Buttons */
+        .btn-primary { background: var(--crimson); color: white; border: none; padding: 12px 28px; border-radius: 8px; font-size: 15px; cursor: pointer; font-family: 'Cormorant Garamond', serif; font-weight: 700; font-size: 17px; letter-spacing: 0.3px; transition: all 0.2s; box-shadow: 0 2px 8px rgba(185,28,28,0.3); }
+        .btn-primary:hover { background: var(--crimson-dark); transform: translateY(-1px); box-shadow: 0 4px 16px rgba(185,28,28,0.4); }
+        .btn-primary:active { transform: translateY(0); }
+        .btn-secondary { background: white; color: var(--bark); border: 1.5px solid var(--bark-pale); padding: 11px 22px; border-radius: 8px; font-size: 14px; cursor: pointer; font-family: 'DM Sans', sans-serif; font-weight: 500; transition: all 0.2s; }
+        .btn-secondary:hover { border-color: var(--crimson); color: var(--crimson); }
+
+        /* Inputs */
+        input[type=text], input[type=email], input[type=password], input[type=date], input[type=time], select, textarea {
+          width: 100%; padding: 11px 16px; border: 1.5px solid var(--bark-pale); border-radius: 8px;
+          background: white; font-size: 15px; color: var(--bark); outline: none;
+          font-family: 'DM Sans', sans-serif; transition: all 0.2s;
+        }
+        input:focus, select:focus, textarea:focus { border-color: var(--crimson); box-shadow: 0 0 0 3px rgba(185,28,28,0.08); }
+        label { display: block; font-size: 12px; font-weight: 600; color: var(--bark-light); margin-bottom: 6px; letter-spacing: 0.8px; text-transform: uppercase; }
+
+        /* Tags */
+        .tag-pill { display: inline-block; padding: 4px 12px; border-radius: 20px; font-size: 12px; font-weight: 500; letter-spacing: 0.3px; }
+
+        /* Photo upload */
+        .photo-thumb { position: relative; width: 88px; height: 88px; border-radius: 8px; overflow: hidden; border: 2px solid var(--bark-pale); flex-shrink: 0; }
         .photo-thumb img { width: 100%; height: 100%; object-fit: cover; }
-        .photo-remove { position: absolute; top: 3px; right: 3px; background: rgba(0,0,0,0.6); color: white; border: none; border-radius: 50%; width: 20px; height: 20px; font-size: 11px; cursor: pointer; display: flex; align-items: center; justify-content: center; }
-        .upload-zone { border: 2px dashed #d6c4a8; border-radius: 8px; padding: 20px; text-align: center; cursor: pointer; transition: border-color 0.2s; background: #fffdf8; }
-        .upload-zone:hover { border-color: #c0392b; background: #fff5f5; }
-        .lightbox-nav { position: absolute; top: 50%; transform: translateY(-50%); color: white; font-size: 28px; cursor: pointer; border: none; background: rgba(255,255,255,0.15); border-radius: 50%; width: 44px; height: 44px; display: flex; align-items: center; justify-content: center; }
+        .photo-remove { position: absolute; top: 4px; right: 4px; background: rgba(41,37,36,0.7); color: white; border: none; border-radius: 50%; width: 20px; height: 20px; font-size: 10px; cursor: pointer; display: flex; align-items: center; justify-content: center; backdrop-filter: blur(4px); }
+        .upload-zone { border: 2px dashed var(--bark-pale); border-radius: 10px; padding: 24px; text-align: center; cursor: pointer; transition: all 0.2s; background: var(--cream); }
+        .upload-zone:hover { border-color: var(--crimson); background: #fff5f5; }
+
+        /* Nav */
+        .lightbox-nav { position: absolute; top: 50%; transform: translateY(-50%); color: white; font-size: 24px; cursor: pointer; border: none; background: rgba(255,255,255,0.15); border-radius: 50%; width: 40px; height: 40px; display: flex; align-items: center; justify-content: center; backdrop-filter: blur(8px); transition: background 0.2s; }
+        .lightbox-nav:hover { background: rgba(255,255,255,0.3); }
+
+        /* Spinner */
         @keyframes spin { to { transform: rotate(360deg); } }
-        .spinner { width: 40px; height: 40px; border: 4px solid #e8d9c4; border-top-color: #c0392b; border-radius: 50%; animation: spin 0.8s linear infinite; margin: 0 auto; }
+        .spinner { width: 36px; height: 36px; border: 3px solid var(--bark-pale); border-top-color: var(--crimson); border-radius: 50%; animation: spin 0.7s linear infinite; margin: 0 auto; }
+
+        /* Animations */
+        @keyframes fadeUp { from { opacity: 0; transform: translateY(16px); } to { opacity: 1; transform: translateY(0); } }
+        .fade-up { animation: fadeUp 0.4s ease forwards; }
+
+        /* Menu overlay */
+        .menu-overlay { position: fixed; inset: 0; background: rgba(41,37,36,0.5); z-index: 98; backdrop-filter: blur(2px); }
+
+        /* Section headers */
+        .section-divider { display: flex; align-items: center; gap: 16px; margin: 40px 0 24px; }
+        .section-divider::before, .section-divider::after { content: ''; flex: 1; height: 1px; background: var(--bark-pale); }
+
+        /* Scrollbar */
+        ::-webkit-scrollbar { width: 6px; }
+        ::-webkit-scrollbar-track { background: var(--cream); }
+        ::-webkit-scrollbar-thumb { background: var(--bark-pale); border-radius: 3px; }
       `}</style>
 
       {/* Header */}
-      <header style={{ background: "#1a0a05", padding: "0 16px", display: "flex", alignItems: "center", justifyContent: "space-between", height: 56 }}>
-        <div style={{ display: "flex", alignItems: "center", gap: 6, cursor: "pointer", flexShrink: 0 }} onClick={() => { setView("browse"); setSelectedSale(null); }}>
-          <span style={{ fontSize: 20 }}>🍁</span>
-          <span style={{ fontFamily: "'Playfair Display', serif", fontSize: 18, fontWeight: 900, color: "#f5ddb4" }}>Yardhunt.ca</span>
+      <header style={{ background: "#1c1009", padding: "0 20px", display: "flex", alignItems: "center", justifyContent: "space-between", height: 64, position: "relative", zIndex: 100, borderBottom: "1px solid rgba(255,255,255,0.06)" }}>
+        <div style={{ display: "flex", alignItems: "center", gap: 10, cursor: "pointer" }} onClick={() => { setView("browse"); setSelectedSale(null); setMenuOpen(false); }}>
+          <span style={{ fontSize: 24 }}>🍁</span>
+          <div>
+            <span style={{ fontFamily: "'Cormorant Garamond', serif", fontSize: 22, fontWeight: 700, color: "#f5ddb4", letterSpacing: 0.5 }}>Yardhunt</span>
+            <span style={{ fontFamily: "'Cormorant Garamond', serif", fontSize: 22, fontWeight: 400, color: "#d97706" }}>.ca</span>
+          </div>
         </div>
-        <nav style={{ display: "flex", gap: 2, alignItems: "center", overflowX: "auto" }}>
-          <button onClick={() => { setView("browse"); setSelectedSale(null); }} style={{ background: view==="browse" ? "#c0392b" : "transparent", color: view==="browse" ? "white" : "#f5ddb4", border: "none", padding: "6px 10px", borderRadius: 4, cursor: "pointer", fontFamily: "'Playfair Display', serif", fontWeight: 700, fontSize: 12, whiteSpace: "nowrap" }}>Browse</button>
-          <button onClick={() => setView("map")} style={{ background: view==="map" ? "#c0392b" : "transparent", color: view==="map" ? "white" : "#f5ddb4", border: "none", padding: "6px 10px", borderRadius: 4, cursor: "pointer", fontFamily: "'Playfair Display', serif", fontWeight: 700, fontSize: 12, whiteSpace: "nowrap" }}>🗺️ Map</button>
-          {user ? (
-            <>
-              <button onClick={() => setView("post")} style={{ background: view==="post" ? "#c0392b" : "transparent", color: view==="post" ? "white" : "#f5ddb4", border: "none", padding: "6px 10px", borderRadius: 4, cursor: "pointer", fontFamily: "'Playfair Display', serif", fontWeight: 700, fontSize: 12, whiteSpace: "nowrap" }}>+ Post</button>
-              <button onClick={() => setView("dashboard")} style={{ background: view==="dashboard" ? "#c0392b" : "transparent", color: view==="dashboard" ? "white" : "#f5ddb4", border: "none", padding: "6px 10px", borderRadius: 4, cursor: "pointer", fontFamily: "'Playfair Display', serif", fontWeight: 700, fontSize: 12, whiteSpace: "nowrap" }}>My Sales</button>
-              <button onClick={handleSignOut} style={{ background: "transparent", color: "#f5ddb455", border: "none", padding: "6px 8px", borderRadius: 4, cursor: "pointer", fontSize: 11, whiteSpace: "nowrap" }}>Log Out</button>
-            </>
-          ) : (
-            <button onClick={() => setView("auth")} style={{ background: "#c0392b", color: "white", border: "none", padding: "6px 12px", borderRadius: 4, cursor: "pointer", fontFamily: "'Playfair Display', serif", fontWeight: 700, fontSize: 12, whiteSpace: "nowrap" }}>Sign In</button>
-          )}
-        </nav>
+        <button onClick={() => setMenuOpen(m => !m)} style={{ background: menuOpen ? "rgba(185,28,28,0.2)" : "transparent", border: "1px solid rgba(255,255,255,0.1)", borderRadius: 8, cursor: "pointer", padding: "8px 10px", display: "flex", flexDirection: "column", gap: 4, transition: "all 0.2s" }}>
+          <span style={{ display: "block", width: 20, height: 1.5, background: "#f5ddb4", transition: "all 0.25s", opacity: menuOpen ? 0 : 1 }}></span>
+          <span style={{ display: "block", width: 20, height: 1.5, background: "#f5ddb4", transition: "all 0.25s", transform: menuOpen ? "rotate(45deg) translate(4px, 4px)" : "none" }}></span>
+          <span style={{ display: "block", width: 20, height: 1.5, background: "#f5ddb4", transition: "all 0.25s", transform: menuOpen ? "rotate(-45deg) translate(4px, -4px)" : "none" }}></span>
+        </button>
       </header>
+
+      {/* Menu Overlay */}
+      {menuOpen && <div className="menu-overlay" onClick={() => setMenuOpen(false)} />}
+
+      {/* Dropdown Menu */}
+      {menuOpen && (
+        <div style={{ position: "fixed", top: 64, right: 0, width: "min(300px, 100vw)", background: "#1c1009", zIndex: 99, borderLeft: "1px solid rgba(255,255,255,0.06)", borderBottom: "1px solid rgba(255,255,255,0.06)", boxShadow: "-8px 8px 40px rgba(0,0,0,0.5)", borderBottomLeftRadius: 16 }}>
+          <div style={{ padding: "8px 0" }}>
+            {[
+              { label: "Browse Sales", icon: "🏠", view: "browse", action: () => { setView("browse"); setSelectedSale(null); } },
+              { label: "Categories", icon: "🗂️", view: "categories", action: () => setView("categories") },
+              { label: "Map View", icon: "🗺️", view: "map", action: () => setView("map") },
+            ].map(item => (
+              <button key={item.view} onClick={() => { item.action(); setMenuOpen(false); }} style={{ display: "flex", alignItems: "center", gap: 12, width: "100%", background: view === item.view ? "rgba(185,28,28,0.2)" : "transparent", color: view === item.view ? "#fca5a5" : "#f5ddb4", border: "none", padding: "14px 20px", textAlign: "left", cursor: "pointer", fontFamily: "'DM Sans', sans-serif", fontWeight: 500, fontSize: 15, borderLeft: view === item.view ? "3px solid #b91c1c" : "3px solid transparent", transition: "all 0.15s" }}>
+                <span style={{ fontSize: 18 }}>{item.icon}</span>
+                {item.label}
+              </button>
+            ))}
+          </div>
+          <div style={{ borderTop: "1px solid rgba(255,255,255,0.08)", padding: "8px 0" }}>
+            {user ? (
+              <>
+                <div style={{ padding: "10px 20px 6px" }}>
+                  <p style={{ fontSize: 11, color: "#78716c", letterSpacing: 0.8, textTransform: "uppercase", fontWeight: 600 }}>My Account</p>
+                </div>
+                <button onClick={() => { setView("post"); setMenuOpen(false); }} style={{ display: "flex", alignItems: "center", gap: 12, width: "100%", background: view === "post" ? "rgba(185,28,28,0.2)" : "transparent", color: view === "post" ? "#fca5a5" : "#f5ddb4", border: "none", padding: "14px 20px", textAlign: "left", cursor: "pointer", fontFamily: "'DM Sans', sans-serif", fontWeight: 500, fontSize: 15, borderLeft: view === "post" ? "3px solid #b91c1c" : "3px solid transparent" }}>
+                  <span style={{ fontSize: 18 }}>➕</span> Post a Sale
+                </button>
+                <button onClick={() => { setView("dashboard"); setMenuOpen(false); }} style={{ display: "flex", alignItems: "center", gap: 12, width: "100%", background: view === "dashboard" ? "rgba(185,28,28,0.2)" : "transparent", color: view === "dashboard" ? "#fca5a5" : "#f5ddb4", border: "none", padding: "14px 20px", textAlign: "left", cursor: "pointer", fontFamily: "'DM Sans', sans-serif", fontWeight: 500, fontSize: 15, borderLeft: view === "dashboard" ? "3px solid #b91c1c" : "3px solid transparent" }}>
+                  <span style={{ fontSize: 18 }}>📋</span> My Sales
+                </button>
+                <div style={{ padding: "8px 20px 12px" }}>
+                  <p style={{ fontSize: 12, color: "#78716c", marginBottom: 8 }}>Signed in as {user.email}</p>
+                  <button onClick={() => { handleSignOut(); setMenuOpen(false); }} style={{ fontSize: 13, color: "#ef4444", background: "none", border: "none", cursor: "pointer", padding: 0, fontFamily: "'DM Sans', sans-serif" }}>Sign out →</button>
+                </div>
+              </>
+            ) : (
+              <div style={{ padding: "12px 20px" }}>
+                <button onClick={() => { setView("auth"); setAuthMode("signup"); setMenuOpen(false); }} className="btn-primary" style={{ width: "100%", marginBottom: 10 }}>🍁 Post Your Sale Free</button>
+                <button onClick={() => { setView("auth"); setAuthMode("login"); setMenuOpen(false); }} className="btn-secondary" style={{ width: "100%" }}>Sign In</button>
+              </div>
+            )}
+          </div>
+        </div>
+      )}
 
       {/* Auth View */}
       {view === "auth" && (
         <main style={{ maxWidth: 420, margin: "0 auto", padding: "50px 20px" }}>
-          <div style={{ background: "white", borderRadius: 8, padding: "36px 28px", boxShadow: "0 4px 24px rgba(0,0,0,0.1)", border: "1px solid #e8d9c4" }}>
-            <div style={{ textAlign: "center", marginBottom: 28 }}>
-              <span style={{ fontSize: 40 }}>🍁</span>
-              <h2 style={{ fontFamily: "'Playfair Display', serif", fontSize: 26, fontWeight: 900, color: "#2d1b0e", marginTop: 8 }}>{authMode === "login" ? "Welcome Back" : "Create Account"}</h2>
-              <p style={{ color: "#7a5c3a", fontSize: 14, marginTop: 4 }}>{authMode === "login" ? "Sign in to post your sale" : "Join Yardhunt.ca for free"}</p>
+          <div style={{ background: "white", borderRadius: 16, padding: "40px 32px", boxShadow: "0 8px 48px rgba(41,37,36,0.12)", border: "1px solid #e7e5e4" }}>
+            <div style={{ textAlign: "center", marginBottom: 32 }}>
+              <div style={{ fontSize: 44, marginBottom: 12 }}>🍁</div>
+              <h2 style={{ fontFamily: "'Cormorant Garamond', serif", fontSize: 30, fontWeight: 700, color: "#292524", marginBottom: 6 }}>{authMode === "login" ? "Welcome Back" : "Create Account"}</h2>
+              <p style={{ color: "#78716c", fontSize: 15 }}>{authMode === "login" ? "Sign in to post your sale" : "Join Canada's garage sale community"}</p>
             </div>
             {authSuccess && <div style={{ background: "#f0fdf4", border: "1px solid #86efac", borderRadius: 6, padding: "12px 14px", marginBottom: 16, fontSize: 14, color: "#166534" }}>{authSuccess}</div>}
             {authError && <div style={{ background: "#fef2f2", border: "1px solid #fca5a5", borderRadius: 6, padding: "12px 14px", marginBottom: 16, fontSize: 14, color: "#991b1b" }}>{authError}</div>}
@@ -338,25 +434,43 @@ export default function App() {
 
       {/* Hero */}
       {view === "browse" && !selectedSale && (
-        <div style={{ background: "linear-gradient(135deg, #1a0a05 0%, #6b1a1a 55%, #c0392b 100%)", padding: "52px 24px 40px", textAlign: "center" }}>
-          <div style={{ display: "flex", alignItems: "center", justifyContent: "center", gap: 8, marginBottom: 10 }}>
-            <span style={{ fontSize: 18 }}>🍁</span>
-            <p style={{ fontFamily: "'Source Serif 4', serif", fontStyle: "italic", color: "#f5ddb4", fontSize: 14, letterSpacing: 2 }}>Canada's garage sale community</p>
-            <span style={{ fontSize: 18 }}>🍁</span>
+        <div style={{ background: "linear-gradient(160deg, #1c1009 0%, #3b0f0f 50%, #7f1d1d 100%)", padding: "56px 24px 48px", textAlign: "center", position: "relative", overflow: "hidden" }}>
+          <div style={{ position: "absolute", inset: 0, backgroundImage: "radial-gradient(ellipse at 20% 50%, rgba(185,28,28,0.15) 0%, transparent 60%), radial-gradient(ellipse at 80% 20%, rgba(217,119,6,0.1) 0%, transparent 50%)", pointerEvents: "none" }} />
+          <div style={{ position: "relative" }}>
+            <div style={{ display: "inline-flex", alignItems: "center", gap: 8, background: "rgba(255,255,255,0.06)", border: "1px solid rgba(255,255,255,0.1)", borderRadius: 20, padding: "6px 16px", marginBottom: 20 }}>
+              <span style={{ fontSize: 14 }}>🍁</span>
+              <p style={{ fontFamily: "'Cormorant Garamond', serif", fontStyle: "italic", color: "#f5ddb4", fontSize: 14, letterSpacing: 1.5 }}>Canada's Garage Sale Community</p>
+              <span style={{ fontSize: 14 }}>🍁</span>
+            </div>
+            <h1 style={{ fontFamily: "'Cormorant Garamond', serif", fontSize: "clamp(32px, 7vw, 60px)", color: "#fff", fontWeight: 600, lineHeight: 1.1, marginBottom: 8, letterSpacing: -0.5 }}>
+              Garage Sales &amp; Yard Sales
+            </h1>
+            <h2 style={{ fontFamily: "'Cormorant Garamond', serif", fontSize: "clamp(20px, 4vw, 32px)", color: "#d97706", fontWeight: 400, fontStyle: "italic", marginBottom: 36, letterSpacing: 0.5 }}>
+              Across Canada 🍁
+            </h2>
+            <div style={{ maxWidth: 580, margin: "0 auto", display: "flex", flexDirection: "column", gap: 10 }}>
+              <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
+                <div style={{ flex: 1, minWidth: 200, position: "relative" }}>
+                  <span style={{ position: "absolute", left: 14, top: "50%", transform: "translateY(-50%)", fontSize: 16 }}>🔍</span>
+                  <input type="text" placeholder="Search sales, items, cities…" value={search} onChange={e => setSearch(e.target.value)} style={{ paddingLeft: 40, background: "rgba(255,255,255,0.95)", border: "none", borderRadius: 10, fontSize: 15, boxShadow: "0 4px 20px rgba(0,0,0,0.2)" }} />
+                </div>
+                <select value={provFilter} onChange={e => setProvFilter(e.target.value)} style={{ width: 140, background: "rgba(255,255,255,0.95)", border: "none", borderRadius: 10, fontSize: 14, boxShadow: "0 4px 20px rgba(0,0,0,0.2)" }}>
+                  <option value="">All Provinces</option>
+                  {provinces.map(p => <option key={p.code} value={p.code}>{p.code} – {p.name}</option>)}
+                </select>
+              </div>
+              <div style={{ display: "flex", gap: 8 }}>
+                <div style={{ flex: 1, position: "relative" }}>
+                  <span style={{ position: "absolute", left: 14, top: "50%", transform: "translateY(-50%)", fontSize: 16 }}>📍</span>
+                  <input type="text" placeholder="Near me — type your city…" value={nearMe} onChange={e => setNearMe(e.target.value)} style={{ paddingLeft: 40, background: "rgba(255,255,255,0.12)", border: "1px solid rgba(255,255,255,0.2)", color: "white", borderRadius: 10, fontSize: 14 }} />
+                </div>
+                {nearMe && <button onClick={() => setNearMe("")} style={{ background: "rgba(255,255,255,0.15)", color: "white", border: "1px solid rgba(255,255,255,0.2)", padding: "11px 14px", borderRadius: 10, cursor: "pointer", fontSize: 13, whiteSpace: "nowrap" }}>✕ Clear</button>}
+              </div>
+            </div>
+            <p style={{ color: "rgba(245,221,180,0.6)", fontSize: 13, marginTop: 20 }}>
+              <span style={{ color: "#d97706", fontWeight: 600 }}>{sales.length}</span> active sale{sales.length !== 1 ? "s" : ""} across Canada • Listings expire automatically
+            </p>
           </div>
-          <h1 style={{ fontFamily: "'Playfair Display', serif", fontSize: "clamp(28px, 6vw, 52px)", color: "#fff", fontWeight: 900, lineHeight: 1.1, marginBottom: 28 }}>Garage Sales &amp;<br />Yard Sales Across Canada</h1>
-          <div style={{ display: "flex", gap: 10, maxWidth: 620, margin: "0 auto", flexWrap: "wrap" }}>
-            <input type="text" placeholder="Search by city, item, or keyword…" value={search} onChange={e => setSearch(e.target.value)} style={{ flex: 1, minWidth: 200, background: "white", border: "none", fontSize: 15, padding: "13px 18px", borderRadius: 4 }} />
-            <select value={provFilter} onChange={e => setProvFilter(e.target.value)} style={{ width: 130, background: "white", border: "none", fontSize: 14, padding: "13px 10px", borderRadius: 4, color: "#3a2c1a" }}>
-              <option value="">All Provinces</option>
-              {provinces.map(p => <option key={p.code} value={p.code}>{p.code} – {p.name}</option>)}
-            </select>
-          </div>
-          <div style={{ maxWidth: 620, margin: "12px auto 0", display: "flex", gap: 10 }}>
-            <input type="text" placeholder="📍 Near me — type your city (e.g. Toronto, Calgary…)" value={nearMe} onChange={e => setNearMe(e.target.value)} style={{ flex: 1, background: "rgba(255,255,255,0.15)", border: "1px solid rgba(255,255,255,0.3)", color: "white", fontSize: 14, padding: "10px 16px", borderRadius: 4 }} />
-            {nearMe && <button onClick={() => setNearMe("")} style={{ background: "rgba(255,255,255,0.2)", color: "white", border: "none", padding: "10px 14px", borderRadius: 4, cursor: "pointer", fontSize: 13 }}>✕ Clear</button>}
-          </div>
-          <p style={{ color: "#f5ddb4", fontSize: 13, marginTop: 16, opacity: 0.8 }}>{sales.length} active sale{sales.length !== 1 ? "s" : ""} • listings expire automatically after sale date</p>
         </div>
       )}
 
@@ -378,7 +492,10 @@ export default function App() {
             </div>
           ) : (
             <>
-              <p style={{ color: "#7a5c3a", fontSize: 14, marginBottom: 20, fontStyle: "italic" }}>{filtered.length} upcoming sale{filtered.length !== 1 ? "s" : ""} found across Canada</p>
+              <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 20 }}>
+                <p style={{ color: "#78716c", fontSize: 14 }}><span style={{ color: "#b91c1c", fontWeight: 600 }}>{filtered.length}</span> upcoming sale{filtered.length !== 1 ? "s" : ""} found across Canada</p>
+                <p style={{ color: "#78716c", fontSize: 12, fontStyle: "italic" }}>Sorted by date</p>
+              </div>
               <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(300px, 1fr))", gap: 24 }}>
                 {filtered.map(sale => (
                   <div key={sale.id} className="card-hover" onClick={() => { setSelectedSale(sale); setPhotoIndex(0); loadReviews(sale.id); setReviewSuccess(false); setReviewComment(''); setReviewRating(5); }} style={{ background: "white", borderRadius: 8, overflow: "hidden", boxShadow: "0 2px 12px rgba(0,0,0,0.08)", border: "1px solid #e8d9c4" }}>
@@ -764,6 +881,70 @@ export default function App() {
       )}
 
 
+      {/* Categories View */}
+      {view === "categories" && (
+        <main style={{ maxWidth: 1100, margin: "0 auto", padding: "36px 20px" }}>
+          <h2 style={{ fontFamily: "'Playfair Display', serif", fontSize: 30, fontWeight: 900, color: "#2d1b0e", marginBottom: 8 }}>🗂️ Browse by Category</h2>
+          <p style={{ color: "#7a5c3a", fontSize: 14, fontStyle: "italic", marginBottom: 28 }}>Find exactly what you're looking for across Canada</p>
+
+          <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(160px, 1fr))", gap: 16, marginBottom: 40 }}>
+            {tagOptions.map(tag => {
+              const count = sales.filter(s => (s.tags || []).includes(tag)).length;
+              const color = tagColors[tag] || "#a08060";
+              return (
+                <div key={tag} className="card-hover" onClick={() => { setSearch(tag); setView("browse"); setSelectedSale(null); }} style={{ background: "white", borderRadius: 10, padding: "20px 16px", textAlign: "center", border: `2px solid ${color}33`, boxShadow: "0 2px 8px rgba(0,0,0,0.06)" }}>
+                  <div style={{ width: 50, height: 50, borderRadius: "50%", background: color + "22", border: `2px solid ${color}55`, display: "flex", alignItems: "center", justifyContent: "center", margin: "0 auto 10px", fontSize: 22 }}>
+                    {tag === "Furniture" ? "🛋️" : tag === "Clothes" ? "👕" : tag === "Tools" ? "🔧" : tag === "Toys" ? "🧸" : tag === "Antiques" ? "🏺" : tag === "Jewelry" ? "💍" : tag === "Art" ? "🎨" : tag === "Books" ? "📚" : tag === "Electronics" ? "💻" : tag === "Sports" ? "⚽" : tag === "Baby" ? "🍼" : tag === "Hockey Gear" ? "🏒" : "📦"}
+                  </div>
+                  <p style={{ fontFamily: "'Playfair Display', serif", fontSize: 14, fontWeight: 700, color: "#2d1b0e", marginBottom: 4 }}>{tag}</p>
+                  <p style={{ fontSize: 12, color: color, fontWeight: 600 }}>{count} sale{count !== 1 ? "s" : ""}</p>
+                </div>
+              );
+            })}
+          </div>
+
+          {/* Featured categories with sales */}
+          {tagOptions.map(tag => {
+            const catSales = sales.filter(s => (s.tags || []).includes(tag));
+            if (catSales.length === 0) return null;
+            const color = tagColors[tag] || "#a08060";
+            return (
+              <div key={tag} style={{ marginBottom: 36 }}>
+                <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 14 }}>
+                  <h3 style={{ fontFamily: "'Playfair Display', serif", fontSize: 20, color: "#2d1b0e" }}>
+                    <span style={{ color }}>{tag === "Furniture" ? "🛋️" : tag === "Clothes" ? "👕" : tag === "Tools" ? "🔧" : tag === "Toys" ? "🧸" : tag === "Antiques" ? "🏺" : tag === "Jewelry" ? "💍" : tag === "Art" ? "🎨" : tag === "Books" ? "📚" : tag === "Electronics" ? "💻" : tag === "Sports" ? "⚽" : tag === "Baby" ? "🍼" : tag === "Hockey Gear" ? "🏒" : "📦"}</span> {tag}
+                  </h3>
+                  <button onClick={() => { setSearch(tag); setView("browse"); }} style={{ background: "none", border: "none", color: "#c0392b", cursor: "pointer", fontSize: 13, fontFamily: "'Playfair Display', serif", fontWeight: 700 }}>See all →</button>
+                </div>
+                <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(260px, 1fr))", gap: 16 }}>
+                  {catSales.slice(0, 3).map(sale => (
+                    <div key={sale.id} className="card-hover" onClick={() => { setSelectedSale(sale); setView("browse"); setPhotoIndex(0); loadReviews(sale.id); }} style={{ background: "white", borderRadius: 8, overflow: "hidden", boxShadow: "0 2px 8px rgba(0,0,0,0.08)", border: `1px solid ${color}33` }}>
+                      <div style={{ background: `linear-gradient(135deg, ${color}33, ${color}55)`, padding: "14px 16px", borderBottom: `2px solid ${color}33` }}>
+                        <p style={{ fontFamily: "'Playfair Display', serif", fontSize: 15, fontWeight: 700, color: "#2d1b0e" }}>{sale.title}</p>
+                        <p style={{ fontSize: 12, color: "#7a5c3a", marginTop: 3 }}>📍 {sale.city}, {sale.province} • 📅 {new Date(sale.date + "T12:00:00").toLocaleDateString("en-CA", { month: "short", day: "numeric" })}</p>
+                      </div>
+                      <div style={{ padding: "10px 16px" }}>
+                        <p style={{ fontSize: 13, color: "#5a4030", lineHeight: 1.4, display: "-webkit-box", WebkitLineClamp: 2, WebkitBoxOrient: "vertical", overflow: "hidden" } as any}>{sale.description || "Come check it out!"}</p>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            );
+          })}
+
+          {sales.length === 0 && (
+            <div style={{ textAlign: "center", padding: "60px 20px" }}>
+              <div style={{ fontSize: 48, marginBottom: 12 }}>🗂️</div>
+              <p style={{ fontFamily: "'Playfair Display', serif", fontSize: 22, color: "#7a5c3a" }}>No sales yet</p>
+              <p style={{ color: "#a08060", marginTop: 8 }}>Be the first to post a sale! 🍁</p>
+              {user && <button className="btn-primary" onClick={() => setView("post")} style={{ marginTop: 16 }}>🍁 Post a Sale</button>}
+            </div>
+          )}
+        </main>
+      )}
+
+
       {/* Map View */}
       {view === "map" && (
         <main style={{ maxWidth: 1100, margin: "0 auto", padding: "36px 20px" }}>
@@ -798,9 +979,34 @@ export default function App() {
       )}
 
 
-      <footer style={{ background: "#1a0a05", padding: "24px", textAlign: "center", marginTop: 60 }}>
-        <p style={{ fontFamily: "'Playfair Display', serif", color: "#f5ddb4", fontSize: 16, fontWeight: 700 }}>🍁 Yardhunt.ca</p>
-        <p style={{ color: "#a08060", fontSize: 12, marginTop: 6, fontStyle: "italic" }}>Connecting Canadians, one great deal at a time.</p>
+      <footer style={{ background: "#1c1009", borderTop: "1px solid rgba(255,255,255,0.06)", padding: "40px 24px", marginTop: 80 }}>
+        <div style={{ maxWidth: 900, margin: "0 auto", display: "flex", flexWrap: "wrap", gap: 32, justifyContent: "space-between", alignItems: "flex-start" }}>
+          <div>
+            <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 10 }}>
+              <span style={{ fontSize: 20 }}>🍁</span>
+              <span style={{ fontFamily: "'Cormorant Garamond', serif", fontSize: 20, fontWeight: 700, color: "#f5ddb4" }}>Yardhunt<span style={{ color: "#d97706" }}>.ca</span></span>
+            </div>
+            <p style={{ color: "#78716c", fontSize: 13, fontStyle: "italic", maxWidth: 240 }}>Canada's community marketplace for garage sales & yard sales.</p>
+          </div>
+          <div style={{ display: "flex", gap: 40, flexWrap: "wrap" }}>
+            <div>
+              <p style={{ color: "#f5ddb4", fontSize: 12, fontWeight: 600, letterSpacing: 1, textTransform: "uppercase", marginBottom: 12 }}>Explore</p>
+              {["Browse Sales", "Categories", "Map View"].map(item => (
+                <p key={item} style={{ color: "#78716c", fontSize: 14, marginBottom: 8, cursor: "pointer" }} onClick={() => { setView(item === "Browse Sales" ? "browse" : item === "Categories" ? "categories" : "map"); setSelectedSale(null); }}>{item}</p>
+              ))}
+            </div>
+            <div>
+              <p style={{ color: "#f5ddb4", fontSize: 12, fontWeight: 600, letterSpacing: 1, textTransform: "uppercase", marginBottom: 12 }}>Sellers</p>
+              {["Post a Sale", "Featured Listings", "My Dashboard"].map(item => (
+                <p key={item} style={{ color: "#78716c", fontSize: 14, marginBottom: 8, cursor: "pointer" }} onClick={() => { if (item === "Post a Sale") setView("post"); else if (item === "My Dashboard") setView("dashboard"); }}>{item}</p>
+              ))}
+            </div>
+          </div>
+        </div>
+        <div style={{ maxWidth: 900, margin: "28px auto 0", paddingTop: 20, borderTop: "1px solid rgba(255,255,255,0.06)", display: "flex", justifyContent: "space-between", alignItems: "center", flexWrap: "wrap", gap: 10 }}>
+          <p style={{ color: "#44403c", fontSize: 12 }}>© 2026 Yardhunt.ca · All rights reserved</p>
+          <p style={{ color: "#44403c", fontSize: 12, fontStyle: "italic" }}>Connecting Canadians, one great deal at a time 🍁</p>
+        </div>
       </footer>
     </div>
   );
