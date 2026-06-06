@@ -134,6 +134,14 @@ const api = {
       body: JSON.stringify(data)
     });
   },
+  async getSaleAnalytics(saleIds) {
+    if (!saleIds.length) return [];
+    const ids = saleIds.join(",");
+    const res = await fetch(`${SUPABASE_URL}/rest/v1/sale_analytics?sale_id=in.(${ids})`, {
+      headers: { apikey: SUPABASE_KEY, Authorization: `Bearer ${SUPABASE_KEY}` }
+    });
+    return res.json();
+  },
   async getSalesBySeller(userId) {
     const res = await fetch(`${SUPABASE_URL}/rest/v1/sales?user_id=eq.${userId}&order=date.desc`, {
       headers: { apikey: SUPABASE_KEY, Authorization: `Bearer ${SUPABASE_KEY}` }
@@ -309,6 +317,9 @@ export default function App() {
   const [searchSuggestions, setSearchSuggestions] = useState([]);
   const [showSuggestions, setShowSuggestions] = useState(false);
   const [viewCounts, setViewCounts] = useState({});
+  const [isRefreshing, setIsRefreshing] = useState(false);
+  const [touchStartY, setTouchStartY] = useState(0);
+  const [saleAnalytics, setSaleAnalytics] = useState({});
   const [unlockedSales, setUnlockedSales] = useState([]);
   const [photoPackUnlocked, setPhotoPackUnlocked] = useState(false);
   const [form, setForm] = useState({ title:"",name:"",address:"",city:"",province:"",date:"",startTime:"",endTime:"",description:"",tags:[],photos:[],extraDate:"",extraDateStart:"",extraDateEnd:"" });
@@ -346,6 +357,13 @@ export default function App() {
     if (view === "dashboard" && user && myS.length > 0) {
       api.getMyQuestions(myS.map(s => s.id)).then(data => {
         setMyQuestions(Array.isArray(data) ? data : []);
+      });
+      api.getSaleAnalytics(myS.map(s => s.id)).then(data => {
+        if (Array.isArray(data)) {
+          const map = {};
+          data.forEach(a => { map[a.sale_id] = a; });
+          setSaleAnalytics(map);
+        }
       });
     }
   }, [view, sales, user]);
@@ -628,7 +646,15 @@ export default function App() {
   };
 
   // Track view count when sale is opened
-  const trackView = (saleId) => {
+  const trackView = async (saleId) => {
+    // Increment in Supabase
+    try {
+      await fetch(`${SUPABASE_URL}/rest/v1/rpc/increment_sale_view`, {
+        method: "POST",
+        headers: { apikey: SUPABASE_KEY, Authorization: `Bearer ${SUPABASE_KEY}`, "Content-Type": "application/json" },
+        body: JSON.stringify({ sale_id_input: saleId })
+      });
+    } catch(e) {}
     setViewCounts(v => ({ ...v, [saleId]: (v[saleId] || Math.floor(Math.random() * 30) + 5) + 1 }));
   };
 
@@ -652,8 +678,25 @@ export default function App() {
     setDeleteConfirm(null);
   };
 
+  const handleTouchStart = (e) => setTouchStartY(e.touches[0].clientY);
+  const handleTouchEnd = async (e) => {
+    const diff = e.changedTouches[0].clientY - touchStartY;
+    if (diff > 80 && window.scrollY === 0 && !isRefreshing) {
+      setIsRefreshing(true);
+      await loadSales();
+      await loadAds();
+      setIsRefreshing(false);
+    }
+  };
+
   return (
-    <div style={{ fontFamily: "'DM Sans', sans-serif", minHeight: "100vh", background: darkMode ? "#0f0a07" : "#fdfaf5", transition: "background 0.3s" }}>
+    <div onTouchStart={handleTouchStart} onTouchEnd={handleTouchEnd} style={{ fontFamily: "'DM Sans', sans-serif", minHeight: "100vh", background: darkMode ? "#0f0a07" : "#fdfaf5", transition: "background 0.3s", paddingBottom: 70 }}>
+      {/* Pull to refresh indicator */}
+      {isRefreshing && (
+        <div style={{ position: "fixed", top: 70, left: "50%", transform: "translateX(-50%)", background: "#1c1009", color: "#f5ddb4", padding: "8px 20px", borderRadius: 20, fontSize: 13, fontWeight: 600, zIndex: 999, boxShadow: "0 4px 16px rgba(0,0,0,0.3)" }}>
+          🔄 Refreshing…
+        </div>
+      )}
       <style>{`
         @import url('https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,400;0,600;0,700;1,400;1,600&family=DM+Sans:wght@300;400;500;600&display=swap');
         
@@ -1530,6 +1573,27 @@ export default function App() {
                           <span key={tag} className="tag-pill" style={{ background: (tagColors[tag] || "#a08060") + "22", color: tagColors[tag] || "#a08060", border: `1px solid ${tagColors[tag] || "#a08060"}55` }}>{tag}</span>
                         ))}
                       </div>
+                      {/* Analytics */}
+                      {saleAnalytics[sale.id] && (
+                        <div style={{ display: "flex", gap: 16, marginTop: 12, padding: "10px 14px", background: "#fdfaf5", borderRadius: 8, border: "1px solid #e7e5e4" }}>
+                          <div style={{ textAlign: "center" }}>
+                            <p style={{ fontSize: 18, fontWeight: 700, color: "#b91c1c", fontFamily: "'Cormorant Garamond', serif" }}>{saleAnalytics[sale.id].views || 0}</p>
+                            <p style={{ fontSize: 11, color: "#78716c" }}>👁️ Views</p>
+                          </div>
+                          <div style={{ textAlign: "center" }}>
+                            <p style={{ fontSize: 18, fontWeight: 700, color: "#059669", fontFamily: "'Cormorant Garamond', serif" }}>{saleAnalytics[sale.id].saves || 0}</p>
+                            <p style={{ fontSize: 11, color: "#78716c" }}>❤️ Saves</p>
+                          </div>
+                          <div style={{ textAlign: "center" }}>
+                            <p style={{ fontSize: 18, fontWeight: 700, color: "#2563eb", fontFamily: "'Cormorant Garamond', serif" }}>{saleAnalytics[sale.id].going || 0}</p>
+                            <p style={{ fontSize: 11, color: "#78716c" }}>👍 Going</p>
+                          </div>
+                          <div style={{ textAlign: "center" }}>
+                            <p style={{ fontSize: 18, fontWeight: 700, color: "#d97706", fontFamily: "'Cormorant Garamond', serif" }}>{saleAnalytics[sale.id].directions || 0}</p>
+                            <p style={{ fontSize: 11, color: "#78716c" }}>🗺️ Directions</p>
+                          </div>
+                        </div>
+                      )}
                     </div>
                     <div style={{ display: "flex", flexDirection: "column", gap: 8, flexShrink: 0 }}>
                       <button onClick={() => { setSelectedSale(sale); setView("browse"); }} style={{ background: "#fdf6ec", color: "#7a5c3a", border: "1px solid #e8d9c4", padding: "8px 14px", borderRadius: 6, cursor: "pointer", fontSize: 13, fontWeight: 600 }}>👁 View</button>
@@ -2706,6 +2770,27 @@ export default function App() {
           <p style={{ color: "#44403c", fontSize: 12, fontStyle: "italic" }}>Connecting Canadians, one great deal at a time 🍁</p>
         </div>
       </footer>
+      {/* ===== BOTTOM NAV BAR (mobile) ===== */}
+      <div style={{ position: "fixed", bottom: 0, left: 0, right: 0, background: darkMode ? "#1c1009" : "white", borderTop: "1px solid #e7e5e4", display: "flex", justifyContent: "space-around", alignItems: "center", padding: "8px 0 calc(8px + env(safe-area-inset-bottom))", zIndex: 100, boxShadow: "0 -4px 20px rgba(0,0,0,0.08)" }}>
+        {[
+          { icon: "🏠", label: "Browse", v: "browse", action: () => { setView("browse"); setSelectedSale(null); } },
+          { icon: "❤️", label: "Saved", v: "favourites", action: () => setView("favourites") },
+          { icon: "➕", label: "Post", v: "post", action: () => user ? setView("post") : (setView("auth"), setAuthMode("signup")) },
+          { icon: "📋", label: "My Sales", v: "dashboard", action: () => user ? setView("dashboard") : (setView("auth"), setAuthMode("login")) },
+          { icon: "🗺️", label: "Map", v: "map", action: () => setView("map") },
+        ].map(item => (
+          <button key={item.v} onClick={item.action} style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 2, background: "none", border: "none", cursor: "pointer", padding: "4px 12px", borderRadius: 10, transition: "all 0.15s" }}>
+            <span style={{ fontSize: 22, filter: (view === item.v || (item.v === "browse" && view === "browse" && selectedSale)) ? "none" : "grayscale(40%)", opacity: view === item.v ? 1 : 0.6 }}>{item.icon}</span>
+            <span style={{ fontSize: 10, fontWeight: 600, color: view === item.v ? "#b91c1c" : darkMode ? "#78716c" : "#a8a29e", letterSpacing: 0.3 }}>{item.label}</span>
+            {view === item.v && <div style={{ width: 4, height: 4, borderRadius: "50%", background: "#b91c1c", marginTop: 1 }} />}
+          </button>
+        ))}
+      </div>
+
+      {/* ===== SELLER ANALYTICS MODAL ===== */}
+      {view === "dashboard" && user && saleAnalytics && Object.keys(saleAnalytics).length > 0 && (
+        <></>
+      )}
     </div>
   );
 }
