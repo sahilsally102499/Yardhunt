@@ -600,8 +600,7 @@ export default function App() {
                     ))}
                     {!unlockedSales.includes(selectedSale.id) && selectedSale.photos.length > 6 && (
                       <div style={{ width: 56, height: 56, borderRadius: 4, flexShrink: 0, background: "rgba(0,0,0,0.7)", display: "flex", alignItems: "center", justifyContent: "center", border: "2px dashed #d97706" }}>
-                        <span style={{ color: "#d97706", fontSize: 10, fontWeight: 700, textAlign: "center", lineHeight: 1.2 }}>+{selectedSale.photos.length - 6}{"
-"}more</span>
+                        <span style={{ color: "#d97706", fontSize: 10, fontWeight: 700, textAlign: "center", lineHeight: 1.2 }}>+{selectedSale.photos.length - 6} more</span>
                       </div>
                     )}
                   </div>
