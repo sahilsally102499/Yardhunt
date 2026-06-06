@@ -735,7 +735,17 @@ export default function App() {
   };
 
   return (
-    <div onTouchStart={handleTouchStart} onTouchEnd={handleTouchEnd} style={{ fontFamily: "'DM Sans', sans-serif", minHeight: "100vh", background: darkMode ? "#0f0a07" : "#fdfaf5", transition: "background 0.3s", paddingBottom: 70 }}>
+    <div onTouchStart={handleTouchStart} onTouchEnd={handleTouchEnd} style={{ fontFamily: "'DM Sans', sans-serif", minHeight: "100vh", paddingBottom: 70, position: "relative" }}>
+      {/* Background image with overlay */}
+      <div style={{ position: "fixed", inset: 0, zIndex: 0,
+        backgroundImage: "url('https://rcqlohlftafxicmfjkuf.supabase.co/storage/v1/object/public/assets/Gemini_Generated_Image_r7ys1er7ys1er7ys.png')",
+        backgroundSize: "cover", backgroundPosition: "center", backgroundAttachment: "fixed",
+        filter: darkMode ? "brightness(0.3) saturate(0.5)" : "brightness(0.85) saturate(0.8)"
+      }} />
+      {/* Dark overlay */}
+      <div style={{ position: "fixed", inset: 0, zIndex: 0, background: darkMode ? "rgba(10,5,0,0.85)" : "rgba(28,16,9,0.55)" }} />
+      {/* Content wrapper */}
+      <div style={{ position: "relative", zIndex: 1 }}>
       {/* Pull to refresh indicator */}
       {isRefreshing && (
         <div style={{ position: "fixed", top: 70, left: "50%", transform: "translateX(-50%)", background: "#1c1009", color: "#f5ddb4", padding: "8px 20px", borderRadius: 20, fontSize: 13, fontWeight: 600, zIndex: 999, boxShadow: "0 4px 16px rgba(0,0,0,0.3)" }}>
@@ -766,20 +776,22 @@ export default function App() {
         .font-display { font-family: 'Cormorant Garamond', serif; }
 
         /* Cards */
-        .card { background: white; border-radius: 12px; border: 1px solid var(--bark-pale); transition: all 0.25s cubic-bezier(0.4,0,0.2,1); cursor: pointer; overflow: hidden; }
-        .card:hover { transform: translateY(-3px); box-shadow: 0 20px 48px rgba(41,37,36,0.12); border-color: var(--crimson-light); }
+        .card { background: rgba(255,255,255,0.85); backdrop-filter: blur(12px); -webkit-backdrop-filter: blur(12px); border-radius: 12px; border: 1px solid rgba(255,255,255,0.4); transition: all 0.25s cubic-bezier(0.4,0,0.2,1); cursor: pointer; overflow: hidden; }
+        .card:hover { transform: translateY(-3px); box-shadow: 0 20px 48px rgba(0,0,0,0.2); border-color: var(--crimson-light); background: rgba(255,255,255,0.92); }
+        .glass { background: rgba(255,255,255,0.82); backdrop-filter: blur(16px); -webkit-backdrop-filter: blur(16px); border: 1px solid rgba(255,255,255,0.35); }
+        .glass-dark { background: rgba(28,16,9,0.75); backdrop-filter: blur(16px); -webkit-backdrop-filter: blur(16px); border: 1px solid rgba(255,255,255,0.08); }
 
         /* Buttons */
         .btn-primary { background: var(--crimson); color: white; border: none; padding: 12px 28px; border-radius: 8px; font-size: 15px; cursor: pointer; font-family: 'Cormorant Garamond', serif; font-weight: 700; font-size: 17px; letter-spacing: 0.3px; transition: all 0.2s; box-shadow: 0 2px 8px rgba(185,28,28,0.3); }
         .btn-primary:hover { background: var(--crimson-dark); transform: translateY(-1px); box-shadow: 0 4px 16px rgba(185,28,28,0.4); }
         .btn-primary:active { transform: translateY(0); }
-        .btn-secondary { background: white; color: var(--bark); border: 1.5px solid var(--bark-pale); padding: 11px 22px; border-radius: 8px; font-size: 14px; cursor: pointer; font-family: 'DM Sans', sans-serif; font-weight: 500; transition: all 0.2s; }
+        .btn-secondary { background: rgba(255,255,255,0.85); backdrop-filter: blur(8px); -webkit-backdrop-filter: blur(8px); color: var(--bark); border: 1.5px solid rgba(255,255,255,0.5); padding: 11px 22px; border-radius: 8px; font-size: 14px; cursor: pointer; font-family: 'DM Sans', sans-serif; font-weight: 500; transition: all 0.2s; }
         .btn-secondary:hover { border-color: var(--crimson); color: var(--crimson); }
 
         /* Inputs */
         input[type=text], input[type=email], input[type=password], input[type=date], input[type=time], select, textarea {
           width: 100%; padding: 11px 16px; border: 1.5px solid var(--bark-pale); border-radius: 8px;
-          background: white; font-size: 15px; color: var(--bark); outline: none;
+          background: rgba(255,255,255,0.9); backdrop-filter: blur(8px); font-size: 15px; color: var(--bark); outline: none;
           font-family: 'DM Sans', sans-serif; transition: all 0.2s;
         }
         input:focus, select:focus, textarea:focus { border-color: var(--crimson); box-shadow: 0 0 0 3px rgba(185,28,28,0.08); }
@@ -909,7 +921,7 @@ export default function App() {
       {/* Auth View */}
       {view === "auth" && (
         <main style={{ maxWidth: 420, margin: "0 auto", padding: "50px 20px" }}>
-          <div style={{ background: "white", borderRadius: 16, padding: "40px 32px", boxShadow: "0 8px 48px rgba(41,37,36,0.12)", border: "1px solid #e7e5e4" }}>
+          <div style={{ background: "rgba(255,255,255,0.88)", backdropFilter: "blur(16px)", WebkitBackdropFilter: "blur(16px)", borderRadius: 16, padding: "40px 32px", boxShadow: "0 8px 48px rgba(0,0,0,0.2)", border: "1px solid rgba(255,255,255,0.4)" }}>
             <div style={{ textAlign: "center", marginBottom: 32 }}>
               <div style={{ fontSize: 44, marginBottom: 12 }}>🍁</div>
               <h2 style={{ fontFamily: "'Cormorant Garamond', serif", fontSize: 30, fontWeight: 700, color: "#292524", marginBottom: 6 }}>{authMode === "login" ? "Welcome Back" : "Create Account"}</h2>
@@ -1081,7 +1093,7 @@ export default function App() {
                     );
                   }
                   acc.push(
-                  <div key={sale.id} className="card-hover" onClick={() => { setSelectedSale(sale); setPhotoIndex(0); loadReviews(sale.id); loadQuestions(sale.id); trackView(sale.id); setReviewSuccess(false); setReviewComment(''); setReviewRating(5); setQuestionText(""); }} style={{ background: "white", borderRadius: 8, overflow: "hidden", boxShadow: sale.is_featured === "premium" ? "0 4px 20px rgba(185,28,28,0.25)" : sale.is_featured === "basic" ? "0 4px 16px rgba(217,119,6,0.2)" : "0 2px 12px rgba(0,0,0,0.08)", border: sale.is_featured === "premium" ? "2px solid #b91c1c" : sale.is_featured === "basic" ? "2px solid #d97706" : "1px solid #e8d9c4", position: "relative" }}>
+                  <div key={sale.id} className="card-hover" onClick={() => { setSelectedSale(sale); setPhotoIndex(0); loadReviews(sale.id); loadQuestions(sale.id); trackView(sale.id); setReviewSuccess(false); setReviewComment(''); setReviewRating(5); setQuestionText(""); }} style={{ background: "rgba(255,255,255,0.88)", backdropFilter: "blur(14px)", WebkitBackdropFilter: "blur(14px)", borderRadius: 8, overflow: "hidden", boxShadow: sale.is_featured === "premium" ? "0 4px 20px rgba(185,28,28,0.35)" : sale.is_featured === "basic" ? "0 4px 16px rgba(217,119,6,0.3)" : "0 2px 16px rgba(0,0,0,0.15)", border: sale.is_featured === "premium" ? "2px solid #b91c1c" : sale.is_featured === "basic" ? "2px solid #d97706" : "1px solid rgba(255,255,255,0.5)", position: "relative" }}>
                     {sale.is_featured === "premium" && <div style={{ position: "absolute", top: 0, left: 0, right: 0, background: "linear-gradient(90deg, #b91c1c, #7f1d1d)", color: "white", fontSize: 10, fontWeight: 700, padding: "3px 10px", textAlign: "center", letterSpacing: 1, zIndex: 2 }}>🌟 PREMIUM FEATURED</div>}
                     {sale.is_featured === "basic" && <div style={{ position: "absolute", top: 0, left: 0, right: 0, background: "linear-gradient(90deg, #d97706, #92400e)", color: "white", fontSize: 10, fontWeight: 700, padding: "3px 10px", textAlign: "center", letterSpacing: 1, zIndex: 2 }}>⭐ FEATURED</div>}
                     {sale.photos && sale.photos.length > 0 ? (
@@ -1135,7 +1147,7 @@ export default function App() {
             </>
           )}
           {!user && sales.length > 0 && (
-            <div style={{ textAlign: "center", marginTop: 40, padding: "28px", background: "white", borderRadius: 8, border: "1px solid #e8d9c4" }}>
+            <div style={{ textAlign: "center", marginTop: 40, padding: "28px", background: "rgba(255,255,255,0.85)", backdropFilter: "blur(12px)", WebkitBackdropFilter: "blur(12px)", borderRadius: 8, border: "1px solid rgba(255,255,255,0.4)" }}>
               <p style={{ fontFamily: "'Playfair Display', serif", fontSize: 18, color: "#2d1b0e", marginBottom: 8 }}>Have a sale coming up?</p>
               <p style={{ color: "#7a5c3a", fontSize: 14, marginBottom: 16 }}>Create a free account to post your sale and reach Canadians near you.</p>
               <button className="btn-primary" onClick={() => { setAuthMode("signup"); setView("auth"); }}>🍁 Post Your Sale Free</button>
@@ -1234,7 +1246,7 @@ export default function App() {
       {view === "browse" && selectedSale && (
         <main style={{ maxWidth: 720, margin: "0 auto", padding: "36px 20px" }}>
           <button onClick={() => setSelectedSale(null)} style={{ background: "none", border: "none", color: "#c0392b", cursor: "pointer", fontSize: 14, fontFamily: "'Playfair Display', serif", fontWeight: 700, marginBottom: 20, display: "flex", alignItems: "center", gap: 6 }}>← Back to listings</button>
-          <div style={{ background: "white", borderRadius: 8, overflow: "hidden", boxShadow: "0 4px 24px rgba(0,0,0,0.1)", border: "1px solid #e8d9c4" }}>
+          <div style={{ background: "rgba(255,255,255,0.9)", backdropFilter: "blur(16px)", WebkitBackdropFilter: "blur(16px)", borderRadius: 8, overflow: "hidden", boxShadow: "0 8px 40px rgba(0,0,0,0.2)", border: "1px solid rgba(255,255,255,0.5)" }}>
             {selectedSale.photos && selectedSale.photos.length > 0 ? (
               <div>
                 <div style={{ position: "relative", height: 280, background: "#1a0a05" }}>
@@ -1427,7 +1439,7 @@ export default function App() {
                 {questions.length > 0 && (
                   <div style={{ marginBottom: 16, display: "flex", flexDirection: "column", gap: 12 }}>
                     {questions.map(q => (
-                      <div key={q.id} style={{ background: "#fdfaf5", borderRadius: 10, padding: "14px 16px", border: "1px solid #e7e5e4" }}>
+                      <div key={q.id} style={{ background: "rgba(253,250,245,0.7)", borderRadius: 10, padding: "14px 16px", border: "1px solid #e7e5e4" }}>
                         <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", marginBottom: 6 }}>
                           <p style={{ fontSize: 14, color: "#292524", fontWeight: 600 }}>❓ {q.question}</p>
                           <span style={{ fontSize: 11, color: "#a8a29e", whiteSpace: "nowrap", marginLeft: 8 }}>{new Date(q.created_at).toLocaleDateString("en-CA")}</span>
@@ -1651,7 +1663,7 @@ export default function App() {
           </div>
 
           {dashTab === "listings" && <>{mySales.length === 0 ? (
-            <div style={{ textAlign: "center", padding: "60px 20px", background: "white", borderRadius: 8, border: "1px solid #e8d9c4" }}>
+            <div style={{ textAlign: "center", padding: "60px 20px", background: "rgba(255,255,255,0.85)", backdropFilter: "blur(12px)", WebkitBackdropFilter: "blur(12px)", borderRadius: 8, border: "1px solid rgba(255,255,255,0.4)" }}>
               <div style={{ fontSize: 48, marginBottom: 12 }}>🏠</div>
               <p style={{ fontFamily: "'Playfair Display', serif", fontSize: 20, color: "#7a5c3a" }}>No sales posted yet</p>
               <p style={{ color: "#a08060", marginTop: 8, marginBottom: 20 }}>Post your first sale and it will appear here!</p>
@@ -1660,7 +1672,7 @@ export default function App() {
           ) : (
             <div style={{ display: "flex", flexDirection: "column", gap: 16 }}>
               {mySales.map(sale => (
-                <div key={sale.id} style={{ background: "white", borderRadius: 8, padding: "20px 24px", boxShadow: "0 2px 12px rgba(0,0,0,0.08)", border: "1px solid #e8d9c4" }}>
+                <div key={sale.id} style={{ background: "rgba(255,255,255,0.88)", backdropFilter: "blur(12px)", WebkitBackdropFilter: "blur(12px)", borderRadius: 8, padding: "20px 24px", boxShadow: "0 4px 20px rgba(0,0,0,0.15)", border: "1px solid rgba(255,255,255,0.4)" }}>
                   <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", gap: 12 }}>
                     <div style={{ flex: 1 }}>
                       <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 4 }}>
@@ -1677,7 +1689,7 @@ export default function App() {
                       </div>
                       {/* Analytics */}
                       {saleAnalytics[sale.id] && (
-                        <div style={{ display: "flex", gap: 16, marginTop: 12, padding: "10px 14px", background: "#fdfaf5", borderRadius: 8, border: "1px solid #e7e5e4" }}>
+                        <div style={{ display: "flex", gap: 16, marginTop: 12, padding: "10px 14px", background: "rgba(253,250,245,0.7)", borderRadius: 8, border: "1px solid #e7e5e4" }}>
                           <div style={{ textAlign: "center" }}>
                             <p style={{ fontSize: 18, fontWeight: 700, color: "#b91c1c", fontFamily: "'Cormorant Garamond', serif" }}>{saleAnalytics[sale.id].views || 0}</p>
                             <p style={{ fontSize: 11, color: "#78716c" }}>👁️ Views</p>
@@ -1748,7 +1760,7 @@ export default function App() {
                 <h3 style={{ fontFamily: "'Cormorant Garamond', serif", fontSize: 22, color: "#292524", marginBottom: 6 }}>💬 Questions from Buyers</h3>
                 <p style={{ color: "#78716c", fontSize: 13, marginBottom: 20 }}>Buyers can ask questions about your listings. Answer them here!</p>
                 {myQuestions.length === 0 ? (
-                  <div style={{ textAlign: "center", padding: "40px 20px", background: "white", borderRadius: 12, border: "1px solid #e7e5e4" }}>
+                  <div style={{ textAlign: "center", padding: "40px 20px", background: "rgba(255,255,255,0.85)", backdropFilter: "blur(14px)", WebkitBackdropFilter: "blur(14px)", borderRadius: 12, border: "1px solid rgba(255,255,255,0.35)" }}>
                     <p style={{ fontSize: 36, marginBottom: 10 }}>💬</p>
                     <p style={{ color: "#78716c", fontSize: 14 }}>No questions yet — they'll appear here when buyers ask!</p>
                   </div>
@@ -1846,7 +1858,7 @@ export default function App() {
                 const weeklyPrice = pricing?.weekly_price || Math.round(monthlyPrice / 4);
                 const price = adForm.billing_period === "weekly" ? weeklyPrice : monthlyPrice;
                 return (
-                  <div key={pkg.type} onClick={() => setAdForm(f => ({...f, package_type: pkg.type}))} style={{ background: "white", borderRadius: 12, padding: "24px", border: adForm.package_type === pkg.type ? `2px solid ${pkg.color}` : "1px solid #e7e5e4", cursor: "pointer", position: "relative", boxShadow: adForm.package_type === pkg.type ? `0 4px 20px ${pkg.color}33` : "none" }}>
+                  <div key={pkg.type} onClick={() => setAdForm(f => ({...f, package_type: pkg.type}))} style={{ background: "rgba(255,255,255,0.85)", backdropFilter: "blur(12px)", WebkitBackdropFilter: "blur(12px)", borderRadius: 12, padding: "24px", border: adForm.package_type === pkg.type ? `2px solid ${pkg.color}` : "1px solid #e7e5e4", cursor: "pointer", position: "relative", boxShadow: adForm.package_type === pkg.type ? `0 4px 20px ${pkg.color}33` : "none" }}>
                     {pkg.best && <div style={{ position: "absolute", top: -10, left: "50%", transform: "translateX(-50%)", background: "#7c3aed", color: "white", fontSize: 10, fontWeight: 700, padding: "3px 12px", borderRadius: 10, whiteSpace: "nowrap" }}>MOST POPULAR</div>}
                     <p style={{ fontSize: 28, marginBottom: 8 }}>{pkg.icon}</p>
                     <p style={{ fontFamily: "'Cormorant Garamond', serif", fontSize: 20, fontWeight: 700, color: "#292524", marginBottom: 4 }}>{pkg.type}</p>
@@ -1971,7 +1983,7 @@ export default function App() {
               ? sales.filter(s => s.province?.toUpperCase() === seoProvince.toUpperCase())
               : sales;
             return cityList.length === 0 ? (
-              <div style={{ textAlign: "center", padding: "48px 20px", background: "white", borderRadius: 12, border: "1px solid #e7e5e4" }}>
+              <div style={{ textAlign: "center", padding: "48px 20px", background: "rgba(255,255,255,0.85)", backdropFilter: "blur(14px)", WebkitBackdropFilter: "blur(14px)", borderRadius: 12, border: "1px solid rgba(255,255,255,0.35)" }}>
                 <p style={{ fontSize: 40, marginBottom: 12 }}>🏠</p>
                 <p style={{ fontFamily: "'Cormorant Garamond', serif", fontSize: 22, color: "#292524", marginBottom: 8 }}>No active sales right now</p>
                 <p style={{ color: "#78716c", fontSize: 14, marginBottom: 20 }}>Be the first to post a sale here!</p>
@@ -1994,7 +2006,7 @@ export default function App() {
           })()}
 
           {/* SEO text block for Google */}
-          <div style={{ marginTop: 48, padding: "28px", background: "#fdfaf5", borderRadius: 12, border: "1px solid #e7e5e4" }}>
+          <div style={{ marginTop: 48, padding: "28px", background: "rgba(253,250,245,0.7)", borderRadius: 12, border: "1px solid #e7e5e4" }}>
             <h2 style={{ fontFamily: "'Playfair Display', serif", fontSize: 22, color: "#2d1b0e", marginBottom: 12 }}>About Garage Sales {seoCity ? `in ${seoCity}` : `in ${seoProvince}`}</h2>
             <p style={{ fontSize: 14, color: "#78716c", lineHeight: 1.8, marginBottom: 12 }}>
               Yardhunt.ca is Canada's dedicated garage sale and yard sale marketplace. Browse upcoming garage sales {seoCity ? `in ${seoCity}` : `across ${seoProvince}`}, find great deals on furniture, clothes, tools, electronics and more — all in one place.
@@ -2034,7 +2046,7 @@ export default function App() {
           <h2 style={{ fontFamily: "'Playfair Display', serif", fontSize: 30, fontWeight: 900, color: "#2d1b0e", marginBottom: 8 }}>❤️ Saved Sales</h2>
           <p style={{ color: "#78716c", fontSize: 14, marginBottom: 28 }}>Sales you've saved for later</p>
           {favourites.length === 0 ? (
-            <div style={{ textAlign: "center", padding: "60px 20px", background: "white", borderRadius: 12, border: "1px solid #e7e5e4" }}>
+            <div style={{ textAlign: "center", padding: "60px 20px", background: "rgba(255,255,255,0.85)", backdropFilter: "blur(14px)", WebkitBackdropFilter: "blur(14px)", borderRadius: 12, border: "1px solid rgba(255,255,255,0.35)" }}>
               <p style={{ fontSize: 40, marginBottom: 12 }}>🤍</p>
               <p style={{ fontFamily: "'Cormorant Garamond', serif", fontSize: 22, color: "#292524", marginBottom: 8 }}>No saved sales yet</p>
               <p style={{ color: "#78716c", fontSize: 14, marginBottom: 20 }}>Tap the 🤍 on any sale card to save it here</p>
@@ -2082,7 +2094,7 @@ export default function App() {
                 <p style={{ color: "#a8a29e", fontSize: 14 }}>No active sales from this seller.</p>
               ) : (
                 sales.filter(s => s.user_id === sellerProfileId).map(sale => (
-                  <div key={sale.id} onClick={() => { setSelectedSale(sale); setSellerProfileId(null); setPhotoIndex(0); loadReviews(sale.id); }} style={{ padding: "14px", borderRadius: 10, border: "1px solid #e7e5e4", marginBottom: 10, cursor: "pointer", background: "#fdfaf5" }}>
+                  <div key={sale.id} onClick={() => { setSelectedSale(sale); setSellerProfileId(null); setPhotoIndex(0); loadReviews(sale.id); }} style={{ padding: "14px", borderRadius: 10, border: "1px solid #e7e5e4", marginBottom: 10, cursor: "pointer", background: "rgba(253,250,245,0.7)" }}>
                     <p style={{ fontFamily: "'Cormorant Garamond', serif", fontSize: 16, fontWeight: 700, color: "#292524", marginBottom: 4 }}>{sale.title}</p>
                     <p style={{ fontSize: 13, color: "#78716c" }}>📍 {sale.city} · 📅 {new Date(sale.date+"T12:00:00").toLocaleDateString("en-CA",{month:"short",day:"numeric"})}</p>
                   </div>
@@ -2108,7 +2120,7 @@ export default function App() {
                 <div><label>City</label><input value={editForm.city} onChange={e=>setEditForm(f=>({...f,city:e.target.value}))} /></div>
               </div>
               {/* Day 1 */}
-              <div style={{ background: "#fdfaf5", borderRadius: 8, padding: "14px", border: "1px solid #e7e5e4" }}>
+              <div style={{ background: "rgba(253,250,245,0.7)", borderRadius: 8, padding: "14px", border: "1px solid #e7e5e4" }}>
                 <p style={{ fontSize: 12, fontWeight: 700, color: "#78716c", marginBottom: 10, textTransform: "uppercase", letterSpacing: 0.8 }}>📅 Day 1</p>
                 <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: 8 }}>
                   <div><label style={{fontSize:11}}>Date *</label><input type="date" value={editForm.date} onChange={e=>setEditForm(f=>({...f,date:e.target.value}))} style={{fontSize:12,padding:"8px 6px"}} /></div>
@@ -2117,7 +2129,7 @@ export default function App() {
                 </div>
               </div>
               {/* Day 2 */}
-              <div style={{ background: "#fdfaf5", borderRadius: 8, padding: "14px", border: "1px solid #e7e5e4" }}>
+              <div style={{ background: "rgba(253,250,245,0.7)", borderRadius: 8, padding: "14px", border: "1px solid #e7e5e4" }}>
                 <label style={{ fontSize: 12, fontWeight: 700, color: "#78716c", display: "flex", alignItems: "center", gap: 8, cursor: "pointer", marginBottom: 10 }}>
                   <input type="checkbox" checked={!!editForm.extraDate} onChange={e => setEditForm(f=>({...f, extraDate: e.target.checked ? f.date : "", extraDateStart: "", extraDateEnd: ""}))} />
                   <span>📅 2-Day Sale — Add Second Day</span>
@@ -2279,7 +2291,7 @@ export default function App() {
       {view === "admin" && (
         <main style={{ maxWidth: 1000, margin: "0 auto", padding: "40px 20px" }}>
           {!adminUnlocked ? (
-            <div style={{ maxWidth: 400, margin: "60px auto", background: "white", borderRadius: 16, padding: "40px 32px", boxShadow: "0 8px 48px rgba(41,37,36,0.12)", border: "1px solid #e7e5e4", textAlign: "center" }}>
+            <div style={{ maxWidth: 400, margin: "60px auto", background: "rgba(255,255,255,0.88)", backdropFilter: "blur(16px)", WebkitBackdropFilter: "blur(16px)", borderRadius: 16, padding: "40px 32px", boxShadow: "0 8px 48px rgba(0,0,0,0.2)", border: "1px solid rgba(255,255,255,0.4)", textAlign: "center" }}>
               <div style={{ fontSize: 48, marginBottom: 16 }}>🔐</div>
               <h2 style={{ fontFamily: "'Cormorant Garamond', serif", fontSize: 28, fontWeight: 700, color: "#292524", marginBottom: 8 }}>Admin Access</h2>
               <p style={{ color: "#78716c", fontSize: 14, marginBottom: 24 }}>Enter your admin password to continue</p>
@@ -2331,7 +2343,7 @@ export default function App() {
                   { label: "Subscribers", value: allSubscribers.length, icon: "🔔", color: "#059669" },
                   { label: "Reviews", value: allReviews.length, icon: "⭐", color: "#7c3aed" },
                 ].map(stat => (
-                  <div key={stat.label} style={{ background: "white", borderRadius: 12, padding: "20px", border: "1px solid #e7e5e4", boxShadow: "0 2px 8px rgba(0,0,0,0.04)" }}>
+                  <div key={stat.label} style={{ background: "rgba(255,255,255,0.85)", backdropFilter: "blur(12px)", WebkitBackdropFilter: "blur(12px)", borderRadius: 12, padding: "20px", border: "1px solid #e7e5e4", boxShadow: "0 2px 8px rgba(0,0,0,0.04)" }}>
                     <div style={{ fontSize: 28, marginBottom: 8 }}>{stat.icon}</div>
                     <p style={{ fontSize: 28, fontWeight: 700, color: stat.color, fontFamily: "'Cormorant Garamond', serif" }}>{stat.value}</p>
                     <p style={{ fontSize: 12, color: "#78716c", fontWeight: 500 }}>{stat.label}</p>
@@ -2361,7 +2373,7 @@ export default function App() {
 
               {/* Sales by City */}
               <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 16, marginBottom: 36 }}>
-                <div style={{ background: "white", borderRadius: 12, border: "1px solid #e7e5e4", padding: 20 }}>
+                <div style={{ background: "rgba(255,255,255,0.85)", backdropFilter: "blur(14px)", WebkitBackdropFilter: "blur(14px)", borderRadius: 12, border: "1px solid rgba(255,255,255,0.35)", padding: 20 }}>
                   <h3 style={{ fontFamily: "'Cormorant Garamond', serif", fontSize: 18, color: "#292524", marginBottom: 14 }}>📍 Sales by City</h3>
                   {Object.entries(allSales.reduce((acc, s) => { acc[s.city] = (acc[s.city] || 0) + 1; return acc; }, {}))
                     .sort((a, b) => b[1] - a[1]).slice(0, 8)
@@ -2374,7 +2386,7 @@ export default function App() {
                   }
                   {allSales.length === 0 && <p style={{ color: "#78716c", fontSize: 13 }}>No data yet</p>}
                 </div>
-                <div style={{ background: "white", borderRadius: 12, border: "1px solid #e7e5e4", padding: 20 }}>
+                <div style={{ background: "rgba(255,255,255,0.85)", backdropFilter: "blur(14px)", WebkitBackdropFilter: "blur(14px)", borderRadius: 12, border: "1px solid rgba(255,255,255,0.35)", padding: 20 }}>
                   <h3 style={{ fontFamily: "'Cormorant Garamond', serif", fontSize: 18, color: "#292524", marginBottom: 14 }}>🗺️ Sales by Province</h3>
                   {Object.entries(allSales.reduce((acc, s) => { acc[s.province] = (acc[s.province] || 0) + 1; return acc; }, {}))
                     .sort((a, b) => b[1] - a[1])
@@ -2390,7 +2402,7 @@ export default function App() {
               </div>
 
               {/* Listing Pricing Controls */}
-              <div style={{ background: "white", borderRadius: 12, border: "1px solid #e7e5e4", padding: 24, marginBottom: 36 }}>
+              <div style={{ background: "rgba(255,255,255,0.85)", backdropFilter: "blur(14px)", WebkitBackdropFilter: "blur(14px)", borderRadius: 12, border: "1px solid rgba(255,255,255,0.35)", padding: 24, marginBottom: 36 }}>
                 <h3 style={{ fontFamily: "'Cormorant Garamond', serif", fontSize: 20, color: "#292524", marginBottom: 6 }}>💰 Listing Feature Prices</h3>
                 <p style={{ color: "#78716c", fontSize: 13, marginBottom: 20 }}>Change prices — updates live on the site instantly. Press Enter or click outside to save.</p>
                 <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(180px, 1fr))", gap: 14 }}>
@@ -2401,7 +2413,7 @@ export default function App() {
                     { key: "photo_unlock", label: "🔓 Photo Unlock", icon: "🔓" },
                     { key: "verified_badge", label: "✅ Verified Badge", icon: "✅" },
                   ].map(item => (
-                    <div key={item.key} style={{ background: "#fdfaf5", borderRadius: 10, padding: "14px", border: "1px solid #e7e5e4" }}>
+                    <div key={item.key} style={{ background: "rgba(253,250,245,0.7)", borderRadius: 10, padding: "14px", border: "1px solid #e7e5e4" }}>
                       <p style={{ fontSize: 18, marginBottom: 6 }}>{item.icon}</p>
                       <p style={{ fontSize: 12, fontWeight: 700, color: "#78716c", marginBottom: 8 }}>{item.label}</p>
                       <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
@@ -2428,7 +2440,7 @@ export default function App() {
               </div>
 
               {/* Featured Purchases */}
-              <div style={{ background: "white", borderRadius: 12, border: "1px solid #e7e5e4", padding: 20, marginBottom: 36 }}>
+              <div style={{ background: "rgba(255,255,255,0.85)", backdropFilter: "blur(14px)", WebkitBackdropFilter: "blur(14px)", borderRadius: 12, border: "1px solid rgba(255,255,255,0.35)", padding: 20, marginBottom: 36 }}>
                 <h3 style={{ fontFamily: "'Cormorant Garamond', serif", fontSize: 18, color: "#292524", marginBottom: 14 }}>💰 Featured Listings</h3>
                 <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(160px, 1fr))", gap: 12 }}>
                   {[
@@ -2436,7 +2448,7 @@ export default function App() {
                     { label: "Premium Featured", icon: "🌟", price: "$14.99", count: allSales.filter(s => s.is_featured === "premium").length, color: "#7c3aed" },
                     { label: "Verified Badge", icon: "✅", price: "$4.99", count: allSales.filter(s => s.is_verified).length, color: "#059669" },
                   ].map(item => (
-                    <div key={item.label} style={{ background: "#fdfaf5", borderRadius: 10, padding: "16px", border: "1px solid #e7e5e4", textAlign: "center" }}>
+                    <div key={item.label} style={{ background: "rgba(253,250,245,0.7)", borderRadius: 10, padding: "16px", border: "1px solid #e7e5e4", textAlign: "center" }}>
                       <p style={{ fontSize: 24, marginBottom: 6 }}>{item.icon}</p>
                       <p style={{ fontSize: 22, fontWeight: 700, color: item.color, fontFamily: "'Cormorant Garamond', serif" }}>{item.count}</p>
                       <p style={{ fontSize: 12, color: "#78716c", marginBottom: 2 }}>{item.label}</p>
@@ -2477,13 +2489,13 @@ export default function App() {
               </div>
 
               {/* Popular Tags */}
-              <div style={{ background: "white", borderRadius: 12, border: "1px solid #e7e5e4", padding: 20, marginBottom: 36 }}>
+              <div style={{ background: "rgba(255,255,255,0.85)", backdropFilter: "blur(14px)", WebkitBackdropFilter: "blur(14px)", borderRadius: 12, border: "1px solid rgba(255,255,255,0.35)", padding: 20, marginBottom: 36 }}>
                 <h3 style={{ fontFamily: "'Cormorant Garamond', serif", fontSize: 18, color: "#292524", marginBottom: 14 }}>🏷️ Most Popular Categories</h3>
                 <div style={{ display: "flex", flexWrap: "wrap", gap: 8 }}>
                   {Object.entries(
                     allSales.flatMap(s => s.tags || []).reduce((acc, tag) => { acc[tag] = (acc[tag] || 0) + 1; return acc; }, {})
                   ).sort((a, b) => b[1] - a[1]).map(([tag, count]) => (
-                    <span key={tag} style={{ background: "#fdfaf5", border: "1px solid #e7e5e4", borderRadius: 20, padding: "6px 14px", fontSize: 13, color: "#292524" }}>
+                    <span key={tag} style={{ background: "rgba(253,250,245,0.7)", border: "1px solid #e7e5e4", borderRadius: 20, padding: "6px 14px", fontSize: 13, color: "#292524" }}>
                       {tag} <strong style={{ color: "#b91c1c" }}>{count}</strong>
                     </span>
                   ))}
@@ -2492,7 +2504,7 @@ export default function App() {
               </div>
 
               {/* Business Insights */}
-              <div style={{ background: "white", borderRadius: 12, border: "1px solid #e7e5e4", padding: 20, marginBottom: 36 }}>
+              <div style={{ background: "rgba(255,255,255,0.85)", backdropFilter: "blur(14px)", WebkitBackdropFilter: "blur(14px)", borderRadius: 12, border: "1px solid rgba(255,255,255,0.35)", padding: 20, marginBottom: 36 }}>
                 <h3 style={{ fontFamily: "'Cormorant Garamond', serif", fontSize: 18, color: "#292524", marginBottom: 14 }}>💡 Business Insights</h3>
                 <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(200px, 1fr))", gap: 12 }}>
                   {[
@@ -2501,7 +2513,7 @@ export default function App() {
                     { label: "Cities Covered", value: new Set(allSales.map(s => s.city)).size, icon: "🏙️" },
                     { label: "Avg Reviews/Sale", value: allSales.length > 0 ? (allReviews.length / allSales.length).toFixed(1) : "0", icon: "⭐" },
                   ].map(item => (
-                    <div key={item.label} style={{ background: "#fdfaf5", borderRadius: 10, padding: "16px", border: "1px solid #e7e5e4" }}>
+                    <div key={item.label} style={{ background: "rgba(253,250,245,0.7)", borderRadius: 10, padding: "16px", border: "1px solid #e7e5e4" }}>
                       <p style={{ fontSize: 22, marginBottom: 6 }}>{item.icon}</p>
                       <p style={{ fontSize: 24, fontWeight: 700, color: "#292524", fontFamily: "'Cormorant Garamond', serif" }}>{item.value}</p>
                       <p style={{ fontSize: 12, color: "#78716c" }}>{item.label}</p>
@@ -2516,7 +2528,7 @@ export default function App() {
               {adminTab === "analytics" && <>
 
               {/* Sales per day chart */}
-              <div style={{ background: "white", borderRadius: 12, border: "1px solid #e7e5e4", padding: 20, marginBottom: 24 }}>
+              <div style={{ background: "rgba(255,255,255,0.85)", backdropFilter: "blur(14px)", WebkitBackdropFilter: "blur(14px)", borderRadius: 12, border: "1px solid rgba(255,255,255,0.35)", padding: 20, marginBottom: 24 }}>
                 <h3 style={{ fontFamily: "'Cormorant Garamond', serif", fontSize: 20, color: "#292524", marginBottom: 16 }}>📅 Sales Posted — Last 14 Days</h3>
                 {(() => {
                   const days = Array.from({length: 14}, (_, i) => {
@@ -2540,7 +2552,7 @@ export default function App() {
               </div>
 
               {/* Opportunity Gap */}
-              <div style={{ background: "white", borderRadius: 12, border: "1px solid #e7e5e4", padding: 20, marginBottom: 24 }}>
+              <div style={{ background: "rgba(255,255,255,0.85)", backdropFilter: "blur(14px)", WebkitBackdropFilter: "blur(14px)", borderRadius: 12, border: "1px solid rgba(255,255,255,0.35)", padding: 20, marginBottom: 24 }}>
                 <h3 style={{ fontFamily: "'Cormorant Garamond', serif", fontSize: 20, color: "#292524", marginBottom: 6 }}>🎯 Opportunity Gap</h3>
                 <p style={{ color: "#78716c", fontSize: 13, marginBottom: 16 }}>Cities with most subscribers but fewest sales — target these for marketing!</p>
                 {(() => {
@@ -2565,7 +2577,7 @@ export default function App() {
               </div>
 
               {/* Most Active Sellers */}
-              <div style={{ background: "white", borderRadius: 12, border: "1px solid #e7e5e4", padding: 20, marginBottom: 24 }}>
+              <div style={{ background: "rgba(255,255,255,0.85)", backdropFilter: "blur(14px)", WebkitBackdropFilter: "blur(14px)", borderRadius: 12, border: "1px solid rgba(255,255,255,0.35)", padding: 20, marginBottom: 24 }}>
                 <h3 style={{ fontFamily: "'Cormorant Garamond', serif", fontSize: 20, color: "#292524", marginBottom: 16 }}>🏆 Most Active Sellers</h3>
                 {(() => {
                   const sellers = allSales.reduce((acc, s) => { const key = s.user_id || "guest"; acc[key] = (acc[key] || { count: 0, name: s.name || "Guest" }); acc[key].count++; return acc; }, {});
@@ -2583,7 +2595,7 @@ export default function App() {
               </div>
 
               {/* Peak Posting Times */}
-              <div style={{ background: "white", borderRadius: 12, border: "1px solid #e7e5e4", padding: 20, marginBottom: 24 }}>
+              <div style={{ background: "rgba(255,255,255,0.85)", backdropFilter: "blur(14px)", WebkitBackdropFilter: "blur(14px)", borderRadius: 12, border: "1px solid rgba(255,255,255,0.35)", padding: 20, marginBottom: 24 }}>
                 <h3 style={{ fontFamily: "'Cormorant Garamond', serif", fontSize: 20, color: "#292524", marginBottom: 16 }}>⏰ Peak Posting Days</h3>
                 {(() => {
                   const days = ["Sun","Mon","Tue","Wed","Thu","Fri","Sat"];
@@ -2608,11 +2620,11 @@ export default function App() {
               {adminTab === "users" && <>
               <div style={{ marginBottom: 36 }}>
                 <h3 style={{ fontFamily: "'Cormorant Garamond', serif", fontSize: 22, color: "#292524", marginBottom: 16 }}>👥 Registered Users ({allUsers.length})</h3>
-                <div style={{ background: "white", borderRadius: 12, border: "1px solid #e7e5e4", overflow: "hidden" }}>
+                <div style={{ background: "rgba(255,255,255,0.85)", backdropFilter: "blur(14px)", WebkitBackdropFilter: "blur(14px)", borderRadius: 12, border: "1px solid rgba(255,255,255,0.35)", overflow: "hidden" }}>
                   {allUsers.length === 0 ? <p style={{ padding: "20px", color: "#78716c", textAlign: "center" }}>No users yet</p> : (
                     <table style={{ width: "100%", borderCollapse: "collapse" }}>
                       <thead>
-                        <tr style={{ background: "#fdfaf5", borderBottom: "1px solid #e7e5e4" }}>
+                        <tr style={{ background: "rgba(253,250,245,0.7)", borderBottom: "1px solid #e7e5e4" }}>
                           {["Email", "Status", "Signed Up", "Last Sign In", "Action"].map(h => (
                             <th key={h} style={{ padding: "12px 16px", textAlign: "left", fontSize: 11, fontWeight: 600, color: "#78716c", letterSpacing: 0.8, textTransform: "uppercase" }}>{h}</th>
                           ))}
@@ -2643,11 +2655,11 @@ export default function App() {
               {adminTab === "listings" && <>
               <div style={{ marginBottom: 36 }}>
                 <h3 style={{ fontFamily: "'Cormorant Garamond', serif", fontSize: 22, color: "#292524", marginBottom: 16 }}>🏠 All Listings ({allSales.length})</h3>
-                <div style={{ background: "white", borderRadius: 12, border: "1px solid #e7e5e4", overflow: "hidden" }}>
+                <div style={{ background: "rgba(255,255,255,0.85)", backdropFilter: "blur(14px)", WebkitBackdropFilter: "blur(14px)", borderRadius: 12, border: "1px solid rgba(255,255,255,0.35)", overflow: "hidden" }}>
                   {allSales.length === 0 ? <p style={{ padding: "20px", color: "#78716c", textAlign: "center" }}>No listings yet</p> : (
                     <table style={{ width: "100%", borderCollapse: "collapse" }}>
                       <thead>
-                        <tr style={{ background: "#fdfaf5", borderBottom: "1px solid #e7e5e4" }}>
+                        <tr style={{ background: "rgba(253,250,245,0.7)", borderBottom: "1px solid #e7e5e4" }}>
                           {["Title", "City", "Province", "Date", "Posted", "Actions"].map(h => (
                             <th key={h} style={{ padding: "12px 16px", textAlign: "left", fontSize: 11, fontWeight: 600, color: "#78716c", letterSpacing: 0.8, textTransform: "uppercase" }}>{h}</th>
                           ))}
@@ -2682,11 +2694,11 @@ export default function App() {
               {/* All Subscribers */}
               <div style={{ marginBottom: 36 }}>
                 <h3 style={{ fontFamily: "'Cormorant Garamond', serif", fontSize: 22, color: "#292524", marginBottom: 16 }}>🔔 Subscribers ({allSubscribers.length})</h3>
-                <div style={{ background: "white", borderRadius: 12, border: "1px solid #e7e5e4", overflow: "hidden" }}>
+                <div style={{ background: "rgba(255,255,255,0.85)", backdropFilter: "blur(14px)", WebkitBackdropFilter: "blur(14px)", borderRadius: 12, border: "1px solid rgba(255,255,255,0.35)", overflow: "hidden" }}>
                   {allSubscribers.length === 0 ? <p style={{ padding: "20px", color: "#78716c", textAlign: "center" }}>No subscribers yet</p> : (
                     <table style={{ width: "100%", borderCollapse: "collapse" }}>
                       <thead>
-                        <tr style={{ background: "#fdfaf5", borderBottom: "1px solid #e7e5e4" }}>
+                        <tr style={{ background: "rgba(253,250,245,0.7)", borderBottom: "1px solid #e7e5e4" }}>
                           {["Email", "City", "Province", "Joined"].map(h => (
                             <th key={h} style={{ padding: "12px 16px", textAlign: "left", fontSize: 11, fontWeight: 600, color: "#78716c", letterSpacing: 0.8, textTransform: "uppercase" }}>{h}</th>
                           ))}
@@ -2711,7 +2723,7 @@ export default function App() {
 
               {/* ===== BROADCAST TAB ===== */}
               {adminTab === "broadcast" && <>
-              <div style={{ background: "white", borderRadius: 12, border: "1px solid #e7e5e4", padding: 28, marginBottom: 24 }}>
+              <div style={{ background: "rgba(255,255,255,0.85)", backdropFilter: "blur(14px)", WebkitBackdropFilter: "blur(14px)", borderRadius: 12, border: "1px solid rgba(255,255,255,0.35)", padding: 28, marginBottom: 24 }}>
                 <h3 style={{ fontFamily: "'Cormorant Garamond', serif", fontSize: 22, color: "#292524", marginBottom: 6 }}>📧 Broadcast Email</h3>
                 <p style={{ color: "#78716c", fontSize: 13, marginBottom: 20 }}>Send an email to all {allSubscribers.length} subscribers at once</p>
                 <label style={{ fontSize: 12, fontWeight: 600, color: "#78716c", textTransform: "uppercase", letterSpacing: 0.8 }}>Subject</label>
@@ -2742,13 +2754,13 @@ export default function App() {
 
               {/* ===== MODERATION TAB ===== */}
               {adminTab === "moderation" && <>
-              <div style={{ background: "white", borderRadius: 12, border: "1px solid #e7e5e4", padding: 20, marginBottom: 24 }}>
+              <div style={{ background: "rgba(255,255,255,0.85)", backdropFilter: "blur(14px)", WebkitBackdropFilter: "blur(14px)", borderRadius: 12, border: "1px solid rgba(255,255,255,0.35)", padding: 20, marginBottom: 24 }}>
                 <h3 style={{ fontFamily: "'Cormorant Garamond', serif", fontSize: 20, color: "#292524", marginBottom: 6 }}>🚨 Flag a Listing</h3>
                 <p style={{ color: "#78716c", fontSize: 13, marginBottom: 16 }}>Mark listings as inappropriate for review</p>
-                <div style={{ background: "white", borderRadius: 12, border: "1px solid #e7e5e4", overflow: "hidden" }}>
+                <div style={{ background: "rgba(255,255,255,0.85)", backdropFilter: "blur(14px)", WebkitBackdropFilter: "blur(14px)", borderRadius: 12, border: "1px solid rgba(255,255,255,0.35)", overflow: "hidden" }}>
                   <table style={{ width: "100%", borderCollapse: "collapse" }}>
                     <thead>
-                      <tr style={{ background: "#fdfaf5", borderBottom: "1px solid #e7e5e4" }}>
+                      <tr style={{ background: "rgba(253,250,245,0.7)", borderBottom: "1px solid #e7e5e4" }}>
                         {["Title", "City", "Date", "Status", "Action"].map(h => (
                           <th key={h} style={{ padding: "12px 16px", textAlign: "left", fontSize: 11, fontWeight: 600, color: "#78716c", letterSpacing: 0.8, textTransform: "uppercase" }}>{h}</th>
                         ))}
@@ -2788,7 +2800,7 @@ export default function App() {
               </div>
 
               {/* Banned Users Summary */}
-              <div style={{ background: "white", borderRadius: 12, border: "1px solid #e7e5e4", padding: 20, marginBottom: 24 }}>
+              <div style={{ background: "rgba(255,255,255,0.85)", backdropFilter: "blur(14px)", WebkitBackdropFilter: "blur(14px)", borderRadius: 12, border: "1px solid rgba(255,255,255,0.35)", padding: 20, marginBottom: 24 }}>
                 <h3 style={{ fontFamily: "'Cormorant Garamond', serif", fontSize: 20, color: "#292524", marginBottom: 16 }}>🚫 Banned Users ({bannedUsers.length})</h3>
                 {bannedUsers.length === 0 ? (
                   <p style={{ color: "#78716c", fontSize: 13 }}>No banned users</p>
@@ -2810,11 +2822,11 @@ export default function App() {
               {/* All Reviews */}
               <div>
                 <h3 style={{ fontFamily: "'Cormorant Garamond', serif", fontSize: 22, color: "#292524", marginBottom: 16 }}>⭐ Reviews ({allReviews.length})</h3>
-                <div style={{ background: "white", borderRadius: 12, border: "1px solid #e7e5e4", overflow: "hidden" }}>
+                <div style={{ background: "rgba(255,255,255,0.85)", backdropFilter: "blur(14px)", WebkitBackdropFilter: "blur(14px)", borderRadius: 12, border: "1px solid rgba(255,255,255,0.35)", overflow: "hidden" }}>
                   {allReviews.length === 0 ? <p style={{ padding: "20px", color: "#78716c", textAlign: "center" }}>No reviews yet</p> : (
                     <table style={{ width: "100%", borderCollapse: "collapse" }}>
                       <thead>
-                        <tr style={{ background: "#fdfaf5", borderBottom: "1px solid #e7e5e4" }}>
+                        <tr style={{ background: "rgba(253,250,245,0.7)", borderBottom: "1px solid #e7e5e4" }}>
                           {["Rating", "Comment", "By", "Date", "Action"].map(h => (
                             <th key={h} style={{ padding: "12px 16px", textAlign: "left", fontSize: 11, fontWeight: 600, color: "#78716c", letterSpacing: 0.8, textTransform: "uppercase" }}>{h}</th>
                           ))}
@@ -2843,7 +2855,7 @@ export default function App() {
               {adminTab === "ads" && <>
 
               {/* Pricing Settings */}
-              <div style={{ background: "white", borderRadius: 12, border: "1px solid #e7e5e4", padding: 24, marginBottom: 24 }}>
+              <div style={{ background: "rgba(255,255,255,0.85)", backdropFilter: "blur(14px)", WebkitBackdropFilter: "blur(14px)", borderRadius: 12, border: "1px solid rgba(255,255,255,0.35)", padding: 24, marginBottom: 24 }}>
                 <h3 style={{ fontFamily: "'Cormorant Garamond', serif", fontSize: 22, color: "#292524", marginBottom: 6 }}>💰 Ad Pricing</h3>
                 <p style={{ color: "#78716c", fontSize: 13, marginBottom: 20 }}>Set your prices — updates live on the advertise page instantly</p>
                 <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(220px, 1fr))", gap: 16 }}>
@@ -2854,7 +2866,7 @@ export default function App() {
                   ].map(pkg => {
                     const pricing = adPricing.find(p => p.package_type === pkg.type);
                     return (
-                      <div key={pkg.type} style={{ background: "#fdfaf5", borderRadius: 10, padding: 16, border: "1px solid #e7e5e4" }}>
+                      <div key={pkg.type} style={{ background: "rgba(253,250,245,0.7)", borderRadius: 10, padding: 16, border: "1px solid #e7e5e4" }}>
                         <p style={{ fontSize: 20, marginBottom: 4 }}>{pkg.icon}</p>
                         <p style={{ fontSize: 14, fontWeight: 700, color: "#292524", marginBottom: 12 }}>{pkg.type}</p>
                         <label style={{ fontSize: 11, color: "#78716c", fontWeight: 600, textTransform: "uppercase", letterSpacing: 0.8 }}>Monthly Price</label>
@@ -2904,7 +2916,7 @@ export default function App() {
               </div>
 
               {/* All Ads */}
-              <div style={{ background: "white", borderRadius: 12, border: "1px solid #e7e5e4", padding: 24 }}>
+              <div style={{ background: "rgba(255,255,255,0.85)", backdropFilter: "blur(14px)", WebkitBackdropFilter: "blur(14px)", borderRadius: 12, border: "1px solid rgba(255,255,255,0.35)", padding: 24 }}>
                 <h3 style={{ fontFamily: "'Cormorant Garamond', serif", fontSize: 22, color: "#292524", marginBottom: 6 }}>📢 All Ads ({allAds.length})</h3>
                 <p style={{ color: "#78716c", fontSize: 13, marginBottom: 20 }}>Approve pending ads, manage active ones</p>
                 {allAds.length === 0 ? (
@@ -3015,6 +3027,7 @@ export default function App() {
       {view === "dashboard" && user && saleAnalytics && Object.keys(saleAnalytics).length > 0 && (
         <></>
       )}
+      </div>
     </div>
   );
 }
