@@ -806,7 +806,7 @@ export default function App() {
         @media (max-width: 768px) {
           .bg-image {
             background-position: 65% center !important;
-            background-attachment: scroll !important;
+            background-attachment: fixed !important;
             background-size: 250% !important;
           }
         }
