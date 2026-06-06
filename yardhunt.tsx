@@ -752,7 +752,8 @@ export default function App() {
             ) : (
               <div style={{ padding: "12px 20px" }}>
                 <button onClick={() => { setView("auth"); setAuthMode("signup"); setMenuOpen(false); }} className="btn-primary" style={{ width: "100%", marginBottom: 10 }}>🍁 Post Your Sale Free</button>
-                <button onClick={() => { setView("auth"); setAuthMode("login"); setMenuOpen(false); }} className="btn-secondary" style={{ width: "100%" }}>Sign In</button>
+                <button onClick={() => { setView("auth"); setAuthMode("login"); setMenuOpen(false); }} className="btn-secondary" style={{ width: "100%", marginBottom: 10 }}>Sign In</button>
+                <button onClick={() => { setView("auth"); setAuthMode("signup"); setMenuOpen(false); }} className="btn-secondary" style={{ width: "100%", borderColor: "#d97706", color: "#d97706" }}>✨ Create Free Account</button>
               </div>
             )}
           </div>
