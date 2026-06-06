@@ -311,7 +311,9 @@ export default function App() {
         start_time: form.startTime, end_time: form.endTime,
         description: form.description, tags: form.tags,
         photos: form.photos, emoji: emojis[Math.floor(Math.random() * emojis.length)],
-        user_id: user?.id
+        user_id: user?.id,
+        extra_date: form.extraDate || null,
+        extra_date_end: form.extraDateEnd || null
       }, token);
       const insertedSale = Array.isArray(inserted) ? inserted[0] : inserted;
       await loadSales();
@@ -877,7 +879,9 @@ export default function App() {
                 </div>
               )}
               <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12, marginBottom: 22 }}>
-                {[["📍 Address", `${selectedSale.address}, ${selectedSale.city}, ${selectedSale.province}`], ["📅 Date", new Date(selectedSale.date+"T12:00:00").toLocaleDateString("en-CA",{weekday:"long",year:"numeric",month:"long",day:"numeric"})], ["⏰ Hours", selectedSale.start_time ? `${selectedSale.start_time} – ${selectedSale.end_time}` : "See description"]].map(([label,val])=>(
+                {[["📍 Address", `${selectedSale.address}, ${selectedSale.city}, ${selectedSale.province}`], ["📅 Date", new Date(selectedSale.date+"T12:00:00").toLocaleDateString("en-CA",{weekday:"long",year:"numeric",month:"long",day:"numeric"})], ["⏰ Hours", selectedSale.start_time ? `${selectedSale.start_time} – ${selectedSale.end_time}` : "See description"],
+                    ...(selectedSale.extra_date ? [["📅 Day 2", new Date(selectedSale.extra_date+"T12:00:00").toLocaleDateString("en-CA",{weekday:"long",month:"long",day:"numeric"})+(selectedSale.extra_date_end ? " until "+selectedSale.extra_date_end : "")]] : [])
+                  ].map(([label,val])=>(
                   <div key={label} style={{ background: "#fdf6ec", padding: "12px 14px", borderRadius: 6, border: "1px solid #e8d9c4" }}>
                     <p style={{ fontSize: 11, color: "#7a5c3a", fontWeight: 700, letterSpacing: 1, textTransform: "uppercase", marginBottom: 3 }}>{label}</p>
                     <p style={{ fontSize: 13, color: "#3a2c1a" }}>{val}</p>
@@ -1130,6 +1134,19 @@ export default function App() {
                   <div><label style={{fontSize:10}}>Date *</label><input type="date" value={form.date} onChange={e=>setForm(f=>({...f,date:e.target.value}))} style={{fontSize:12,padding:"8px 6px"}} /></div>
                   <div><label style={{fontSize:10}}>Start Time</label><input type="time" value={form.startTime} onChange={e=>setForm(f=>({...f,startTime:e.target.value}))} style={{fontSize:12,padding:"8px 6px"}} /></div>
                   <div><label style={{fontSize:10}}>End Time</label><input type="time" value={form.endTime} onChange={e=>setForm(f=>({...f,endTime:e.target.value}))} style={{fontSize:12,padding:"8px 6px"}} /></div>
+                </div>
+                {/* Second date for 2-day sales */}
+                <div>
+                  <label style={{ fontSize: 12, color: "#78716c", display: "flex", alignItems: "center", gap: 8, cursor: "pointer" }}>
+                    <input type="checkbox" checked={!!form.extraDate} onChange={e => setForm(f=>({...f, extraDate: e.target.checked ? f.date : "", extraDateEnd: ""}))} />
+                    <span>📅 This is a 2-day sale (add second day)</span>
+                  </label>
+                  {form.extraDate !== undefined && form.extraDate !== "" && (
+                    <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 8, marginTop: 8 }}>
+                      <div><label style={{fontSize:10}}>Day 2 Date</label><input type="date" value={form.extraDate} onChange={e=>setForm(f=>({...f,extraDate:e.target.value}))} style={{fontSize:12,padding:"8px 6px"}} /></div>
+                      <div><label style={{fontSize:10}}>Day 2 End Time</label><input type="time" value={form.extraDateEnd} onChange={e=>setForm(f=>({...f,extraDateEnd:e.target.value}))} style={{fontSize:12,padding:"8px 6px"}} /></div>
+                    </div>
+                  )}
                 </div>
                 <div><label>Description</label><textarea rows={4} placeholder="What's for sale? Any special deals?" value={form.description} onChange={e=>setForm(f=>({...f,description:e.target.value}))} style={{ resize: "vertical" }} /></div>
                 <div>
