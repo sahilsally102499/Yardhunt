@@ -167,6 +167,7 @@ export default function App() {
   const [installPrompt, setInstallPrompt] = useState<any>(null);
   const [showInstallBanner, setShowInstallBanner] = useState(false);
   const [goingList, setGoingList] = useState<number[]>([]);
+  const [verified, setVerified] = useState(false);
   const [unlockedSales, setUnlockedSales] = useState<number[]>([]);
   const [photoPackUnlocked, setPhotoPackUnlocked] = useState(false);
   const [form, setForm] = useState({ title:"",name:"",address:"",city:"",province:"",date:"",startTime:"",endTime:"",description:"",tags:[] as string[],photos:[] as string[] });
@@ -642,13 +643,21 @@ export default function App() {
                       <div style={{ background: "linear-gradient(135deg, #6b1a1a, #c0392b)", padding: "20px 20px 16px", display: "flex", alignItems: "flex-start", gap: 12 }}>
                         <span style={{ fontSize: 32 }}>{sale.emoji || "🏠"}</span>
                         <div>
-                          <p style={{ fontFamily: "'Playfair Display', serif", fontSize: 17, fontWeight: 700, color: "white", lineHeight: 1.3 }}>{sale.title}</p>
+                          <div style={{ display: "flex", alignItems: "center", gap: 6, flexWrap: "wrap" }}>
+                            <p style={{ fontFamily: "'Cormorant Garamond', serif", fontSize: 17, fontWeight: 700, color: "white", lineHeight: 1.3 }}>{sale.title}</p>
+                            {sale.is_verified && <span style={{ background: "#059669", color: "white", fontSize: 10, fontWeight: 700, padding: "2px 6px", borderRadius: 10, letterSpacing: 0.5 }}>✓ VERIFIED</span>}
+                          </div>
                           <p style={{ color: "#f5ddb4", fontSize: 12, marginTop: 4 }}>📍 {sale.city}, {sale.province}</p>
                         </div>
                       </div>
                     )}
                     <div style={{ padding: "16px 20px" }}>
-                      {sale.photos && sale.photos.length > 0 && <p style={{ fontFamily: "'Playfair Display', serif", fontSize: 16, fontWeight: 700, color: "#2d1b0e", marginBottom: 6 }}>{sale.title}</p>}
+                      {sale.photos && sale.photos.length > 0 && (
+                        <div style={{ display: "flex", alignItems: "center", gap: 6, marginBottom: 6 }}>
+                          <p style={{ fontFamily: "'Cormorant Garamond', serif", fontSize: 16, fontWeight: 700, color: "#2d1b0e" }}>{sale.title}</p>
+                          {sale.is_verified && <span style={{ background: "#059669", color: "white", fontSize: 10, fontWeight: 700, padding: "2px 6px", borderRadius: 10, letterSpacing: 0.5 }}>✓ VERIFIED</span>}
+                        </div>
+                      )}
                       <div style={{ display: "flex", gap: 12, marginBottom: 8, flexWrap: "wrap" }}>
                         <span style={{ fontSize: 13, color: "#7a5c3a" }}>📍 {sale.city}, {sale.province}</span>
                         <span style={{ fontSize: 13, color: "#7a5c3a" }}>📅 {new Date(sale.date + "T12:00:00").toLocaleDateString("en-CA", { month:"short", day:"numeric" })}</span>
@@ -760,8 +769,11 @@ export default function App() {
             <div style={{ padding: "24px 28px" }}>
               {selectedSale.photos && selectedSale.photos.length > 0 && (
                 <div style={{ marginBottom: 18 }}>
-                  <h2 style={{ fontFamily: "'Playfair Display', serif", fontSize: 24, fontWeight: 900, color: "#2d1b0e" }}>{selectedSale.title}</h2>
-                  <p style={{ color: "#7a5c3a", fontSize: 14, marginTop: 3 }}>Hosted by {selectedSale.name||"Anonymous"}</p>
+                  <div style={{ display: "flex", alignItems: "center", gap: 8, flexWrap: "wrap", marginBottom: 4 }}>
+                    <h2 style={{ fontFamily: "'Cormorant Garamond', serif", fontSize: 24, fontWeight: 700, color: "#292524" }}>{selectedSale.title}</h2>
+                    {selectedSale.is_verified && <span style={{ background: "#059669", color: "white", fontSize: 11, fontWeight: 700, padding: "3px 8px", borderRadius: 10, letterSpacing: 0.5 }}>✓ VERIFIED SELLER</span>}
+                  </div>
+                  <p style={{ color: "#78716c", fontSize: 14 }}>Hosted by {selectedSale.name||"Anonymous"}</p>
                 </div>
               )}
               <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12, marginBottom: 22 }}>
@@ -1052,6 +1064,24 @@ export default function App() {
                   </div>
                 </div>
               ))}
+              {/* Verified Seller Badge */}
+              <div style={{ background: "linear-gradient(135deg, #ecfdf5, #d1fae5)", borderRadius: 12, padding: "20px 24px", border: "2px solid #6ee7b7", textAlign: "center" }}>
+                {verified ? (
+                  <>
+                    <p style={{ fontSize: 28, marginBottom: 8 }}>✅</p>
+                    <p style={{ fontFamily: "'Cormorant Garamond', serif", fontSize: 20, fontWeight: 700, color: "#059669" }}>You're a Verified Seller!</p>
+                    <p style={{ fontSize: 13, color: "#065f46", marginTop: 4 }}>Your listings show the ✓ Verified badge — buyers trust you more!</p>
+                  </>
+                ) : (
+                  <>
+                    <p style={{ fontSize: 28, marginBottom: 8 }}>🏅</p>
+                    <p style={{ fontFamily: "'Cormorant Garamond', serif", fontSize: 20, fontWeight: 700, color: "#292524", marginBottom: 6 }}>Get Verified Seller Badge</p>
+                    <p style={{ fontSize: 13, color: "#78716c", marginBottom: 16 }}>Show buyers you're trustworthy! A ✓ green badge appears on ALL your listings for just $4.99 one-time.</p>
+                    <a href="https://buy.stripe.com/eVqaEX5SxfXEfHz4oY1Jm04" target="_blank" rel="noreferrer" onClick={() => setTimeout(() => setVerified(true), 3000)} style={{ display: "inline-block", background: "#059669", color: "white", padding: "12px 24px", borderRadius: 8, fontFamily: "'Cormorant Garamond', serif", fontWeight: 700, fontSize: 16, textDecoration: "none" }}>✓ Get Verified — $4.99</a>
+                  </>
+                )}
+              </div>
+
               <div style={{ textAlign: "center", marginTop: 8 }}>
                 <button className="btn-primary" onClick={() => setView("post")}>🍁 Post Another Sale</button>
               </div>
