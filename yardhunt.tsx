@@ -263,7 +263,7 @@ export default function App() {
     if (!form.title || !form.address || !form.city || !form.province || !form.date) return;
     setSubmitting(true);
     try {
-      await api.insertSale({
+      const inserted = await api.insertSale({
         title: form.title, name: form.name, address: form.address,
         city: form.city, province: form.province, date: form.date,
         start_time: form.startTime, end_time: form.endTime,
@@ -271,8 +271,16 @@ export default function App() {
         photos: form.photos, emoji: emojis[Math.floor(Math.random() * emojis.length)],
         user_id: user?.id
       }, token);
+      const insertedSale = Array.isArray(inserted) ? inserted[0] : inserted;
       await loadSales();
       setSubmitted(true);
+      try {
+        await fetch("https://rcqlohlftafxicmfjkuf.supabase.co/functions/v1/notify-subscribers", {
+          method: "POST",
+          headers: { "Content-Type": "application/json", "Authorization": `Bearer ${SUPABASE_KEY}` },
+          body: JSON.stringify({ sale: { id: insertedSale?.id, title: form.title, address: form.address, city: form.city, province: form.province, date: form.date, start_time: form.startTime, end_time: form.endTime, description: form.description, tags: form.tags, photos: form.photos } })
+        });
+      } catch(e) { console.warn("Notify failed:", e); }
       setTimeout(() => {
         setSubmitted(false); setView("browse");
         setForm({ title:"",name:"",address:"",city:"",province:"",date:"",startTime:"",endTime:"",description:"",tags:[],photos:[] });
