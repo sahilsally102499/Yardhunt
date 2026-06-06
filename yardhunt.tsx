@@ -125,6 +125,27 @@ const api = {
       headers: { apikey: SUPABASE_KEY, Authorization: `Bearer ${SUPABASE_KEY}` }
     });
     return res.json();
+  },
+  async getQuestions(saleId) {
+    const res = await fetch(`${SUPABASE_URL}/rest/v1/questions?sale_id=eq.${saleId}&order=created_at.asc`, {
+      headers: { apikey: SUPABASE_KEY, Authorization: `Bearer ${SUPABASE_KEY}` }
+    });
+    return res.json();
+  },
+  async addQuestion(q) {
+    const res = await fetch(`${SUPABASE_URL}/rest/v1/questions`, {
+      method: "POST",
+      headers: { apikey: SUPABASE_KEY, Authorization: `Bearer ${SUPABASE_KEY}`, "Content-Type": "application/json", Prefer: "return=representation" },
+      body: JSON.stringify(q)
+    });
+    return res.json();
+  },
+  async answerQuestion(id, answer) {
+    await fetch(`${SUPABASE_URL}/rest/v1/questions?id=eq.${id}`, {
+      method: "PATCH",
+      headers: { apikey: SUPABASE_KEY, Authorization: `Bearer ${SUPABASE_KEY}`, "Content-Type": "application/json" },
+      body: JSON.stringify({ answer })
+    });
   }
 };
 
@@ -210,6 +231,11 @@ export default function App() {
   const [unlockedSales, setUnlockedSales] = useState([]);
   const [photoPackUnlocked, setPhotoPackUnlocked] = useState(false);
   const [form, setForm] = useState({ title:"",name:"",address:"",city:"",province:"",date:"",startTime:"",endTime:"",description:"",tags:[],photos:[],extraDate:"",extraDateStart:"",extraDateEnd:"" });
+  const [questions, setQuestions] = useState([]);
+  const [questionText, setQuestionText] = useState("");
+  const [questionSubmitting, setQuestionSubmitting] = useState(false);
+  const [answerText, setAnswerText] = useState({});
+  const [neighbourhoodFilter, setNeighbourhoodFilter] = useState("");
   const [favourites, setFavourites] = useState(() => { try { return JSON.parse(localStorage.getItem("yh_favs")||"[]"); } catch { return []; }});
   const [reminderSales, setReminderSales] = useState(() => { try { return JSON.parse(localStorage.getItem("yh_reminders")||"[]"); } catch { return []; }});
   const [editingSale, setEditingSale] = useState(null);
@@ -313,7 +339,8 @@ export default function App() {
         photos: form.photos, emoji: emojis[Math.floor(Math.random() * emojis.length)],
         user_id: user?.id,
         extra_date: form.extraDate || null,
-        extra_date_end: form.extraDateEnd || null
+        extra_date_end: form.extraDateEnd || null,
+        neighbourhood: form.neighbourhood || null
       }, token);
       const insertedSale = Array.isArray(inserted) ? inserted[0] : inserted;
       await loadSales();
@@ -338,7 +365,8 @@ export default function App() {
     const matchSearch = !q || s.title?.toLowerCase().includes(q) || s.city?.toLowerCase().includes(q) || s.description?.toLowerCase().includes(q) || (s.tags||[]).some((t)=>t.toLowerCase().includes(q));
     const matchProv = !provFilter || s.province === provFilter;
     const matchNear = !nearMe || s.city?.toLowerCase().includes(nearMe.toLowerCase()) || s.province?.toLowerCase().includes(nearMe.toLowerCase());
-    return matchSearch && matchProv && matchNear;
+    const matchNeighbourhood = !neighbourhoodFilter || s.neighbourhood === neighbourhoodFilter;
+    return matchSearch && matchProv && matchNear && matchNeighbourhood;
   });
 
   const mySales = sales.filter(s => user && s.user_id === user.id);
@@ -408,6 +436,13 @@ export default function App() {
   // Track view count when sale is opened
   const trackView = (saleId) => {
     setViewCounts(v => ({ ...v, [saleId]: (v[saleId] || Math.floor(Math.random() * 30) + 5) + 1 }));
+  };
+
+  const loadQuestions = async (saleId) => {
+    try {
+      const data = await api.getQuestions(saleId);
+      setQuestions(Array.isArray(data) ? data : []);
+    } catch(e) { setQuestions([]); }
   };
 
   const loadReviews = async (saleId) => {
@@ -697,6 +732,18 @@ export default function App() {
                 </div>
                 {nearMe && <button onClick={() => setNearMe("")} style={{ background: "rgba(255,255,255,0.15)", color: "white", border: "1px solid rgba(255,255,255,0.2)", padding: "11px 14px", borderRadius: 10, cursor: "pointer", fontSize: 13, whiteSpace: "nowrap" }}>✕ Clear</button>}
               </div>
+              {/* Neighbourhood filter - only show if a city is typed */}
+              {nearMe && (() => {
+                const neighbourhoods = [...new Set(sales.filter(s => s.city?.toLowerCase().includes(nearMe.toLowerCase()) && s.neighbourhood).map(s => s.neighbourhood))];
+                return neighbourhoods.length > 0 ? (
+                  <div style={{ display: "flex", gap: 8, flexWrap: "wrap", marginTop: 8 }}>
+                    <button onClick={() => setNeighbourhoodFilter("")} style={{ padding: "6px 14px", borderRadius: 20, border: "none", background: !neighbourhoodFilter ? "white" : "rgba(255,255,255,0.2)", color: !neighbourhoodFilter ? "#292524" : "white", fontSize: 12, cursor: "pointer", fontWeight: 600 }}>All</button>
+                    {neighbourhoods.map(n => (
+                      <button key={n} onClick={() => setNeighbourhoodFilter(n === neighbourhoodFilter ? "" : n)} style={{ padding: "6px 14px", borderRadius: 20, border: "none", background: neighbourhoodFilter === n ? "white" : "rgba(255,255,255,0.2)", color: neighbourhoodFilter === n ? "#292524" : "white", fontSize: 12, cursor: "pointer" }}>{n}</button>
+                    ))}
+                  </div>
+                ) : null;
+              })()}
             </div>
             <p style={{ color: "rgba(245,221,180,0.6)", fontSize: 13, marginTop: 20 }}>
               <span style={{ color: "#d97706", fontWeight: 600 }}>{sales.length}</span> active sale{sales.length !== 1 ? "s" : ""} across Canada • Listings expire automatically
@@ -729,7 +776,7 @@ export default function App() {
               </div>
               <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(300px, 1fr))", gap: 24 }}>
                 {filtered.map(sale => (
-                  <div key={sale.id} className="card-hover" onClick={() => { setSelectedSale(sale); setPhotoIndex(0); loadReviews(sale.id); trackView(sale.id); setReviewSuccess(false); setReviewComment(''); setReviewRating(5); }} style={{ background: "white", borderRadius: 8, overflow: "hidden", boxShadow: "0 2px 12px rgba(0,0,0,0.08)", border: "1px solid #e8d9c4" }}>
+                  <div key={sale.id} className="card-hover" onClick={() => { setSelectedSale(sale); setPhotoIndex(0); loadReviews(sale.id); loadQuestions(sale.id); trackView(sale.id); setReviewSuccess(false); setReviewComment(''); setReviewRating(5); setQuestionText(""); }} style={{ background: "white", borderRadius: 8, overflow: "hidden", boxShadow: "0 2px 12px rgba(0,0,0,0.08)", border: "1px solid #e8d9c4" }}>
                     {sale.photos && sale.photos.length > 0 ? (
                       <div style={{ position: "relative", height: 160, overflow: "hidden" }}>
                         <img src={sale.photos[0]} alt="" style={{ width: "100%", height: "100%", objectFit: "cover" }} />
@@ -879,7 +926,7 @@ export default function App() {
                 </div>
               )}
               <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12, marginBottom: 22 }}>
-                {[["📍 Address", `${selectedSale.address}, ${selectedSale.city}, ${selectedSale.province}`], ["📅 Date", new Date(selectedSale.date+"T12:00:00").toLocaleDateString("en-CA",{weekday:"long",year:"numeric",month:"long",day:"numeric"})], ["⏰ Hours", selectedSale.start_time ? `${selectedSale.start_time} – ${selectedSale.end_time}` : "See description"],
+                {[["📍 Address", `${selectedSale.address}${selectedSale.neighbourhood ? ", "+selectedSale.neighbourhood : ""}, ${selectedSale.city}, ${selectedSale.province}`], ["📅 Date", new Date(selectedSale.date+"T12:00:00").toLocaleDateString("en-CA",{weekday:"long",year:"numeric",month:"long",day:"numeric"})], ["⏰ Hours", selectedSale.start_time ? `${selectedSale.start_time} – ${selectedSale.end_time}` : "See description"],
                     ...(selectedSale.extra_date ? [["📅 Day 2", new Date(selectedSale.extra_date+"T12:00:00").toLocaleDateString("en-CA",{weekday:"long",month:"long",day:"numeric"})+(selectedSale.extra_date_end ? " until "+selectedSale.extra_date_end : "")]] : [])
                   ].map(([label,val])=>(
                   <div key={label} style={{ background: "#fdf6ec", padding: "12px 14px", borderRadius: 6, border: "1px solid #e8d9c4" }}>
@@ -1009,6 +1056,58 @@ export default function App() {
                   </div>
                 </div>
               )}
+
+              {/* Q&A Section */}
+              <div style={{ marginTop: 24, marginBottom: 24 }}>
+                <h3 style={{ fontFamily: "'Playfair Display', serif", fontSize: 20, color: "#2d1b0e", marginBottom: 16 }}>💬 Questions & Answers</h3>
+                {/* Existing questions */}
+                {questions.length > 0 && (
+                  <div style={{ marginBottom: 16, display: "flex", flexDirection: "column", gap: 12 }}>
+                    {questions.map(q => (
+                      <div key={q.id} style={{ background: "#fdfaf5", borderRadius: 10, padding: "14px 16px", border: "1px solid #e7e5e4" }}>
+                        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", marginBottom: 6 }}>
+                          <p style={{ fontSize: 14, color: "#292524", fontWeight: 600 }}>❓ {q.question}</p>
+                          <span style={{ fontSize: 11, color: "#a8a29e", whiteSpace: "nowrap", marginLeft: 8 }}>{new Date(q.created_at).toLocaleDateString("en-CA")}</span>
+                        </div>
+                        {q.answer ? (
+                          <p style={{ fontSize: 13, color: "#059669", background: "#f0fdf4", padding: "8px 12px", borderRadius: 6, marginTop: 6 }}>💬 <strong>Seller:</strong> {q.answer}</p>
+                        ) : (
+                          <p style={{ fontSize: 12, color: "#a8a29e", fontStyle: "italic" }}>Awaiting seller response…</p>
+                        )}
+                        {/* Seller can answer */}
+                        {user && selectedSale.user_id === user.id && !q.answer && (
+                          <div style={{ marginTop: 8, display: "flex", gap: 8 }}>
+                            <input placeholder="Type your answer…" value={answerText[q.id]||""} onChange={e => setAnswerText(a=>({...a,[q.id]:e.target.value}))} style={{ flex: 1, padding: "8px 12px", borderRadius: 6, border: "1px solid #e7e5e4", fontSize: 13 }} />
+                            <button onClick={async () => {
+                              if (!answerText[q.id]) return;
+                              await api.answerQuestion(q.id, answerText[q.id]);
+                              setAnswerText(a=>({...a,[q.id]:""}));
+                              loadQuestions(selectedSale.id);
+                            }} style={{ background: "#059669", color: "white", border: "none", padding: "8px 14px", borderRadius: 6, cursor: "pointer", fontSize: 13, fontWeight: 600 }}>Reply</button>
+                          </div>
+                        )}
+                      </div>
+                    ))}
+                  </div>
+                )}
+                {questions.length === 0 && <p style={{ fontSize: 13, color: "#a8a29e", marginBottom: 12, fontStyle: "italic" }}>No questions yet — be the first to ask!</p>}
+                {/* Ask a question */}
+                {user && selectedSale.user_id !== user.id && (
+                  <div style={{ display: "flex", gap: 8 }}>
+                    <input placeholder="Ask the seller a question…" value={questionText} onChange={e => setQuestionText(e.target.value)} onKeyDown={e => { if(e.key==="Enter" && questionText.trim()) document.getElementById("ask-btn").click(); }} style={{ flex: 1, padding: "11px 14px", borderRadius: 8, border: "1px solid #e7e5e4", fontSize: 14 }} />
+                    <button id="ask-btn" disabled={questionSubmitting || !questionText.trim()} onClick={async () => {
+                      setQuestionSubmitting(true);
+                      await api.addQuestion({ sale_id: selectedSale.id, user_id: user.id, user_email: user.email, question: questionText.trim(), answer: null });
+                      setQuestionText("");
+                      loadQuestions(selectedSale.id);
+                      setQuestionSubmitting(false);
+                    }} style={{ background: "#b91c1c", color: "white", border: "none", padding: "11px 18px", borderRadius: 8, cursor: "pointer", fontSize: 14, fontWeight: 700, whiteSpace: "nowrap" }}>
+                      {questionSubmitting ? "…" : "Ask"}
+                    </button>
+                  </div>
+                )}
+                {!user && <p style={{ fontSize: 13, color: "#78716c" }}><span style={{ color: "#c0392b", cursor: "pointer", textDecoration: "underline" }} onClick={() => { setAuthMode("login"); setView("auth"); }}>Sign in</span> to ask the seller a question</p>}
+              </div>
 
               {/* Reviews Section */}
               <div style={{ marginTop: 24 }}>
