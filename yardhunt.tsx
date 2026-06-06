@@ -737,9 +737,9 @@ export default function App() {
   return (
     <div onTouchStart={handleTouchStart} onTouchEnd={handleTouchEnd} style={{ fontFamily: "'DM Sans', sans-serif", minHeight: "100vh", paddingBottom: 70, position: "relative" }}>
       {/* Background image with overlay */}
-      <div style={{ position: "fixed", inset: 0, zIndex: 0,
+      <div className="bg-image" style={{ position: "fixed", inset: 0, zIndex: 0,
         backgroundImage: "url('https://rcqlohlftafxicmfjkuf.supabase.co/storage/v1/object/public/assets/Gemini_Generated_Image_r7ys1er7ys1er7ys.png')",
-        backgroundSize: "cover", backgroundPosition: "center", backgroundAttachment: "fixed",
+        backgroundSize: "cover", backgroundPosition: "center",
         filter: darkMode ? "brightness(0.3) saturate(0.5)" : "brightness(0.85) saturate(0.8)"
       }} />
       {/* Dark overlay */}
@@ -803,6 +803,20 @@ export default function App() {
         /* Photo upload */
         .photo-thumb { position: relative; width: 88px; height: 88px; border-radius: 8px; overflow: hidden; border: 2px solid var(--bark-pale); flex-shrink: 0; }
         .photo-thumb img { width: 100%; height: 100%; object-fit: cover; }
+        @media (max-width: 768px) {
+          .bg-image {
+            background-position: 65% center !important;
+            background-attachment: scroll !important;
+            background-size: 250% !important;
+          }
+        }
+        @media (min-width: 769px) {
+          .bg-image {
+            background-attachment: fixed !important;
+            background-size: cover !important;
+            background-position: center !important;
+          }
+        }
         .photo-remove { position: absolute; top: 4px; right: 4px; background: rgba(41,37,36,0.7); color: white; border: none; border-radius: 50%; width: 20px; height: 20px; font-size: 10px; cursor: pointer; display: flex; align-items: center; justify-content: center; backdrop-filter: blur(4px); }
         .upload-zone { border: 2px dashed var(--bark-pale); border-radius: 10px; padding: 24px; text-align: center; cursor: pointer; transition: all 0.2s; background: var(--cream); }
         .upload-zone:hover { border-color: var(--crimson); background: #fff5f5; }
