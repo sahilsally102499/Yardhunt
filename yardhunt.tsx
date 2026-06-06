@@ -369,6 +369,20 @@ export default function App() {
     }
   }, []);
 
+  const createListingCheckout = async (product_type, sale_id = null) => {
+    if (!user) { setView("auth"); setAuthMode("login"); return; }
+    try {
+      const res = await fetch("https://rcqlohlftafxicmfjkuf.supabase.co/functions/v1/create-listing-checkout", {
+        method: "POST",
+        headers: { "Content-Type": "application/json", "Authorization": `Bearer ${SUPABASE_KEY}` },
+        body: JSON.stringify({ product_type, sale_id, user_id: user.id, email: user.email })
+      });
+      const data = await res.json();
+      if (data.url) window.location.href = data.url;
+      else alert("Something went wrong. Please try again.");
+    } catch(e) { alert("Error. Please try again."); }
+  };
+
   const loadAds = async () => {
     try {
       const data = await api.getAds();
@@ -1050,7 +1064,7 @@ export default function App() {
                       <p style={{ fontFamily: "'Cormorant Garamond', serif", fontSize: 16, fontWeight: 700, color: "white", marginBottom: 2 }}>🔒 {selectedSale.photos.length - 6} more photos locked</p>
                       <p style={{ fontSize: 12, color: "#f5ddb499" }}>Unlock all for just ${listingPricing.photo_unlock}</p>
                     </div>
-                    <a href="https://buy.stripe.com/9B66oH3Kp3aS2UNdZy1Jm03" target="_blank" rel="noreferrer" onClick={() => setTimeout(() => setUnlockedSales(u => [...u, selectedSale.id]), 3000)} style={{ background: "#d97706", color: "white", padding: "10px 18px", borderRadius: 8, fontFamily: "'Cormorant Garamond', serif", fontWeight: 700, fontSize: 14, textDecoration: "none", whiteSpace: "nowrap" }}>{`📸 Unlock All — $${listingPricing.photo_unlock}`}</a>
+                    <button onClick={() => createListingCheckout("photo_unlock", selectedSale.id)} style={{ background: "#d97706", color: "white", padding: "10px 18px", borderRadius: 8, fontFamily: "'Cormorant Garamond', serif", fontWeight: 700, fontSize: 14, border: "none", cursor: "pointer", whiteSpace: "nowrap" }}>{`📸 Unlock All — $${listingPricing.photo_unlock}`}</button>
                   </div>
                 )}
               </div>
@@ -1184,7 +1198,7 @@ export default function App() {
                         <li>📌 Pinned to top</li>
                         <li>3 day boost</li>
                       </ul>
-                      <a href="https://buy.stripe.com/fZu7sLdkZ12K1QJbRq1Jm00" target="_blank" rel="noreferrer" style={{ display: "block", background: "#f5a623", color: "white", padding: "10px", borderRadius: 6, fontFamily: "'Playfair Display', serif", fontWeight: 700, fontSize: 14, textDecoration: "none" }}>{`⭐ Get Basic — $${listingPricing.basic_featured}`}</a>
+                      <button onClick={() => createListingCheckout("basic_featured", selectedSale.id)} style={{ display: "block", width: "100%", background: "#f5a623", color: "white", padding: "10px", borderRadius: 6, fontFamily: "'Playfair Display', serif", fontWeight: 700, fontSize: 14, border: "none", cursor: "pointer" }}>{`⭐ Get Basic — $${listingPricing.basic_featured}`}</button>
                     </div>
                     <div style={{ background: "linear-gradient(135deg, #2d1b0e, #c0392b)", borderRadius: 8, padding: "16px", border: "2px solid #c0392b", textAlign: "center", position: "relative" }}>
                       <div style={{ position: "absolute", top: -10, left: "50%", transform: "translateX(-50%)", background: "#c0392b", color: "white", fontSize: 10, fontWeight: 700, padding: "3px 10px", borderRadius: 10, whiteSpace: "nowrap" }}>BEST VALUE</div>
@@ -1197,7 +1211,7 @@ export default function App() {
                         <li>7 day boost</li>
                         <li>Bold highlighted card</li>
                       </ul>
-                      <a href="https://buy.stripe.com/cNi4gzep3dPwcvn08I1Jm01" target="_blank" rel="noreferrer" style={{ display: "block", background: "white", color: "#c0392b", padding: "10px", borderRadius: 6, fontFamily: "'Playfair Display', serif", fontWeight: 700, fontSize: 14, textDecoration: "none" }}>{`🌟 Get Premium — $${listingPricing.premium_featured}`}</a>
+                      <button onClick={() => createListingCheckout("premium_featured", selectedSale.id)} style={{ display: "block", width: "100%", background: "white", color: "#c0392b", padding: "10px", borderRadius: 6, fontFamily: "'Playfair Display', serif", fontWeight: 700, fontSize: 14, border: "none", cursor: "pointer" }}>{`🌟 Get Premium — $${listingPricing.premium_featured}`}</button>
                     </div>
                   </div>
                 </div>
@@ -1357,7 +1371,7 @@ export default function App() {
                     <div style={{ background: "linear-gradient(135deg, #fef3c7, #fff8e7)", borderRadius: 10, padding: "16px", border: "2px solid #d97706", textAlign: "center", marginTop: 8 }}>
                       <p style={{ fontFamily: "'Cormorant Garamond', serif", fontSize: 17, fontWeight: 700, color: "#292524", marginBottom: 4 }}>📸 Want More Photos?</p>
                       <p style={{ fontSize: 13, color: "#78716c", marginBottom: 12 }}>Upgrade to upload up to <strong>20 photos</strong> for just ${listingPricing.extra_photos}!</p>
-                      <a href="https://buy.stripe.com/6oU28ra8N26O3YR2gQ1Jm02" target="_blank" rel="noreferrer" onClick={() => setTimeout(() => setPhotoPackUnlocked(true), 3000)} style={{ display: "inline-block", background: "#d97706", color: "white", padding: "10px 20px", borderRadius: 8, fontFamily: "'Cormorant Garamond', serif", fontWeight: 700, fontSize: 15, textDecoration: "none" }}>{`📸 Unlock 20 Photos — $${listingPricing.extra_photos}`}</a>
+                      <button onClick={() => createListingCheckout("extra_photos")} style={{ display: "inline-block", background: "#d97706", color: "white", padding: "10px 20px", borderRadius: 8, fontFamily: "'Cormorant Garamond', serif", fontWeight: 700, fontSize: 15, border: "none", cursor: "pointer" }}>{`📸 Unlock 20 Photos — $${listingPricing.extra_photos}`}</button>
                       <p style={{ fontSize: 11, color: "#a08060", marginTop: 8 }}>After payment, tap the button again to unlock</p>
                     </div>
                   )}
@@ -1459,8 +1473,8 @@ export default function App() {
                     <div style={{ display: "flex", flexDirection: "column", gap: 8, flexShrink: 0 }}>
                       <button onClick={() => { setSelectedSale(sale); setView("browse"); }} style={{ background: "#fdf6ec", color: "#7a5c3a", border: "1px solid #e8d9c4", padding: "8px 14px", borderRadius: 6, cursor: "pointer", fontSize: 13, fontWeight: 600 }}>👁 View</button>
                       <button onClick={() => { setEditingSale(sale.id); setEditForm({ title: sale.title, address: sale.address, city: sale.city, province: sale.province, date: sale.date, startTime: sale.start_time||"", endTime: sale.end_time||"", description: sale.description||"", tags: sale.tags||[], extraDate: sale.extra_date||"", extraDateStart: sale.extra_date_start||"", extraDateEnd: sale.extra_date_end||"" }); }} style={{ background: "#eff6ff", color: "#2563eb", border: "1px solid #bfdbfe", padding: "8px 14px", borderRadius: 6, cursor: "pointer", fontSize: 13, fontWeight: 600 }}>✏️ Edit</button>
-                      <a href="https://buy.stripe.com/fZu7sLdkZ12K1QJbRq1Jm00" target="_blank" rel="noreferrer" style={{ background: "#f5a623", color: "white", border: "none", padding: "8px 14px", borderRadius: 6, cursor: "pointer", fontSize: 13, fontWeight: 600, textDecoration: "none", textAlign: "center" }}>{`⭐ $${listingPricing.basic_featured}`}</a>
-                      <a href="https://buy.stripe.com/cNi4gzep3dPwcvn08I1Jm01" target="_blank" rel="noreferrer" style={{ background: "#c0392b", color: "white", border: "none", padding: "8px 14px", borderRadius: 6, cursor: "pointer", fontSize: 13, fontWeight: 600, textDecoration: "none", textAlign: "center" }}>{`🌟 $${listingPricing.premium_featured}`}</a>
+                      <button onClick={() => createListingCheckout("basic_featured", sale.id)} style={{ background: "#f5a623", color: "white", border: "none", padding: "8px 14px", borderRadius: 6, cursor: "pointer", fontSize: 13, fontWeight: 600 }}>{`⭐ $${listingPricing.basic_featured}`}</button>
+                      <button onClick={() => createListingCheckout("premium_featured", sale.id)} style={{ background: "#c0392b", color: "white", border: "none", padding: "8px 14px", borderRadius: 6, cursor: "pointer", fontSize: 13, fontWeight: 600 }}>{`🌟 $${listingPricing.premium_featured}`}</button>
                       {deleteConfirm === sale.id ? (
                         <div style={{ display: "flex", gap: 6 }}>
                           <button onClick={() => handleDelete(sale.id)} style={{ background: "#e74c3c", color: "white", border: "none", padding: "8px 10px", borderRadius: 6, cursor: "pointer", fontSize: 12, fontWeight: 600 }}>Yes, delete</button>
@@ -1489,7 +1503,7 @@ export default function App() {
                     <p style={{ fontSize: 28, marginBottom: 8 }}>🏅</p>
                     <p style={{ fontFamily: "'Cormorant Garamond', serif", fontSize: 20, fontWeight: 700, color: "#292524", marginBottom: 6 }}>Get Verified Seller Badge</p>
                     <p style={{ fontSize: 13, color: "#78716c", marginBottom: 16 }}>Show buyers you're trustworthy! A ✓ green badge appears on ALL your listings for just ${listingPricing.verified_badge} one-time.</p>
-                    <a href="https://buy.stripe.com/eVqaEX5SxfXEfHz4oY1Jm04" target="_blank" rel="noreferrer" onClick={() => setTimeout(() => setVerified(true), 3000)} style={{ display: "inline-block", background: "#059669", color: "white", padding: "12px 24px", borderRadius: 8, fontFamily: "'Cormorant Garamond', serif", fontWeight: 700, fontSize: 16, textDecoration: "none" }}>{`✓ Get Verified — $${listingPricing.verified_badge}`}</a>
+                    <button onClick={() => createListingCheckout("verified_badge")} style={{ display: "inline-block", background: "#059669", color: "white", padding: "12px 24px", borderRadius: 8, fontFamily: "'Cormorant Garamond', serif", fontWeight: 700, fontSize: 16, border: "none", cursor: "pointer" }}>{`✓ Get Verified — $${listingPricing.verified_badge}`}</button>
                   </>
                 )}
               </div>
