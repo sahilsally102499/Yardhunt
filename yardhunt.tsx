@@ -99,6 +99,19 @@ const api = {
       body: JSON.stringify({ email, city, province })
     });
     return res.json();
+  },
+  async markFeatured(id, level) {
+    await fetch(`${SUPABASE_URL}/rest/v1/sales?id=eq.${id}`, {
+      method: "PATCH",
+      headers: { apikey: SUPABASE_KEY, Authorization: `Bearer ${SUPABASE_KEY}`, "Content-Type": "application/json" },
+      body: JSON.stringify({ is_featured: level })
+    });
+  },
+  async deleteReview(id) {
+    await fetch(`${SUPABASE_URL}/rest/v1/reviews?id=eq.${id}`, {
+      method: "DELETE",
+      headers: { apikey: SUPABASE_KEY, Authorization: `Bearer ${SUPABASE_KEY}` }
+    });
   }
 };
 
@@ -164,6 +177,11 @@ export default function App() {
   const [allReviews, setAllReviews] = useState([]);
   const [adminLoading, setAdminLoading] = useState(false);
   const [allUsers, setAllUsers] = useState([]);
+  const [broadcastSubject, setBroadcastSubject] = useState("");
+  const [broadcastMessage, setBroadcastMessage] = useState("");
+  const [broadcastSending, setBroadcastSending] = useState(false);
+  const [broadcastResult, setBroadcastResult] = useState("");
+  const [adminTab, setAdminTab] = useState("overview");
   const [darkMode, setDarkMode] = useState(false);
   const [installPrompt, setInstallPrompt] = useState(null);
   const [showInstallBanner, setShowInstallBanner] = useState(false);
@@ -1285,7 +1303,27 @@ export default function App() {
                 </div>
                 <button onClick={loadAdminData} className="btn-secondary" disabled={adminLoading}>{adminLoading ? "Loading…" : "🔄 Refresh"}</button>
               </div>
+              {/* Admin Tabs */}
+              <div style={{ display: "flex", gap: 8, marginBottom: 28, flexWrap: "wrap" }}>
+                {[
+                  { id: "overview", label: "📊 Overview" },
+                  { id: "users", label: "👥 Users" },
+                  { id: "listings", label: "🏠 Listings" },
+                  { id: "subscribers", label: "🔔 Subscribers" },
+                  { id: "broadcast", label: "📧 Broadcast" },
+                  { id: "reviews", label: "⭐ Reviews" },
+                ].map(tab => (
+                  <button key={tab.id} onClick={() => setAdminTab(tab.id)} style={{ padding: "8px 16px", borderRadius: 20, border: "none", cursor: "pointer", fontSize: 13, fontWeight: 600, background: adminTab === tab.id ? "#1c1009" : "#f5f5f4", color: adminTab === tab.id ? "#f5ddb4" : "#78716c" }}>
+                    {tab.label}
+                  </button>
+                ))}
+              </div>
+              <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 0 }}>
+                <div></div>
+              </div>
 
+              {/* ===== OVERVIEW TAB ===== */}
+              {adminTab === "overview" && <>
               {/* Stats */}
               <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(180px, 1fr))", gap: 16, marginBottom: 36 }}>
                 {[
@@ -1402,7 +1440,44 @@ export default function App() {
                 </div>
               </div>
 
-              {/* All Users */}
+              {/* Popular Tags */}
+              <div style={{ background: "white", borderRadius: 12, border: "1px solid #e7e5e4", padding: 20, marginBottom: 36 }}>
+                <h3 style={{ fontFamily: "'Cormorant Garamond', serif", fontSize: 18, color: "#292524", marginBottom: 14 }}>🏷️ Most Popular Categories</h3>
+                <div style={{ display: "flex", flexWrap: "wrap", gap: 8 }}>
+                  {Object.entries(
+                    allSales.flatMap(s => s.tags || []).reduce((acc, tag) => { acc[tag] = (acc[tag] || 0) + 1; return acc; }, {})
+                  ).sort((a, b) => b[1] - a[1]).map(([tag, count]) => (
+                    <span key={tag} style={{ background: "#fdfaf5", border: "1px solid #e7e5e4", borderRadius: 20, padding: "6px 14px", fontSize: 13, color: "#292524" }}>
+                      {tag} <strong style={{ color: "#b91c1c" }}>{count}</strong>
+                    </span>
+                  ))}
+                  {allSales.length === 0 && <p style={{ color: "#78716c", fontSize: 13 }}>No data yet</p>}
+                </div>
+              </div>
+
+              {/* Business Insights */}
+              <div style={{ background: "white", borderRadius: 12, border: "1px solid #e7e5e4", padding: 20, marginBottom: 36 }}>
+                <h3 style={{ fontFamily: "'Cormorant Garamond', serif", fontSize: 18, color: "#292524", marginBottom: 14 }}>💡 Business Insights</h3>
+                <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(200px, 1fr))", gap: 12 }}>
+                  {[
+                    { label: "Avg Sales per User", value: allUsers.length > 0 ? (allSales.length / allUsers.length).toFixed(1) : "0", icon: "📊" },
+                    { label: "Subscriber Conversion", value: allUsers.length > 0 ? Math.round((allSubscribers.length / allUsers.length) * 100) + "%" : "0%", icon: "🔄" },
+                    { label: "Cities Covered", value: new Set(allSales.map(s => s.city)).size, icon: "🏙️" },
+                    { label: "Avg Reviews/Sale", value: allSales.length > 0 ? (allReviews.length / allSales.length).toFixed(1) : "0", icon: "⭐" },
+                  ].map(item => (
+                    <div key={item.label} style={{ background: "#fdfaf5", borderRadius: 10, padding: "16px", border: "1px solid #e7e5e4" }}>
+                      <p style={{ fontSize: 22, marginBottom: 6 }}>{item.icon}</p>
+                      <p style={{ fontSize: 24, fontWeight: 700, color: "#292524", fontFamily: "'Cormorant Garamond', serif" }}>{item.value}</p>
+                      <p style={{ fontSize: 12, color: "#78716c" }}>{item.label}</p>
+                    </div>
+                  ))}
+                </div>
+              </div>
+
+              </>}
+
+              {/* ===== USERS TAB ===== */}
+              {adminTab === "users" && <>
               <div style={{ marginBottom: 36 }}>
                 <h3 style={{ fontFamily: "'Cormorant Garamond', serif", fontSize: 22, color: "#292524", marginBottom: 16 }}>👥 Registered Users ({allUsers.length})</h3>
                 <div style={{ background: "white", borderRadius: 12, border: "1px solid #e7e5e4", overflow: "hidden" }}>
@@ -1434,7 +1509,10 @@ export default function App() {
                 </div>
               </div>
 
-              {/* All Listings */}
+              </>}
+
+              {/* ===== LISTINGS TAB ===== */}
+              {adminTab === "listings" && <>
               <div style={{ marginBottom: 36 }}>
                 <h3 style={{ fontFamily: "'Cormorant Garamond', serif", fontSize: 22, color: "#292524", marginBottom: 16 }}>🏠 All Listings ({allSales.length})</h3>
                 <div style={{ background: "white", borderRadius: 12, border: "1px solid #e7e5e4", overflow: "hidden" }}>
@@ -1442,7 +1520,7 @@ export default function App() {
                     <table style={{ width: "100%", borderCollapse: "collapse" }}>
                       <thead>
                         <tr style={{ background: "#fdfaf5", borderBottom: "1px solid #e7e5e4" }}>
-                          {["Title", "City", "Province", "Date", "Posted"].map(h => (
+                          {["Title", "City", "Province", "Date", "Posted", "Actions"].map(h => (
                             <th key={h} style={{ padding: "12px 16px", textAlign: "left", fontSize: 11, fontWeight: 600, color: "#78716c", letterSpacing: 0.8, textTransform: "uppercase" }}>{h}</th>
                           ))}
                         </tr>
@@ -1455,6 +1533,13 @@ export default function App() {
                             <td style={{ padding: "12px 16px", fontSize: 14, color: "#78716c" }}>{s.province}</td>
                             <td style={{ padding: "12px 16px", fontSize: 14, color: "#78716c" }}>{s.date}</td>
                             <td style={{ padding: "12px 16px", fontSize: 12, color: "#a8a29e" }}>{new Date(s.created_at).toLocaleDateString("en-CA")}</td>
+                            <td style={{ padding: "12px 16px" }}>
+                              <div style={{ display: "flex", gap: 6 }}>
+                                <button onClick={async () => { await api.markFeatured(s.id, "basic"); loadAdminData(); }} style={{ fontSize: 11, padding: "3px 8px", borderRadius: 6, border: "1px solid #d97706", background: "#fffbeb", color: "#d97706", cursor: "pointer" }}>⭐ Basic</button>
+                                <button onClick={async () => { await api.markFeatured(s.id, "premium"); loadAdminData(); }} style={{ fontSize: 11, padding: "3px 8px", borderRadius: 6, border: "1px solid #7c3aed", background: "#f5f3ff", color: "#7c3aed", cursor: "pointer" }}>🌟 Premium</button>
+                                <button onClick={async () => { if(confirm("Delete this listing?")) { await api.deleteSale(s.id); loadAdminData(); } }} style={{ fontSize: 11, padding: "3px 8px", borderRadius: 6, border: "1px solid #b91c1c", background: "#fef2f2", color: "#b91c1c", cursor: "pointer" }}>🗑️</button>
+                              </div>
+                            </td>
                           </tr>
                         ))}
                       </tbody>
@@ -1462,7 +1547,10 @@ export default function App() {
                   )}
                 </div>
               </div>
+              </>}
 
+              {/* ===== SUBSCRIBERS TAB ===== */}
+              {adminTab === "subscribers" && <>
               {/* All Subscribers */}
               <div style={{ marginBottom: 36 }}>
                 <h3 style={{ fontFamily: "'Cormorant Garamond', serif", fontSize: 22, color: "#292524", marginBottom: 16 }}>🔔 Subscribers ({allSubscribers.length})</h3>
@@ -1491,6 +1579,41 @@ export default function App() {
                 </div>
               </div>
 
+              </>}
+
+              {/* ===== BROADCAST TAB ===== */}
+              {adminTab === "broadcast" && <>
+              <div style={{ background: "white", borderRadius: 12, border: "1px solid #e7e5e4", padding: 28, marginBottom: 24 }}>
+                <h3 style={{ fontFamily: "'Cormorant Garamond', serif", fontSize: 22, color: "#292524", marginBottom: 6 }}>📧 Broadcast Email</h3>
+                <p style={{ color: "#78716c", fontSize: 13, marginBottom: 20 }}>Send an email to all {allSubscribers.length} subscribers at once</p>
+                <label style={{ fontSize: 12, fontWeight: 600, color: "#78716c", textTransform: "uppercase", letterSpacing: 0.8 }}>Subject</label>
+                <input value={broadcastSubject} onChange={e => setBroadcastSubject(e.target.value)} placeholder="e.g. 🍁 Big sales happening near you this weekend!" style={{ width: "100%", marginTop: 6, marginBottom: 16, boxSizing: "border-box" }} />
+                <label style={{ fontSize: 12, fontWeight: 600, color: "#78716c", textTransform: "uppercase", letterSpacing: 0.8 }}>Message</label>
+                <textarea value={broadcastMessage} onChange={e => setBroadcastMessage(e.target.value)} placeholder="Write your message to subscribers..." rows={6} style={{ width: "100%", marginTop: 6, marginBottom: 20, padding: "12px 14px", borderRadius: 8, border: "1px solid #e7e5e4", fontSize: 14, resize: "vertical", boxSizing: "border-box" }} />
+                {broadcastResult && <p style={{ color: broadcastResult.includes("Sent") ? "#15803d" : "#b91c1c", fontSize: 14, marginBottom: 12 }}>{broadcastResult}</p>}
+                <button disabled={broadcastSending || !broadcastSubject || !broadcastMessage} onClick={async () => {
+                  setBroadcastSending(true); setBroadcastResult("");
+                  try {
+                    const res = await fetch("https://rcqlohlftafxicmfjkuf.supabase.co/functions/v1/notify-subscribers", {
+                      method: "POST",
+                      headers: { "Content-Type": "application/json", "Authorization": `Bearer ${SUPABASE_KEY}` },
+                      body: JSON.stringify({ broadcast: true, subject: broadcastSubject, message: broadcastMessage, subscribers: allSubscribers })
+                    });
+                    const data = await res.json();
+                    setBroadcastResult(`✅ Sent to ${data.sent || 0} subscribers!`);
+                  } catch(e) { setBroadcastResult("❌ Failed to send. Try again."); }
+                  setBroadcastSending(false);
+                }} className="btn-primary" style={{ minWidth: 180 }}>
+                  {broadcastSending ? "Sending…" : `📧 Send to All ${allSubscribers.length} Subscribers`}
+                </button>
+              </div>
+              <div style={{ background: "#fffbeb", border: "1px solid #fde68a", borderRadius: 10, padding: "14px 18px" }}>
+                <p style={{ fontSize: 13, color: "#92400e" }}>⚠️ This will send a real email to every subscriber. Double-check your message before sending!</p>
+              </div>
+              </>}
+
+              {/* ===== REVIEWS TAB ===== */}
+              {adminTab === "reviews" && <>
               {/* All Reviews */}
               <div>
                 <h3 style={{ fontFamily: "'Cormorant Garamond', serif", fontSize: 22, color: "#292524", marginBottom: 16 }}>⭐ Reviews ({allReviews.length})</h3>
@@ -1499,7 +1622,7 @@ export default function App() {
                     <table style={{ width: "100%", borderCollapse: "collapse" }}>
                       <thead>
                         <tr style={{ background: "#fdfaf5", borderBottom: "1px solid #e7e5e4" }}>
-                          {["Rating", "Comment", "By", "Date"].map(h => (
+                          {["Rating", "Comment", "By", "Date", "Action"].map(h => (
                             <th key={h} style={{ padding: "12px 16px", textAlign: "left", fontSize: 11, fontWeight: 600, color: "#78716c", letterSpacing: 0.8, textTransform: "uppercase" }}>{h}</th>
                           ))}
                         </tr>
@@ -1511,6 +1634,9 @@ export default function App() {
                             <td style={{ padding: "12px 16px", fontSize: 14, color: "#292524" }}>{r.comment}</td>
                             <td style={{ padding: "12px 16px", fontSize: 13, color: "#78716c" }}>{r.user_email?.split("@")[0]}</td>
                             <td style={{ padding: "12px 16px", fontSize: 12, color: "#a8a29e" }}>{new Date(r.created_at).toLocaleDateString("en-CA")}</td>
+                            <td style={{ padding: "12px 16px" }}>
+                              <button onClick={async () => { if(confirm("Delete this review?")) { await api.deleteReview(r.id); loadAdminData(); } }} style={{ fontSize: 11, padding: "3px 8px", borderRadius: 6, border: "1px solid #b91c1c", background: "#fef2f2", color: "#b91c1c", cursor: "pointer" }}>🗑️ Delete</button>
+                            </td>
                           </tr>
                         ))}
                       </tbody>
@@ -1518,6 +1644,7 @@ export default function App() {
                   )}
                 </div>
               </div>
+              </>}
             </>
           )}
         </main>
