@@ -1,5 +1,7 @@
 {
   "rewrites": [
+    { "source": "/garage-sales/:city/:province", "destination": "/index.html" },
+    { "source": "/garage-sales/:province", "destination": "/index.html" },
     { "source": "/(.*)", "destination": "/index.html" }
   ]
 }
