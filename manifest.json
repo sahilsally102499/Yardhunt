@@ -1,0 +1,16 @@
+{
+  "name": "Yardhunt.ca",
+  "short_name": "Yardhunt",
+  "description": "Garage Sales Across Canada",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#1c1009",
+  "theme_color": "#b91c1c",
+  "icons": [
+    {
+      "src": "https://fav.farm/🍁",
+      "sizes": "192x192",
+      "type": "image/png"
+    }
+  ]
+}
