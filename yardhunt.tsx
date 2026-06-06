@@ -259,6 +259,8 @@ const emojis = ["🏠","🌻","📦","🛋️","🔑","🧺","🏡","🌼"];
 export default function App() {
   const [view, setView] = useState("browse");
   const [viewHistory, setViewHistory] = useState(["browse"]);
+  const [seoCity, setSeoCity] = useState("");
+  const [seoProvince, setSeoProvince] = useState("");
   const [sales, setSales] = useState([]);
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState("");
@@ -631,6 +633,29 @@ export default function App() {
     if (window.location.pathname === '/admin') {
       setView('admin');
     }
+    // SEO city/province pages e.g. /garage-sales/ontario or /garage-sales/toronto
+    const path = window.location.pathname;
+    const seoMatch = path.match(/^\/garage-sales\/([^/]+)(?:\/([^/]+))?/);
+    if (seoMatch) {
+      const segment1 = decodeURIComponent(seoMatch[1]).replace(/-/g, " ");
+      const segment2 = seoMatch[2] ? decodeURIComponent(seoMatch[2]).replace(/-/g, " ") : "";
+      // Check if segment1 is a province code or name
+      const provinces2 = ["AB","BC","MB","NB","NL","NS","NT","NU","ON","PE","QC","SK","YT"];
+      const provinceNames = ["alberta","british columbia","manitoba","new brunswick","newfoundland","nova scotia","northwest territories","nunavut","ontario","prince edward island","quebec","saskatchewan","yukon"];
+      const isProvince = provinces2.includes(segment1.toUpperCase()) || provinceNames.includes(segment1.toLowerCase());
+      if (isProvince) {
+        setSeoProvince(segment1.toUpperCase().length <= 2 ? segment1.toUpperCase() : segment1);
+        setSeoCity(segment2);
+      } else {
+        setSeoCity(segment1);
+        setSeoProvince(segment2.toUpperCase());
+      }
+      setView("seo");
+      // Update page title
+      document.title = segment2
+        ? `Garage Sales in ${segment1}, ${segment2} | Yardhunt.ca`
+        : `Garage Sales in ${segment1} | Yardhunt.ca`;
+    }
   }, []);
 
   // Generate search suggestions from existing sales
@@ -682,6 +707,7 @@ export default function App() {
   const navigateTo = (newView) => {
     setViewHistory(h => [...h.slice(-9), newView]);
     setView(newView);
+    document.title = "Yardhunt.ca — Canada's Garage Sale Marketplace";
   };
 
   const goBack = () => {
@@ -1845,6 +1871,99 @@ export default function App() {
         </main>
       )}
 
+      {/* ===== SEO CITY/PROVINCE PAGE ===== */}
+      {view === "seo" && (
+        <main style={{ maxWidth: 900, margin: "0 auto", padding: "36px 20px" }}>
+          <button onClick={() => { setView("browse"); window.history.pushState({}, "", "/"); }} style={{ display: "flex", alignItems: "center", gap: 6, background: "none", border: "none", color: "#b91c1c", cursor: "pointer", fontSize: 14, fontWeight: 700, marginBottom: 20, padding: 0 }}>← Back to all sales</button>
+
+          {/* SEO Header */}
+          <div style={{ marginBottom: 32 }}>
+            <h1 style={{ fontFamily: "'Playfair Display', serif", fontSize: 32, fontWeight: 900, color: "#2d1b0e", marginBottom: 8 }}>
+              🍁 Garage Sales {seoCity ? `in ${seoCity}` : ""}{seoProvince ? `, ${seoProvince}` : ""}
+            </h1>
+            <p style={{ color: "#78716c", fontSize: 16, marginBottom: 16 }}>
+              Find the best garage sales and yard sales {seoCity ? `in ${seoCity}` : ""}{seoProvince ? ` ${seoProvince}` : ""} on Yardhunt.ca — Canada's garage sale marketplace.
+            </p>
+            <div style={{ display: "flex", gap: 10, flexWrap: "wrap" }}>
+              {(() => {
+                const cityList = seoCity
+                  ? sales.filter(s => s.city?.toLowerCase() === seoCity.toLowerCase())
+                  : seoProvince
+                  ? sales.filter(s => s.province?.toUpperCase() === seoProvince.toUpperCase())
+                  : sales;
+                return (
+                  <>
+                    <span style={{ background: "#fef3c7", color: "#d97706", padding: "4px 12px", borderRadius: 20, fontSize: 13, fontWeight: 600 }}>
+                      🏠 {cityList.length} active sale{cityList.length !== 1 ? "s" : ""}
+                    </span>
+                    {seoProvince && <span style={{ background: "#f0fdf4", color: "#059669", padding: "4px 12px", borderRadius: 20, fontSize: 13, fontWeight: 600 }}>📍 {seoProvince}</span>}
+                  </>
+                );
+              })()}
+            </div>
+          </div>
+
+          {/* Sale listings */}
+          {(() => {
+            const cityList = seoCity
+              ? sales.filter(s => s.city?.toLowerCase() === seoCity.toLowerCase())
+              : seoProvince
+              ? sales.filter(s => s.province?.toUpperCase() === seoProvince.toUpperCase())
+              : sales;
+            return cityList.length === 0 ? (
+              <div style={{ textAlign: "center", padding: "48px 20px", background: "white", borderRadius: 12, border: "1px solid #e7e5e4" }}>
+                <p style={{ fontSize: 40, marginBottom: 12 }}>🏠</p>
+                <p style={{ fontFamily: "'Cormorant Garamond', serif", fontSize: 22, color: "#292524", marginBottom: 8 }}>No active sales right now</p>
+                <p style={{ color: "#78716c", fontSize: 14, marginBottom: 20 }}>Be the first to post a sale here!</p>
+                <button className="btn-primary" onClick={() => { setView("post"); window.history.pushState({}, "", "/"); }}>🍁 Post a Sale Free</button>
+              </div>
+            ) : (
+              <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(280px, 1fr))", gap: 20 }}>
+                {cityList.map(sale => (
+                  <div key={sale.id} className="card-hover" onClick={() => { setSelectedSale(sale); setPhotoIndex(0); loadReviews(sale.id); loadQuestions(sale.id); trackView(sale.id); setView("browse"); window.history.pushState({}, "", "/"); }} style={{ background: "white", borderRadius: 8, overflow: "hidden", boxShadow: "0 2px 12px rgba(0,0,0,0.08)", border: sale.is_featured === "premium" ? "2px solid #b91c1c" : sale.is_featured === "basic" ? "2px solid #d97706" : "1px solid #e8d9c4" }}>
+                    {sale.photos?.[0] ? <img src={sale.photos[0]} alt={sale.title} style={{ width: "100%", height: 160, objectFit: "cover" }} /> : <div style={{ background: "linear-gradient(135deg, #6b1a1a, #c0392b)", padding: "20px", display: "flex", alignItems: "center", gap: 12 }}><span style={{ fontSize: 32 }}>{sale.emoji || "🏠"}</span><p style={{ fontFamily: "'Cormorant Garamond', serif", fontSize: 16, fontWeight: 700, color: "white" }}>{sale.title}</p></div>}
+                    <div style={{ padding: "14px 18px" }}>
+                      <p style={{ fontFamily: "'Cormorant Garamond', serif", fontSize: 16, fontWeight: 700, color: "#2d1b0e", marginBottom: 6 }}>{sale.title}</p>
+                      <p style={{ fontSize: 13, color: "#78716c", marginBottom: 4 }}>📍 {sale.address}, {sale.city}</p>
+                      <p style={{ fontSize: 13, color: "#78716c" }}>📅 {new Date(sale.date+"T12:00:00").toLocaleDateString("en-CA", { weekday:"short", month:"short", day:"numeric" })}</p>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            );
+          })()}
+
+          {/* SEO text block for Google */}
+          <div style={{ marginTop: 48, padding: "28px", background: "#fdfaf5", borderRadius: 12, border: "1px solid #e7e5e4" }}>
+            <h2 style={{ fontFamily: "'Playfair Display', serif", fontSize: 22, color: "#2d1b0e", marginBottom: 12 }}>About Garage Sales {seoCity ? `in ${seoCity}` : `in ${seoProvince}`}</h2>
+            <p style={{ fontSize: 14, color: "#78716c", lineHeight: 1.8, marginBottom: 12 }}>
+              Yardhunt.ca is Canada's dedicated garage sale and yard sale marketplace. Browse upcoming garage sales {seoCity ? `in ${seoCity}` : `across ${seoProvince}`}, find great deals on furniture, clothes, tools, electronics and more — all in one place.
+            </p>
+            <p style={{ fontSize: 14, color: "#78716c", lineHeight: 1.8, marginBottom: 16 }}>
+              Posting a garage sale {seoCity ? `in ${seoCity}` : ""} is 100% free on Yardhunt.ca. Add photos, set your hours, and reach hundreds of local buyers. Subscribe to get email notifications when new sales are posted near you.
+            </p>
+            <div style={{ display: "flex", gap: 12, flexWrap: "wrap" }}>
+              <button className="btn-primary" onClick={() => { setView("post"); window.history.pushState({}, "", "/"); }}>🍁 Post a Free Sale</button>
+              <button className="btn-secondary" onClick={() => { setView("browse"); window.history.pushState({}, "", "/"); }}>Browse All Sales</button>
+            </div>
+          </div>
+
+          {/* Other cities in province */}
+          {seoProvince && (
+            <div style={{ marginTop: 32 }}>
+              <h3 style={{ fontFamily: "'Cormorant Garamond', serif", fontSize: 20, color: "#292524", marginBottom: 16 }}>Other cities in {seoProvince}</h3>
+              <div style={{ display: "flex", gap: 10, flexWrap: "wrap" }}>
+                {[...new Set(sales.filter(s => s.province?.toUpperCase() === seoProvince.toUpperCase()).map(s => s.city))].map(city => (
+                  <a key={city} href={`/garage-sales/${city.toLowerCase().replace(/ /g, "-")}/${seoProvince.toLowerCase()}`} style={{ padding: "8px 16px", background: "white", border: "1px solid #e7e5e4", borderRadius: 20, fontSize: 13, color: "#292524", textDecoration: "none", fontWeight: 500 }}>
+                    {city}
+                  </a>
+                ))}
+              </div>
+            </div>
+          )}
+        </main>
+      )}
+
       {/* Categories View */}
       {/* ===== SAVED SALES VIEW ===== */}
       {view === "favourites" && (
@@ -2796,6 +2915,22 @@ export default function App() {
         </div>
         <div style={{ maxWidth: 900, margin: "28px auto 0", paddingTop: 20, borderTop: "1px solid rgba(255,255,255,0.06)", display: "flex", justifyContent: "space-between", alignItems: "center", flexWrap: "wrap", gap: 10 }}>
           <p style={{ color: "#44403c", fontSize: 12 }}>© 2026 Yardhunt.ca · All rights reserved · <span style={{ cursor: "pointer", textDecoration: "underline" }} onClick={() => setView("terms")}>Terms & Privacy</span></p>
+          <div style={{ display: "flex", gap: 12, flexWrap: "wrap", marginTop: 8 }}>
+            {[["Ontario","on"],["Alberta","ab"],["British Columbia","british-columbia"],["Quebec","quebec"]].map(([name, slug]) => (
+              <a key={slug} href={`/garage-sales/${slug}`} style={{ color: "#44403c", fontSize: 11, textDecoration: "underline" }}>Garage Sales in {name}</a>
+            ))}
+            {[...new Set(sales.slice(0,4).map(s=>s.city).filter(Boolean))].map(city => (
+              <a key={city} href={`/garage-sales/${city.toLowerCase().replace(/ /g,"-")}`} style={{ color: "#44403c", fontSize: 11, textDecoration: "underline" }}>Garage Sales in {city}</a>
+            ))}
+          </div>
+          <div style={{ display: "flex", gap: 12, flexWrap: "wrap", marginTop: 8 }}>
+            {[["Ontario","ON"],["Alberta","AB"],["British Columbia","BC"],["Quebec","QC"]].map(([name, code]) => (
+              <a key={code} href={`/garage-sales/${name.toLowerCase().replace(/ /g,"-")}`} style={{ color: "#44403c", fontSize: 11, textDecoration: "underline" }}>Garage Sales in {name}</a>
+            ))}
+            {[...new Set(sales.slice(0,6).map(s=>s.city).filter(Boolean))].map(city => (
+              <a key={city} href={`/garage-sales/${city.toLowerCase().replace(/ /g,"-")}`} style={{ color: "#44403c", fontSize: 11, textDecoration: "underline" }}>Garage Sales in {city}</a>
+            ))}
+          </div>
           <p style={{ color: "#44403c", fontSize: 12, fontStyle: "italic" }}>Connecting Canadians, one great deal at a time 🍁</p>
         </div>
       </footer>
