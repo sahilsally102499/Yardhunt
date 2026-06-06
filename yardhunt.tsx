@@ -737,11 +737,18 @@ export default function App() {
   return (
     <div onTouchStart={handleTouchStart} onTouchEnd={handleTouchEnd} style={{ fontFamily: "'DM Sans', sans-serif", minHeight: "100vh", paddingBottom: 70, position: "relative" }}>
       {/* Background image with overlay */}
-      <div className="bg-image" style={{ position: "fixed", inset: 0, zIndex: 0,
-        backgroundImage: "url('https://rcqlohlftafxicmfjkuf.supabase.co/storage/v1/object/public/assets/Gemini_Generated_Image_r7ys1er7ys1er7ys.png')",
-        backgroundSize: "cover", backgroundPosition: "center",
-        filter: darkMode ? "brightness(0.3) saturate(0.5)" : "brightness(0.85) saturate(0.8)"
-      }} />
+      <div className="bg-image" style={{ position: "fixed", inset: 0, zIndex: 0, overflow: "hidden" }}>
+        <div style={{
+          position: "absolute", inset: "-20px",
+          backgroundImage: "url('https://rcqlohlftafxicmfjkuf.supabase.co/storage/v1/object/public/assets/Gemini_Generated_Image_r7ys1er7ys1er7ys.png')",
+          backgroundSize: "cover",
+          backgroundPosition: "65% center",
+          backgroundAttachment: "scroll",
+          filter: darkMode ? "brightness(0.3) saturate(0.5)" : "brightness(0.85) saturate(0.8)",
+          willChange: "transform",
+          transform: "translateZ(0)",
+        }} />
+      </div>
       {/* Dark overlay */}
       <div style={{ position: "fixed", inset: 0, zIndex: 0, background: darkMode ? "rgba(10,5,0,0.85)" : "rgba(28,16,9,0.55)" }} />
       {/* Content wrapper */}
@@ -803,17 +810,8 @@ export default function App() {
         /* Photo upload */
         .photo-thumb { position: relative; width: 88px; height: 88px; border-radius: 8px; overflow: hidden; border: 2px solid var(--bark-pale); flex-shrink: 0; }
         .photo-thumb img { width: 100%; height: 100%; object-fit: cover; }
-        @media (max-width: 768px) {
-          .bg-image {
-            background-position: 65% center !important;
-            background-attachment: fixed !important;
-            background-size: 250% !important;
-          }
-        }
         @media (min-width: 769px) {
-          .bg-image {
-            background-attachment: fixed !important;
-            background-size: cover !important;
+          .bg-image > div {
             background-position: center !important;
           }
         }
