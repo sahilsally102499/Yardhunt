@@ -178,6 +178,27 @@ const api = {
     });
     return res.json();
   },
+  async getListingPricing() {
+    const res = await fetch(`${SUPABASE_URL}/rest/v1/listing_pricing?id=eq.1`, {
+      headers: { apikey: SUPABASE_KEY, Authorization: `Bearer ${SUPABASE_KEY}` }
+    });
+    return res.json();
+  },
+  async updateListingPricing(data) {
+    const res = await fetch(`${SUPABASE_URL}/rest/v1/listing_pricing?id=eq.1`, {
+      method: "PATCH",
+      headers: { apikey: SUPABASE_KEY, Authorization: `Bearer ${SUPABASE_KEY}`, "Content-Type": "application/json" },
+      body: JSON.stringify(data)
+    });
+    // If no row exists, insert one
+    if (res.status === 404 || res.status === 204) {
+      await fetch(`${SUPABASE_URL}/rest/v1/listing_pricing`, {
+        method: "POST",
+        headers: { apikey: SUPABASE_KEY, Authorization: `Bearer ${SUPABASE_KEY}`, "Content-Type": "application/json" },
+        body: JSON.stringify({ id: 1, ...data })
+      });
+    }
+  },
   async updateAdPricing(id, price) {
     await fetch(`${SUPABASE_URL}/rest/v1/ad_pricing?id=eq.${id}`, {
       method: "PATCH",
@@ -280,6 +301,13 @@ export default function App() {
   const [ads, setAds] = useState([]);
   const [allAds, setAllAds] = useState([]);
   const [adPricing, setAdPricing] = useState([]);
+  const [listingPricing, setListingPricing] = useState({
+    basic_featured: 9.99,
+    premium_featured: 14.99,
+    extra_photos: 1.99,
+    photo_unlock: 1.99,
+    verified_badge: 4.99
+  });
   const [adForm, setAdForm] = useState({ business_name:"", description:"", website:"", city:"", province:"", logo_url:"", package_type:"Starter", billing_period:"monthly", email:"" });
   const [adSubmitting, setAdSubmitting] = useState(false);
   const [adSuccess, setAdSuccess] = useState(false);
@@ -311,6 +339,16 @@ export default function App() {
   useEffect(() => {
     loadAds();
     loadAdPricing();
+    api.getListingPricing().then(data => {
+      const row = Array.isArray(data) ? data[0] : data;
+      if (row) setListingPricing({
+        basic_featured: row.basic_featured ?? 9.99,
+        premium_featured: row.premium_featured ?? 14.99,
+        extra_photos: row.extra_photos ?? 1.99,
+        photo_unlock: row.photo_unlock ?? 1.99,
+        verified_badge: row.verified_badge ?? 4.99
+      });
+    });
     // Check for ad success
     const params = new URLSearchParams(window.location.search);
     if (params.get("ad_success")) { setAdSuccess(true); setView("advertise"); }
@@ -861,43 +899,26 @@ export default function App() {
               </div>
               <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(300px, 1fr))", gap: 24 }}>
                 {filtered.reduce((acc, sale, idx) => {
-                  // Starter = every 4, City = every 3, Premium = every 2 (province-wide)
-                  const starterAds = ads.filter(a => a.package_type === "Starter" && a.city?.toLowerCase() === (sale.city||"").toLowerCase());
-                  const cityAds = ads.filter(a => a.package_type === "City" && a.city?.toLowerCase() === (sale.city||"").toLowerCase());
-                  const premiumAds = ads.filter(a => a.package_type === "Premium" && (a.province === sale.province || !a.province));
-
-                  const renderAd = (ad, border, badgeColor, badgeLabel) => (
-                    <div key={`ad-${ad.id}-${idx}`} style={{ background: "linear-gradient(135deg, #1c1009, #2d1b0e)", borderRadius: 8, overflow: "hidden", boxShadow: "0 2px 12px rgba(0,0,0,0.15)", border: `2px solid ${border}`, position: "relative" }}>
-                      <div style={{ position: "absolute", top: 10, right: 10, background: badgeColor, color: "white", fontSize: 10, fontWeight: 700, padding: "2px 8px", borderRadius: 10, letterSpacing: 0.8 }}>{badgeLabel}</div>
-                      {ad.logo_url && <img src={ad.logo_url} alt={ad.business_name} style={{ width: "100%", height: 140, objectFit: "cover", opacity: 0.9 }} />}
-                      {!ad.logo_url && <div style={{ height: 80, display: "flex", alignItems: "center", justifyContent: "center", fontSize: 40 }}>📢</div>}
-                      <div style={{ padding: "16px 20px" }}>
-                        <p style={{ fontFamily: "'Cormorant Garamond', serif", fontSize: 18, fontWeight: 700, color: "#f5ddb4", marginBottom: 6 }}>{ad.business_name}</p>
-                        <p style={{ fontSize: 13, color: "#a8a29e", marginBottom: 10, lineHeight: 1.5 }}>{ad.description}</p>
-                        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
-                          <span style={{ fontSize: 11, color: "#78716c" }}>📍 {ad.city || ad.province}</span>
-                          <a href={ad.website} target="_blank" rel="noreferrer" style={{ background: badgeColor, color: "white", padding: "7px 14px", borderRadius: 6, fontSize: 12, fontWeight: 700, textDecoration: "none" }}>Visit →</a>
+                  // Insert a sponsored ad every 4 listings
+                  if (idx > 0 && idx % 4 === 0) {
+                    const cityAds = ads.filter(a => a.city?.toLowerCase() === (sale.city||"").toLowerCase() || !a.city);
+                    const ad = cityAds[Math.floor(idx/4 - 1) % cityAds.length];
+                    if (ad) acc.push(
+                      <div key={`ad-${ad.id}-${idx}`} style={{ background: "linear-gradient(135deg, #1c1009, #2d1b0e)", borderRadius: 8, overflow: "hidden", boxShadow: "0 2px 12px rgba(0,0,0,0.15)", border: "2px solid #d97706", position: "relative" }}>
+                        <div style={{ position: "absolute", top: 10, right: 10, background: "#d97706", color: "white", fontSize: 10, fontWeight: 700, padding: "2px 8px", borderRadius: 10, letterSpacing: 0.8 }}>SPONSORED</div>
+                        {ad.logo_url && <img src={ad.logo_url} alt={ad.business_name} style={{ width: "100%", height: 140, objectFit: "cover", opacity: 0.9 }} />}
+                        {!ad.logo_url && <div style={{ height: 80, display: "flex", alignItems: "center", justifyContent: "center", fontSize: 40 }}>📢</div>}
+                        <div style={{ padding: "16px 20px" }}>
+                          <p style={{ fontFamily: "'Cormorant Garamond', serif", fontSize: 18, fontWeight: 700, color: "#f5ddb4", marginBottom: 6 }}>{ad.business_name}</p>
+                          <p style={{ fontSize: 13, color: "#a8a29e", marginBottom: 10, lineHeight: 1.5 }}>{ad.description}</p>
+                          <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+                            <span style={{ fontSize: 11, color: "#78716c" }}>📍 {ad.city}</span>
+                            <a href={ad.website} target="_blank" rel="noreferrer" style={{ background: "#d97706", color: "white", padding: "7px 14px", borderRadius: 6, fontSize: 12, fontWeight: 700, textDecoration: "none" }}>Visit →</a>
+                          </div>
                         </div>
                       </div>
-                    </div>
-                  );
-
-                  // Premium: every 2 listings (province-wide)
-                  if (idx > 0 && idx % 2 === 0 && premiumAds.length > 0) {
-                    const ad = premiumAds[Math.floor(idx/2 - 1) % premiumAds.length];
-                    acc.push(renderAd(ad, "#b91c1c", "#b91c1c", "💎 PREMIUM"));
+                    );
                   }
-                  // City: every 3 listings
-                  else if (idx > 0 && idx % 3 === 0 && cityAds.length > 0) {
-                    const ad = cityAds[Math.floor(idx/3 - 1) % cityAds.length];
-                    acc.push(renderAd(ad, "#7c3aed", "#7c3aed", "🌟 SPONSORED"));
-                  }
-                  // Starter: every 4 listings
-                  else if (idx > 0 && idx % 4 === 0 && starterAds.length > 0) {
-                    const ad = starterAds[Math.floor(idx/4 - 1) % starterAds.length];
-                    acc.push(renderAd(ad, "#d97706", "#d97706", "⭐ SPONSORED"));
-                  }
-
                   acc.push(
                   <div key={sale.id} className="card-hover" onClick={() => { setSelectedSale(sale); setPhotoIndex(0); loadReviews(sale.id); loadQuestions(sale.id); trackView(sale.id); setReviewSuccess(false); setReviewComment(''); setReviewRating(5); setQuestionText(""); }} style={{ background: "white", borderRadius: 8, overflow: "hidden", boxShadow: "0 2px 12px rgba(0,0,0,0.08)", border: "1px solid #e8d9c4" }}>
                     {sale.photos && sale.photos.length > 0 ? (
@@ -1027,9 +1048,9 @@ export default function App() {
                   <div style={{ background: "linear-gradient(135deg, #1c1009, #3b0f0f)", padding: "14px 20px", display: "flex", alignItems: "center", justifyContent: "space-between", gap: 12, flexWrap: "wrap" }}>
                     <div>
                       <p style={{ fontFamily: "'Cormorant Garamond', serif", fontSize: 16, fontWeight: 700, color: "white", marginBottom: 2 }}>🔒 {selectedSale.photos.length - 6} more photos locked</p>
-                      <p style={{ fontSize: 12, color: "#f5ddb499" }}>Unlock all for just $1.99</p>
+                      <p style={{ fontSize: 12, color: "#f5ddb499" }}>Unlock all for just ${listingPricing.photo_unlock}</p>
                     </div>
-                    <a href="https://buy.stripe.com/9B66oH3Kp3aS2UNdZy1Jm03" target="_blank" rel="noreferrer" onClick={() => setTimeout(() => setUnlockedSales(u => [...u, selectedSale.id]), 3000)} style={{ background: "#d97706", color: "white", padding: "10px 18px", borderRadius: 8, fontFamily: "'Cormorant Garamond', serif", fontWeight: 700, fontSize: 14, textDecoration: "none", whiteSpace: "nowrap" }}>📸 Unlock All — $1.99</a>
+                    <a href="https://buy.stripe.com/9B66oH3Kp3aS2UNdZy1Jm03" target="_blank" rel="noreferrer" onClick={() => setTimeout(() => setUnlockedSales(u => [...u, selectedSale.id]), 3000)} style={{ background: "#d97706", color: "white", padding: "10px 18px", borderRadius: 8, fontFamily: "'Cormorant Garamond', serif", fontWeight: 700, fontSize: 14, textDecoration: "none", whiteSpace: "nowrap" }}>{`📸 Unlock All — $${listingPricing.photo_unlock}`}</a>
                   </div>
                 )}
               </div>
@@ -1156,19 +1177,19 @@ export default function App() {
                   <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12 }}>
                     <div style={{ background: "white", borderRadius: 8, padding: "16px", border: "2px solid #f5c27a", textAlign: "center" }}>
                       <p style={{ fontSize: 11, fontWeight: 700, color: "#7a5c3a", letterSpacing: 1, textTransform: "uppercase", marginBottom: 4 }}>Basic</p>
-                      <p style={{ fontFamily: "'Playfair Display', serif", fontSize: 22, fontWeight: 900, color: "#2d1b0e", marginBottom: 4 }}>$9.99</p>
+                      <p style={{ fontFamily: "'Playfair Display', serif", fontSize: 22, fontWeight: 900, color: "#2d1b0e", marginBottom: 4 }}>${listingPricing.basic_featured}</p>
                       <p style={{ fontSize: 11, color: "#7a5c3a", marginBottom: 12 }}>CAD one-time</p>
                       <ul style={{ fontSize: 12, color: "#5a4030", textAlign: "left", marginBottom: 14, paddingLeft: 16 }}>
                         <li>⭐ Featured badge</li>
                         <li>📌 Pinned to top</li>
                         <li>3 day boost</li>
                       </ul>
-                      <a href="https://buy.stripe.com/fZu7sLdkZ12K1QJbRq1Jm00" target="_blank" rel="noreferrer" style={{ display: "block", background: "#f5a623", color: "white", padding: "10px", borderRadius: 6, fontFamily: "'Playfair Display', serif", fontWeight: 700, fontSize: 14, textDecoration: "none" }}>⭐ Get Basic</a>
+                      <a href="https://buy.stripe.com/fZu7sLdkZ12K1QJbRq1Jm00" target="_blank" rel="noreferrer" style={{ display: "block", background: "#f5a623", color: "white", padding: "10px", borderRadius: 6, fontFamily: "'Playfair Display', serif", fontWeight: 700, fontSize: 14, textDecoration: "none" }}>{`⭐ Get Basic — $${listingPricing.basic_featured}`}</a>
                     </div>
                     <div style={{ background: "linear-gradient(135deg, #2d1b0e, #c0392b)", borderRadius: 8, padding: "16px", border: "2px solid #c0392b", textAlign: "center", position: "relative" }}>
                       <div style={{ position: "absolute", top: -10, left: "50%", transform: "translateX(-50%)", background: "#c0392b", color: "white", fontSize: 10, fontWeight: 700, padding: "3px 10px", borderRadius: 10, whiteSpace: "nowrap" }}>BEST VALUE</div>
                       <p style={{ fontSize: 11, fontWeight: 700, color: "#f5ddb4", letterSpacing: 1, textTransform: "uppercase", marginBottom: 4 }}>Premium</p>
-                      <p style={{ fontFamily: "'Playfair Display', serif", fontSize: 22, fontWeight: 900, color: "white", marginBottom: 4 }}>$14.99</p>
+                      <p style={{ fontFamily: "'Playfair Display', serif", fontSize: 22, fontWeight: 900, color: "white", marginBottom: 4 }}>${listingPricing.premium_featured}</p>
                       <p style={{ fontSize: 11, color: "#f5ddb4", marginBottom: 12 }}>CAD one-time</p>
                       <ul style={{ fontSize: 12, color: "#f5ddb4", textAlign: "left", marginBottom: 14, paddingLeft: 16 }}>
                         <li>🌟 Premium badge</li>
@@ -1176,7 +1197,7 @@ export default function App() {
                         <li>7 day boost</li>
                         <li>Bold highlighted card</li>
                       </ul>
-                      <a href="https://buy.stripe.com/cNi4gzep3dPwcvn08I1Jm01" target="_blank" rel="noreferrer" style={{ display: "block", background: "white", color: "#c0392b", padding: "10px", borderRadius: 6, fontFamily: "'Playfair Display', serif", fontWeight: 700, fontSize: 14, textDecoration: "none" }}>🌟 Get Premium</a>
+                      <a href="https://buy.stripe.com/cNi4gzep3dPwcvn08I1Jm01" target="_blank" rel="noreferrer" style={{ display: "block", background: "white", color: "#c0392b", padding: "10px", borderRadius: 6, fontFamily: "'Playfair Display', serif", fontWeight: 700, fontSize: 14, textDecoration: "none" }}>{`🌟 Get Premium — $${listingPricing.premium_featured}`}</a>
                     </div>
                   </div>
                 </div>
@@ -1335,8 +1356,8 @@ export default function App() {
                   {!photoPackUnlocked && form.photos.length >= 6 && (
                     <div style={{ background: "linear-gradient(135deg, #fef3c7, #fff8e7)", borderRadius: 10, padding: "16px", border: "2px solid #d97706", textAlign: "center", marginTop: 8 }}>
                       <p style={{ fontFamily: "'Cormorant Garamond', serif", fontSize: 17, fontWeight: 700, color: "#292524", marginBottom: 4 }}>📸 Want More Photos?</p>
-                      <p style={{ fontSize: 13, color: "#78716c", marginBottom: 12 }}>Upgrade to upload up to <strong>20 photos</strong> for just $1.99!</p>
-                      <a href="https://buy.stripe.com/6oU28ra8N26O3YR2gQ1Jm02" target="_blank" rel="noreferrer" onClick={() => setTimeout(() => setPhotoPackUnlocked(true), 3000)} style={{ display: "inline-block", background: "#d97706", color: "white", padding: "10px 20px", borderRadius: 8, fontFamily: "'Cormorant Garamond', serif", fontWeight: 700, fontSize: 15, textDecoration: "none" }}>📸 Unlock 20 Photos — $1.99</a>
+                      <p style={{ fontSize: 13, color: "#78716c", marginBottom: 12 }}>Upgrade to upload up to <strong>20 photos</strong> for just ${listingPricing.extra_photos}!</p>
+                      <a href="https://buy.stripe.com/6oU28ra8N26O3YR2gQ1Jm02" target="_blank" rel="noreferrer" onClick={() => setTimeout(() => setPhotoPackUnlocked(true), 3000)} style={{ display: "inline-block", background: "#d97706", color: "white", padding: "10px 20px", borderRadius: 8, fontFamily: "'Cormorant Garamond', serif", fontWeight: 700, fontSize: 15, textDecoration: "none" }}>{`📸 Unlock 20 Photos — $${listingPricing.extra_photos}`}</a>
                       <p style={{ fontSize: 11, color: "#a08060", marginTop: 8 }}>After payment, tap the button again to unlock</p>
                     </div>
                   )}
@@ -1438,8 +1459,8 @@ export default function App() {
                     <div style={{ display: "flex", flexDirection: "column", gap: 8, flexShrink: 0 }}>
                       <button onClick={() => { setSelectedSale(sale); setView("browse"); }} style={{ background: "#fdf6ec", color: "#7a5c3a", border: "1px solid #e8d9c4", padding: "8px 14px", borderRadius: 6, cursor: "pointer", fontSize: 13, fontWeight: 600 }}>👁 View</button>
                       <button onClick={() => { setEditingSale(sale.id); setEditForm({ title: sale.title, address: sale.address, city: sale.city, province: sale.province, date: sale.date, startTime: sale.start_time||"", endTime: sale.end_time||"", description: sale.description||"", tags: sale.tags||[], extraDate: sale.extra_date||"", extraDateStart: sale.extra_date_start||"", extraDateEnd: sale.extra_date_end||"" }); }} style={{ background: "#eff6ff", color: "#2563eb", border: "1px solid #bfdbfe", padding: "8px 14px", borderRadius: 6, cursor: "pointer", fontSize: 13, fontWeight: 600 }}>✏️ Edit</button>
-                      <a href="https://buy.stripe.com/fZu7sLdkZ12K1QJbRq1Jm00" target="_blank" rel="noreferrer" style={{ background: "#f5a623", color: "white", border: "none", padding: "8px 14px", borderRadius: 6, cursor: "pointer", fontSize: 13, fontWeight: 600, textDecoration: "none", textAlign: "center" }}>⭐ $9.99</a>
-                      <a href="https://buy.stripe.com/cNi4gzep3dPwcvn08I1Jm01" target="_blank" rel="noreferrer" style={{ background: "#c0392b", color: "white", border: "none", padding: "8px 14px", borderRadius: 6, cursor: "pointer", fontSize: 13, fontWeight: 600, textDecoration: "none", textAlign: "center" }}>🌟 $14.99</a>
+                      <a href="https://buy.stripe.com/fZu7sLdkZ12K1QJbRq1Jm00" target="_blank" rel="noreferrer" style={{ background: "#f5a623", color: "white", border: "none", padding: "8px 14px", borderRadius: 6, cursor: "pointer", fontSize: 13, fontWeight: 600, textDecoration: "none", textAlign: "center" }}>{`⭐ $${listingPricing.basic_featured}`}</a>
+                      <a href="https://buy.stripe.com/cNi4gzep3dPwcvn08I1Jm01" target="_blank" rel="noreferrer" style={{ background: "#c0392b", color: "white", border: "none", padding: "8px 14px", borderRadius: 6, cursor: "pointer", fontSize: 13, fontWeight: 600, textDecoration: "none", textAlign: "center" }}>{`🌟 $${listingPricing.premium_featured}`}</a>
                       {deleteConfirm === sale.id ? (
                         <div style={{ display: "flex", gap: 6 }}>
                           <button onClick={() => handleDelete(sale.id)} style={{ background: "#e74c3c", color: "white", border: "none", padding: "8px 10px", borderRadius: 6, cursor: "pointer", fontSize: 12, fontWeight: 600 }}>Yes, delete</button>
@@ -1467,8 +1488,8 @@ export default function App() {
                   <>
                     <p style={{ fontSize: 28, marginBottom: 8 }}>🏅</p>
                     <p style={{ fontFamily: "'Cormorant Garamond', serif", fontSize: 20, fontWeight: 700, color: "#292524", marginBottom: 6 }}>Get Verified Seller Badge</p>
-                    <p style={{ fontSize: 13, color: "#78716c", marginBottom: 16 }}>Show buyers you're trustworthy! A ✓ green badge appears on ALL your listings for just $4.99 one-time.</p>
-                    <a href="https://buy.stripe.com/eVqaEX5SxfXEfHz4oY1Jm04" target="_blank" rel="noreferrer" onClick={() => setTimeout(() => setVerified(true), 3000)} style={{ display: "inline-block", background: "#059669", color: "white", padding: "12px 24px", borderRadius: 8, fontFamily: "'Cormorant Garamond', serif", fontWeight: 700, fontSize: 16, textDecoration: "none" }}>✓ Get Verified — $4.99</a>
+                    <p style={{ fontSize: 13, color: "#78716c", marginBottom: 16 }}>Show buyers you're trustworthy! A ✓ green badge appears on ALL your listings for just ${listingPricing.verified_badge} one-time.</p>
+                    <a href="https://buy.stripe.com/eVqaEX5SxfXEfHz4oY1Jm04" target="_blank" rel="noreferrer" onClick={() => setTimeout(() => setVerified(true), 3000)} style={{ display: "inline-block", background: "#059669", color: "white", padding: "12px 24px", borderRadius: 8, fontFamily: "'Cormorant Garamond', serif", fontWeight: 700, fontSize: 16, textDecoration: "none" }}>{`✓ Get Verified — $${listingPricing.verified_badge}`}</a>
                   </>
                 )}
               </div>
@@ -2018,6 +2039,44 @@ export default function App() {
                     ))
                   }
                   {allSales.length === 0 && <p style={{ color: "#78716c", fontSize: 13 }}>No data yet</p>}
+                </div>
+              </div>
+
+              {/* Listing Pricing Controls */}
+              <div style={{ background: "white", borderRadius: 12, border: "1px solid #e7e5e4", padding: 24, marginBottom: 36 }}>
+                <h3 style={{ fontFamily: "'Cormorant Garamond', serif", fontSize: 20, color: "#292524", marginBottom: 6 }}>💰 Listing Feature Prices</h3>
+                <p style={{ color: "#78716c", fontSize: 13, marginBottom: 20 }}>Change prices — updates live on the site instantly. Press Enter or click outside to save.</p>
+                <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(180px, 1fr))", gap: 14 }}>
+                  {[
+                    { key: "basic_featured", label: "⭐ Basic Featured", icon: "⭐" },
+                    { key: "premium_featured", label: "🌟 Premium Featured", icon: "🌟" },
+                    { key: "extra_photos", label: "📸 Extra Photos", icon: "📸" },
+                    { key: "photo_unlock", label: "🔓 Photo Unlock", icon: "🔓" },
+                    { key: "verified_badge", label: "✅ Verified Badge", icon: "✅" },
+                  ].map(item => (
+                    <div key={item.key} style={{ background: "#fdfaf5", borderRadius: 10, padding: "14px", border: "1px solid #e7e5e4" }}>
+                      <p style={{ fontSize: 18, marginBottom: 6 }}>{item.icon}</p>
+                      <p style={{ fontSize: 12, fontWeight: 700, color: "#78716c", marginBottom: 8 }}>{item.label}</p>
+                      <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
+                        <span style={{ fontSize: 14, color: "#78716c" }}>$</span>
+                        <input
+                          type="number"
+                          step="0.01"
+                          defaultValue={listingPricing[item.key]}
+                          key={listingPricing[item.key]}
+                          onBlur={async e => {
+                            const newPrice = parseFloat(e.target.value);
+                            if (isNaN(newPrice) || newPrice <= 0) return;
+                            const updated = { ...listingPricing, [item.key]: newPrice };
+                            setListingPricing(updated);
+                            await api.updateListingPricing(updated);
+                          }}
+                          onKeyDown={e => { if (e.key === "Enter") e.target.blur(); }}
+                          style={{ width: "100%", padding: "8px 10px", borderRadius: 8, border: "1px solid #e7e5e4", fontSize: 16, fontWeight: 700 }}
+                        />
+                      </div>
+                    </div>
+                  ))}
                 </div>
               </div>
 
