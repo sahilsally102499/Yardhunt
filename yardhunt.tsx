@@ -209,7 +209,7 @@ export default function App() {
   const [viewCounts, setViewCounts] = useState({});
   const [unlockedSales, setUnlockedSales] = useState([]);
   const [photoPackUnlocked, setPhotoPackUnlocked] = useState(false);
-  const [form, setForm] = useState({ title:"",name:"",address:"",city:"",province:"",date:"",startTime:"",endTime:"",description:"",tags:[],photos:[],extraDate:"",extraDateEnd:"" });
+  const [form, setForm] = useState({ title:"",name:"",address:"",city:"",province:"",date:"",startTime:"",endTime:"",description:"",tags:[],photos:[],extraDate:"",extraDateStart:"",extraDateEnd:"" });
   const [favourites, setFavourites] = useState(() => { try { return JSON.parse(localStorage.getItem("yh_favs")||"[]"); } catch { return []; }});
   const [reminderSales, setReminderSales] = useState(() => { try { return JSON.parse(localStorage.getItem("yh_reminders")||"[]"); } catch { return []; }});
   const [editingSale, setEditingSale] = useState(null);
@@ -1142,8 +1142,9 @@ export default function App() {
                     <span>📅 This is a 2-day sale (add second day)</span>
                   </label>
                   {form.extraDate !== undefined && form.extraDate !== "" && (
-                    <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 8, marginTop: 8 }}>
+                    <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: 8, marginTop: 8 }}>
                       <div><label style={{fontSize:10}}>Day 2 Date</label><input type="date" value={form.extraDate} onChange={e=>setForm(f=>({...f,extraDate:e.target.value}))} style={{fontSize:12,padding:"8px 6px"}} /></div>
+                      <div><label style={{fontSize:10}}>Day 2 Start Time</label><input type="time" value={form.extraDateStart||""} onChange={e=>setForm(f=>({...f,extraDateStart:e.target.value}))} style={{fontSize:12,padding:"8px 6px"}} /></div>
                       <div><label style={{fontSize:10}}>Day 2 End Time</label><input type="time" value={form.extraDateEnd} onChange={e=>setForm(f=>({...f,extraDateEnd:e.target.value}))} style={{fontSize:12,padding:"8px 6px"}} /></div>
                     </div>
                   )}
