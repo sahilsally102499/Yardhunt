@@ -714,13 +714,17 @@ export default function App() {
     setViewHistory(h => [...h.slice(-9), newView]);
     setView(newView);
     document.title = "Yardhunt.ca — Canada's Garage Sale Marketplace";
+    window.scrollTo({ top: 0, behavior: "smooth" });
   };
 
+  const scrollTop = () => window.scrollTo({ top: 0, behavior: "smooth" });
+
   const goBack = () => {
-    if (selectedSale) { setSelectedSale(null); return; }
+    if (selectedSale) { setSelectedSale(null); window.scrollTo({ top: 0, behavior: "smooth" }); return; }
     const prev = viewHistory.length > 1 ? viewHistory[viewHistory.length - 2] : "browse";
     setViewHistory(h => h.slice(0, -1));
     setView(prev);
+    window.scrollTo({ top: 0, behavior: "smooth" });
   };
 
   const handleTouchStart = (e) => setTouchStartY(e.touches[0].clientY);
@@ -3001,10 +3005,10 @@ export default function App() {
             <div>
               <p style={{ color: "#f5ddb4", fontSize: 12, fontWeight: 600, letterSpacing: 1, textTransform: "uppercase", marginBottom: 12 }}>Explore</p>
               {[
-                { label: "Browse Sales", action: () => { setView("browse"); setSelectedSale(null); } },
-                { label: "Categories", action: () => setView("categories") },
-                { label: "Map View", action: () => setView("map") },
-                { label: "Saved Sales", action: () => setView("favourites") },
+                { label: "Browse Sales", action: () => { setView("browse"); setSelectedSale(null); window.scrollTo({top:0}); } },
+                { label: "Categories", action: () => { setView("categories"); window.scrollTo({top:0}); } },
+                { label: "Map View", action: () => { setView("map"); window.scrollTo({top:0}); } },
+                { label: "Saved Sales", action: () => { setView("favourites"); window.scrollTo({top:0}); } },
               ].map(item => (
                 <p key={item.label} style={{ color: "#a8a29e", fontSize: 14, marginBottom: 8, cursor: "pointer" }} onClick={item.action}>{item.label}</p>
               ))}
@@ -3012,10 +3016,10 @@ export default function App() {
             <div>
               <p style={{ color: "#f5ddb4", fontSize: 12, fontWeight: 600, letterSpacing: 1, textTransform: "uppercase", marginBottom: 12 }}>Sellers</p>
               {[
-                { label: "Post a Sale", action: () => user ? setView("post") : (setView("auth"), setAuthMode("signup")) },
-                { label: "Featured Listings", action: () => { setView("browse"); setSelectedSale(null); } },
-                { label: "My Dashboard", action: () => user ? setView("dashboard") : (setView("auth"), setAuthMode("login")) },
-                { label: "Promote Your Business", action: () => setView("advertise") },
+                { label: "Post a Sale", action: () => { user ? setView("post") : (setView("auth"), setAuthMode("signup")); window.scrollTo({top:0}); } },
+                { label: "Featured Listings", action: () => { setView("browse"); setSelectedSale(null); window.scrollTo({top:0}); } },
+                { label: "My Dashboard", action: () => { user ? setView("dashboard") : (setView("auth"), setAuthMode("login")); window.scrollTo({top:0}); } },
+                { label: "Promote Your Business", action: () => { setView("advertise"); window.scrollTo({top:0}); } },
               ].map(item => (
                 <p key={item.label} style={{ color: "#a8a29e", fontSize: 14, marginBottom: 8, cursor: "pointer" }} onClick={item.action}>{item.label}</p>
               ))}
@@ -3046,11 +3050,11 @@ export default function App() {
       {/* ===== BOTTOM NAV BAR (mobile) ===== */}
       <div style={{ position: "fixed", bottom: 0, left: 0, right: 0, background: darkMode ? "#1c1009" : "white", borderTop: "1px solid #e7e5e4", display: "flex", justifyContent: "space-around", alignItems: "center", padding: "8px 0 calc(8px + env(safe-area-inset-bottom))", zIndex: 100, boxShadow: "0 -4px 20px rgba(0,0,0,0.08)" }}>
         {[
-          { icon: "🏠", label: "Browse", v: "browse", action: () => { setView("browse"); setSelectedSale(null); } },
-          { icon: "❤️", label: "Saved", v: "favourites", action: () => setView("favourites") },
-          { icon: "➕", label: "Post", v: "post", action: () => user ? setView("post") : (setView("auth"), setAuthMode("signup")) },
-          { icon: "📋", label: "My Sales", v: "dashboard", action: () => user ? setView("dashboard") : (setView("auth"), setAuthMode("login")) },
-          { icon: "🗺️", label: "Map", v: "map", action: () => setView("map") },
+          { icon: "🏠", label: "Browse", v: "browse", action: () => { setView("browse"); setSelectedSale(null); window.scrollTo({top:0}); } },
+          { icon: "❤️", label: "Saved", v: "favourites", action: () => { setView("favourites"); window.scrollTo({top:0}); } },
+          { icon: "➕", label: "Post", v: "post", action: () => { user ? setView("post") : (setView("auth"), setAuthMode("signup")); window.scrollTo({top:0}); } },
+          { icon: "📋", label: "My Sales", v: "dashboard", action: () => { user ? setView("dashboard") : (setView("auth"), setAuthMode("login")); window.scrollTo({top:0}); } },
+          { icon: "🗺️", label: "Map", v: "map", action: () => { setView("map"); window.scrollTo({top:0}); } },
         ].map(item => (
           <button key={item.v} onClick={item.action} style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 2, background: "none", border: "none", cursor: "pointer", padding: "4px 12px", borderRadius: 10, transition: "all 0.15s" }}>
             <span style={{ fontSize: 22, filter: (view === item.v || (item.v === "browse" && view === "browse" && selectedSale)) ? "none" : "grayscale(40%)", opacity: view === item.v ? 1 : 0.6 }}>{item.icon}</span>
