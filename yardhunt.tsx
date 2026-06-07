@@ -2456,9 +2456,11 @@ export default function App() {
                 <h3 style={{ fontFamily: "'Cormorant Garamond', serif", fontSize: 18, color: "#292524", marginBottom: 14 }}>💰 Featured Listings</h3>
                 <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(160px, 1fr))", gap: 12 }}>
                   {[
-                    { label: "Basic Featured", icon: "⭐", price: "$9.99", count: allSales.filter(s => s.is_featured === "basic").length, color: "#d97706" },
-                    { label: "Premium Featured", icon: "🌟", price: "$14.99", count: allSales.filter(s => s.is_featured === "premium").length, color: "#7c3aed" },
-                    { label: "Verified Badge", icon: "✅", price: "$4.99", count: allSales.filter(s => s.is_verified).length, color: "#059669" },
+                    { label: "Basic Featured", icon: "⭐", price: `$${listingPricing.basic_featured || 9.99}`, count: allSales.filter(s => s.is_featured === "basic").length, color: "#d97706" },
+                    { label: "Premium Featured", icon: "🌟", price: `$${listingPricing.premium_featured || 14.99}`, count: allSales.filter(s => s.is_featured === "premium").length, color: "#7c3aed" },
+                    { label: "Verified Badge", icon: "✅", price: `$${listingPricing.verified_badge || 4.99}`, count: allSales.filter(s => s.is_verified).length, color: "#059669" },
+                    { label: "Extra Photos", icon: "📸", price: `$${listingPricing.extra_photos || 1.99}`, count: allSales.filter(s => s.photo_pack_unlocked).length, color: "#2563eb" },
+                    { label: "Active Ads", icon: "📢", price: "varies", count: allAds.filter(a => a.status === "active").length, color: "#b91c1c" },
                   ].map(item => (
                     <div key={item.label} style={{ background: "rgba(253,250,245,0.7)", borderRadius: 10, padding: "16px", border: "1px solid #e7e5e4", textAlign: "center" }}>
                       <p style={{ fontSize: 24, marginBottom: 6 }}>{item.icon}</p>
@@ -2472,28 +2474,41 @@ export default function App() {
                 <div style={{ marginTop: 16, padding: "16px", background: "linear-gradient(135deg, #1c1009, #3b0f0f)", borderRadius: 10, color: "white" }}>
                   <p style={{ fontSize: 13, color: "#f5ddb4", marginBottom: 8, fontWeight: 600 }}>💰 Estimated Total Revenue</p>
                   {(() => {
-                    const basic = allSales.filter(s => s.is_featured === "basic").length * 9.99;
-                    const premium = allSales.filter(s => s.is_featured === "premium").length * 14.99;
-                    const verified = allSales.filter(s => s.is_verified).length * 4.99;
-                    const total = basic + premium + verified;
+                    const basicPrice = listingPricing.basic_featured || 9.99;
+                    const premiumPrice = listingPricing.premium_featured || 14.99;
+                    const verifiedPrice = listingPricing.verified_badge || 4.99;
+                    const extraPhotosPrice = listingPricing.extra_photos || 1.99;
+                    const photoUnlockPrice = listingPricing.photo_unlock || 1.99;
+                    const basicCount = allSales.filter(s => s.is_featured === "basic").length;
+                    const premiumCount = allSales.filter(s => s.is_featured === "premium").length;
+                    const verifiedCount = allSales.filter(s => s.is_verified).length;
+                    const photoPackCount = allSales.filter(s => s.photo_pack_unlocked).length;
+                    const basic = basicCount * basicPrice;
+                    const premium = premiumCount * premiumPrice;
+                    const verified = verifiedCount * verifiedPrice;
+                    const photosPack = photoPackCount * extraPhotosPrice;
+                    const activeAds = allAds.filter(a => a.status === "active");
+                    const adRevenue = activeAds.reduce((sum, a) => sum + (a.price || 0), 0);
+                    const total = basic + premium + verified + photosPack + adRevenue;
                     return (
                       <div>
-                        <div style={{ display: "flex", justifyContent: "space-between", fontSize: 12, color: "#f5ddb499", marginBottom: 4 }}>
-                          <span>Basic Featured ({allSales.filter(s => s.is_featured === "basic").length} × $9.99)</span>
-                          <span>${basic.toFixed(2)}</span>
-                        </div>
-                        <div style={{ display: "flex", justifyContent: "space-between", fontSize: 12, color: "#f5ddb499", marginBottom: 4 }}>
-                          <span>Premium Featured ({allSales.filter(s => s.is_featured === "premium").length} × $14.99)</span>
-                          <span>${premium.toFixed(2)}</span>
-                        </div>
-                        <div style={{ display: "flex", justifyContent: "space-between", fontSize: 12, color: "#f5ddb499", marginBottom: 8 }}>
-                          <span>Verified Badge ({allSales.filter(s => s.is_verified).length} × $4.99)</span>
-                          <span>${verified.toFixed(2)}</span>
-                        </div>
-                        <div style={{ display: "flex", justifyContent: "space-between", fontSize: 18, fontWeight: 700, color: "#d97706", borderTop: "1px solid rgba(255,255,255,0.1)", paddingTop: 8 }}>
+                        {[
+                          { label: "Basic Featured", count: basicCount, price: basicPrice, amount: basic },
+                          { label: "Premium Featured", count: premiumCount, price: premiumPrice, amount: premium },
+                          { label: "Verified Badge", count: verifiedCount, price: verifiedPrice, amount: verified },
+                          { label: "Extra Photos", count: photoPackCount, price: extraPhotosPrice, amount: photosPack },
+                          { label: "Active Ads/mo", count: activeAds.length, price: null, amount: adRevenue },
+                        ].map(item => (
+                          <div key={item.label} style={{ display: "flex", justifyContent: "space-between", fontSize: 12, color: "#f5ddb499", marginBottom: 4 }}>
+                            <span>{item.label} ({item.count}{item.price ? ` × $${item.price}` : ""})</span>
+                            <span>${item.amount.toFixed(2)}</span>
+                          </div>
+                        ))}
+                        <div style={{ display: "flex", justifyContent: "space-between", fontSize: 20, fontWeight: 700, color: "#d97706", borderTop: "1px solid rgba(255,255,255,0.15)", paddingTop: 10, marginTop: 6 }}>
                           <span>Total Estimated</span>
                           <span>${total.toFixed(2)} CAD</span>
                         </div>
+                        <p style={{ fontSize: 11, color: "#f5ddb444", marginTop: 8 }}>Based on current prices × active purchases. Check Stripe for actual payments.</p>
                       </div>
                     );
                   })()}
