@@ -394,7 +394,7 @@ export default function App() {
 
       // Check for ad success
       const params = new URLSearchParams(window.location.search);
-      if (params.get("ad_success")) { setAdSuccess(true); setView("advertise"); }
+      if (params.get("ad_success")) { setAdSuccess(true); navigateTo("advertise"); }
     if (params.get("donation_success")) { setDonationSuccess(true); }
 
       // Handle listing payment success
@@ -490,7 +490,7 @@ export default function App() {
       const openId = sessionStorage.getItem("openSaleId");
       if (openId) {
         const sale = salesData.find((s) => String(s.id) === openId);
-        if (sale) { setSelectedSale(sale); setView("browse"); }
+        if (sale) { setSelectedSale(sale); navigateTo("browse"); }
         sessionStorage.removeItem("openSaleId");
       }
     } catch (e) { setSales([]); }
@@ -516,7 +516,7 @@ export default function App() {
           setToken(data.access_token);
           localStorage.setItem("yh_user", JSON.stringify(data.user));
           localStorage.setItem("yh_token", data.access_token);
-          setView("browse");
+          navigateTo("browse");
           setAuthEmail(""); setAuthPassword("");
         }
       }
@@ -529,7 +529,7 @@ export default function App() {
     setUser(null); setToken("");
     localStorage.removeItem("yh_user");
     localStorage.removeItem("yh_token");
-    setView("browse");
+    navigateTo("browse");
   };
 
   const toggleTag = (tag) => {
@@ -571,7 +571,7 @@ export default function App() {
         });
       } catch(e) { console.warn("Notify failed:", e); }
       setTimeout(() => {
-        setSubmitted(false); setView("browse");
+        setSubmitted(false); navigateTo("browse");
         setForm({ title:"",name:"",address:"",city:"",province:"",date:"",startTime:"",endTime:"",description:"",tags:[],photos:[] });
       }, 2500);
     } catch(e) { alert("Something went wrong. Please try again."); }
@@ -665,7 +665,7 @@ export default function App() {
         setSeoCity(segment1);
         setSeoProvince(segment2.toUpperCase());
       }
-      setView("seo");
+      navigateTo("seo");
       // Update page title
       document.title = segment2
         ? `Garage Sales in ${segment1}, ${segment2} | Yardhunt.ca`
@@ -872,7 +872,7 @@ export default function App() {
 
       {/* Header */}
       <header style={{ background: "#1c1009", padding: "0 20px", display: "flex", alignItems: "center", justifyContent: "space-between", height: 64, position: "relative", zIndex: 100, borderBottom: "1px solid rgba(255,255,255,0.06)" }}>
-        <div style={{ display: "flex", alignItems: "center", gap: 10, cursor: "pointer" }} onClick={() => { setView("browse"); setSelectedSale(null); setMenuOpen(false); }}>
+        <div style={{ display: "flex", alignItems: "center", gap: 10, cursor: "pointer" }} onClick={() => { navigateTo("browse"); setSelectedSale(null); setMenuOpen(false); }}>
           <span style={{ fontSize: 24 }}>🍁</span>
           <div>
             <span style={{ fontFamily: "'Cormorant Garamond', serif", fontSize: 22, fontWeight: 700, color: "#f5ddb4", letterSpacing: 0.5 }}>Yardhunt</span>
@@ -916,11 +916,11 @@ export default function App() {
         <div style={{ position: "fixed", top: 64, right: 0, width: "min(300px, 100vw)", background: "#1c1009", zIndex: 99, borderLeft: "1px solid rgba(255,255,255,0.06)", borderBottom: "1px solid rgba(255,255,255,0.06)", boxShadow: "-8px 8px 40px rgba(0,0,0,0.5)", borderBottomLeftRadius: 16 }}>
           <div style={{ padding: "8px 0" }}>
             {[
-              { label: "Browse Sales", icon: "🏠", view: "browse", action: () => { setView("browse"); setSelectedSale(null); } },
-              { label: "Saved Sales", icon: "❤️", view: "favourites", action: () => setView("favourites") },
-              { label: "Categories", icon: "🗂️", view: "categories", action: () => setView("categories") },
-              { label: "Map View", icon: "🗺️", view: "map", action: () => setView("map") },
-              { label: "Promote Your Business", icon: "📢", view: "advertise", action: () => setView("advertise") },
+              { label: "Browse Sales", icon: "🏠", view: "browse", action: () => { navigateTo("browse"); setSelectedSale(null); } },
+              { label: "Saved Sales", icon: "❤️", view: "favourites", action: () => navigateTo("favourites") },
+              { label: "Categories", icon: "🗂️", view: "categories", action: () => navigateTo("categories") },
+              { label: "Map View", icon: "🗺️", view: "map", action: () => navigateTo("map") },
+              { label: "Promote Your Business", icon: "📢", view: "advertise", action: () => navigateTo("advertise") },
             ].map(item => (
               <button key={item.view} onClick={() => { item.action(); setMenuOpen(false); }} style={{ display: "flex", alignItems: "center", gap: 12, width: "100%", background: view === item.view ? "rgba(185,28,28,0.2)" : "transparent", color: view === item.view ? "#fca5a5" : "#f5ddb4", border: "none", padding: "14px 20px", textAlign: "left", cursor: "pointer", fontFamily: "'DM Sans', sans-serif", fontWeight: 500, fontSize: 15, borderLeft: view === item.view ? "3px solid #b91c1c" : "3px solid transparent", transition: "all 0.15s" }}>
                 <span style={{ fontSize: 18 }}>{item.icon}</span>
@@ -934,10 +934,10 @@ export default function App() {
                 <div style={{ padding: "10px 20px 6px" }}>
                   <p style={{ fontSize: 11, color: "#78716c", letterSpacing: 0.8, textTransform: "uppercase", fontWeight: 600 }}>My Account</p>
                 </div>
-                <button onClick={() => { setView("post"); setMenuOpen(false); }} style={{ display: "flex", alignItems: "center", gap: 12, width: "100%", background: view === "post" ? "rgba(185,28,28,0.2)" : "transparent", color: view === "post" ? "#fca5a5" : "#f5ddb4", border: "none", padding: "14px 20px", textAlign: "left", cursor: "pointer", fontFamily: "'DM Sans', sans-serif", fontWeight: 500, fontSize: 15, borderLeft: view === "post" ? "3px solid #b91c1c" : "3px solid transparent" }}>
+                <button onClick={() => { navigateTo("post"); setMenuOpen(false); }} style={{ display: "flex", alignItems: "center", gap: 12, width: "100%", background: view === "post" ? "rgba(185,28,28,0.2)" : "transparent", color: view === "post" ? "#fca5a5" : "#f5ddb4", border: "none", padding: "14px 20px", textAlign: "left", cursor: "pointer", fontFamily: "'DM Sans', sans-serif", fontWeight: 500, fontSize: 15, borderLeft: view === "post" ? "3px solid #b91c1c" : "3px solid transparent" }}>
                   <span style={{ fontSize: 18 }}>➕</span> Post a Sale
                 </button>
-                <button onClick={() => { setView("dashboard"); setMenuOpen(false); }} style={{ display: "flex", alignItems: "center", gap: 12, width: "100%", background: view === "dashboard" ? "rgba(185,28,28,0.2)" : "transparent", color: view === "dashboard" ? "#fca5a5" : "#f5ddb4", border: "none", padding: "14px 20px", textAlign: "left", cursor: "pointer", fontFamily: "'DM Sans', sans-serif", fontWeight: 500, fontSize: 15, borderLeft: view === "dashboard" ? "3px solid #b91c1c" : "3px solid transparent" }}>
+                <button onClick={() => { navigateTo("dashboard"); setMenuOpen(false); }} style={{ display: "flex", alignItems: "center", gap: 12, width: "100%", background: view === "dashboard" ? "rgba(185,28,28,0.2)" : "transparent", color: view === "dashboard" ? "#fca5a5" : "#f5ddb4", border: "none", padding: "14px 20px", textAlign: "left", cursor: "pointer", fontFamily: "'DM Sans', sans-serif", fontWeight: 500, fontSize: 15, borderLeft: view === "dashboard" ? "3px solid #b91c1c" : "3px solid transparent" }}>
                   <span style={{ fontSize: 18 }}>📋</span> My Sales
                 </button>
                 <div style={{ padding: "8px 20px 12px" }}>
@@ -1055,7 +1055,7 @@ export default function App() {
                   <option value="">All Provinces</option>
                   {provinces.map(p => <option key={p.code} value={p.code}>{p.code} – {p.name}</option>)}
                 </select>
-                <button onClick={() => setView("favourites")} style={{ padding: "10px 14px", borderRadius: 10, border: "none", background: favourites.length > 0 ? "#fff1f2" : "rgba(255,255,255,0.15)", color: favourites.length > 0 ? "#e11d48" : "white", fontSize: 13, cursor: "pointer", fontWeight: 700, whiteSpace: "nowrap", boxShadow: "0 4px 20px rgba(0,0,0,0.2)" }}>
+                <button onClick={() => navigateTo("favourites")} style={{ padding: "10px 14px", borderRadius: 10, border: "none", background: favourites.length > 0 ? "#fff1f2" : "rgba(255,255,255,0.15)", color: favourites.length > 0 ? "#e11d48" : "white", fontSize: 13, cursor: "pointer", fontWeight: 700, whiteSpace: "nowrap", boxShadow: "0 4px 20px rgba(0,0,0,0.2)" }}>
                   ❤️ {favourites.length > 0 ? favourites.length : ""} Saved
                 </button>
               </div>
@@ -1099,7 +1099,7 @@ export default function App() {
               <div style={{ fontSize: 48, marginBottom: 12 }}>🍁</div>
               <p style={{ fontFamily: "'Playfair Display', serif", fontSize: 22, color: "#7a5c3a" }}>No sales found</p>
               <p style={{ color: "#a08060", marginTop: 8 }}>
-                {user ? <span style={{ color: "#c0392b", cursor: "pointer", textDecoration: "underline" }} onClick={() => setView("post")}>Post your sale</span> : <span style={{ color: "#c0392b", cursor: "pointer", textDecoration: "underline" }} onClick={() => setView("auth")}>Sign in to post your sale</span>}
+                {user ? <span style={{ color: "#c0392b", cursor: "pointer", textDecoration: "underline" }} onClick={() => navigateTo("post")}>Post your sale</span> : <span style={{ color: "#c0392b", cursor: "pointer", textDecoration: "underline" }} onClick={() => setView("auth")}>Sign in to post your sale</span>}
               </p>
             </div>
           ) : (
@@ -1705,7 +1705,7 @@ export default function App() {
               <div style={{ fontSize: 48, marginBottom: 12 }}>🏠</div>
               <p style={{ fontFamily: "'Playfair Display', serif", fontSize: 20, color: "#7a5c3a" }}>No sales posted yet</p>
               <p style={{ color: "#a08060", marginTop: 8, marginBottom: 20 }}>Post your first sale and it will appear here!</p>
-              <button className="btn-primary" onClick={() => setView("post")}>🍁 Post a Sale</button>
+              <button className="btn-primary" onClick={() => navigateTo("post")}>🍁 Post a Sale</button>
             </div>
           ) : (
             <div style={{ display: "flex", flexDirection: "column", gap: 16 }}>
@@ -1748,7 +1748,7 @@ export default function App() {
                       )}
                     </div>
                     <div style={{ display: "flex", flexDirection: "column", gap: 8, flexShrink: 0 }}>
-                      <button onClick={() => { setSelectedSale(sale); setView("browse"); }} style={{ background: "#fdf6ec", color: "#7a5c3a", border: "1px solid #e8d9c4", padding: "8px 14px", borderRadius: 6, cursor: "pointer", fontSize: 13, fontWeight: 600 }}>👁 View</button>
+                      <button onClick={() => { setSelectedSale(sale); navigateTo("browse"); }} style={{ background: "#fdf6ec", color: "#7a5c3a", border: "1px solid #e8d9c4", padding: "8px 14px", borderRadius: 6, cursor: "pointer", fontSize: 13, fontWeight: 600 }}>👁 View</button>
                       <button onClick={() => { setEditingSale(sale.id); setEditForm({ title: sale.title, address: sale.address, city: sale.city, province: sale.province, date: sale.date, startTime: sale.start_time||"", endTime: sale.end_time||"", description: sale.description||"", tags: sale.tags||[], extraDate: sale.extra_date||"", extraDateStart: sale.extra_date_start||"", extraDateEnd: sale.extra_date_end||"" }); }} style={{ background: "#eff6ff", color: "#2563eb", border: "1px solid #bfdbfe", padding: "8px 14px", borderRadius: 6, cursor: "pointer", fontSize: 13, fontWeight: 600 }}>✏️ Edit</button>
                       <button onClick={() => createListingCheckout("basic_featured", sale.id)} style={{ background: "#f5a623", color: "white", border: "none", padding: "8px 14px", borderRadius: 6, cursor: "pointer", fontSize: 13, fontWeight: 600 }}>{`⭐ $${listingPricing.basic_featured}`}</button>
                       <button onClick={() => createListingCheckout("premium_featured", sale.id)} style={{ background: "#c0392b", color: "white", border: "none", padding: "8px 14px", borderRadius: 6, cursor: "pointer", fontSize: 13, fontWeight: 600 }}>{`🌟 $${listingPricing.premium_featured}`}</button>
@@ -1786,7 +1786,7 @@ export default function App() {
               </div>
 
               <div style={{ textAlign: "center", marginTop: 8 }}>
-                <button className="btn-primary" onClick={() => setView("post")}>🍁 Post Another Sale</button>
+                <button className="btn-primary" onClick={() => navigateTo("post")}>🍁 Post Another Sale</button>
               </div>
             </div>
           )}
@@ -1853,7 +1853,7 @@ export default function App() {
               <p style={{ fontSize: 56, marginBottom: 16 }}>🎉</p>
               <h2 style={{ fontFamily: "'Cormorant Garamond', serif", fontSize: 32, color: "#059669", marginBottom: 10 }}>Payment Successful!</h2>
               <p style={{ color: "#78716c", fontSize: 16, marginBottom: 24 }}>Your ad is being reviewed and will go live within 24 hours. We'll email you at {adForm.email} when it's active.</p>
-              <button className="btn-primary" onClick={() => { setAdSuccess(false); setView("browse"); }}>Back to Browse 🍁</button>
+              <button className="btn-primary" onClick={() => { setAdSuccess(false); navigateTo("browse"); }}>Back to Browse 🍁</button>
             </div>
           ) : (
             <>
@@ -1984,7 +1984,7 @@ export default function App() {
       {/* ===== SEO CITY/PROVINCE PAGE ===== */}
       {view === "seo" && (
         <main style={{ maxWidth: 900, margin: "0 auto", padding: "36px 20px" }}>
-          <button onClick={() => { setView("browse"); window.history.pushState({}, "", "/"); }} style={{ display: "flex", alignItems: "center", gap: 6, background: "none", border: "none", color: "white", cursor: "pointer", fontSize: 15, fontWeight: 700, marginBottom: 20, padding: 0, textShadow: "0 2px 6px rgba(0,0,0,0.6)" }}>← Back to all sales</button>
+          <button onClick={() => { navigateTo("browse"); window.history.pushState({}, "", "/"); }} style={{ display: "flex", alignItems: "center", gap: 6, background: "none", border: "none", color: "white", cursor: "pointer", fontSize: 15, fontWeight: 700, marginBottom: 20, padding: 0, textShadow: "0 2px 6px rgba(0,0,0,0.6)" }}>← Back to all sales</button>
 
           {/* SEO Header */}
           <div style={{ marginBottom: 32 }}>
@@ -2025,12 +2025,12 @@ export default function App() {
                 <p style={{ fontSize: 40, marginBottom: 12 }}>🏠</p>
                 <p style={{ fontFamily: "'Cormorant Garamond', serif", fontSize: 22, color: "#292524", marginBottom: 8 }}>No active sales right now</p>
                 <p style={{ color: "rgba(255,255,255,0.8)", fontSize: 14, marginBottom: 20 }}>Be the first to post a sale here!</p>
-                <button className="btn-primary" onClick={() => { setView("post"); window.history.pushState({}, "", "/"); }}>🍁 Post a Sale Free</button>
+                <button className="btn-primary" onClick={() => { navigateTo("post"); window.history.pushState({}, "", "/"); }}>🍁 Post a Sale Free</button>
               </div>
             ) : (
               <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(280px, 1fr))", gap: 20 }}>
                 {cityList.map(sale => (
-                  <div key={sale.id} className="card-hover" onClick={() => { setSelectedSale(sale); setPhotoIndex(0); loadReviews(sale.id); loadQuestions(sale.id); trackView(sale.id); setView("browse"); window.history.pushState({}, "", "/"); }} style={{ background: "white", borderRadius: 8, overflow: "hidden", boxShadow: "0 2px 12px rgba(0,0,0,0.08)", border: sale.is_featured === "premium" ? "2px solid #b91c1c" : sale.is_featured === "basic" ? "2px solid #d97706" : "1px solid #e8d9c4" }}>
+                  <div key={sale.id} className="card-hover" onClick={() => { setSelectedSale(sale); setPhotoIndex(0); loadReviews(sale.id); loadQuestions(sale.id); trackView(sale.id); navigateTo("browse"); window.history.pushState({}, "", "/"); }} style={{ background: "white", borderRadius: 8, overflow: "hidden", boxShadow: "0 2px 12px rgba(0,0,0,0.08)", border: sale.is_featured === "premium" ? "2px solid #b91c1c" : sale.is_featured === "basic" ? "2px solid #d97706" : "1px solid #e8d9c4" }}>
                     {sale.photos?.[0] ? <img src={sale.photos[0]} alt={sale.title} style={{ width: "100%", height: 160, objectFit: "cover" }} /> : <div style={{ background: "linear-gradient(135deg, #6b1a1a, #c0392b)", padding: "20px", display: "flex", alignItems: "center", gap: 12 }}><span style={{ fontSize: 32 }}>{sale.emoji || "🏠"}</span><p style={{ fontFamily: "'Cormorant Garamond', serif", fontSize: 16, fontWeight: 700, color: "white" }}>{sale.title}</p></div>}
                     <div style={{ padding: "14px 18px" }}>
                       <p style={{ fontFamily: "'Cormorant Garamond', serif", fontSize: 16, fontWeight: 700, color: "#2d1b0e", marginBottom: 6 }}>{sale.title}</p>
@@ -2053,8 +2053,8 @@ export default function App() {
               Posting a garage sale {seoCity ? `in ${seoCity}` : ""} is 100% free on Yardhunt.ca. Add photos, set your hours, and reach hundreds of local buyers. Subscribe to get email notifications when new sales are posted near you.
             </p>
             <div style={{ display: "flex", gap: 12, flexWrap: "wrap" }}>
-              <button className="btn-primary" onClick={() => { setView("post"); window.history.pushState({}, "", "/"); }}>🍁 Post a Free Sale</button>
-              <button className="btn-secondary" onClick={() => { setView("browse"); window.history.pushState({}, "", "/"); }}>Browse All Sales</button>
+              <button className="btn-primary" onClick={() => { navigateTo("post"); window.history.pushState({}, "", "/"); }}>🍁 Post a Free Sale</button>
+              <button className="btn-secondary" onClick={() => { navigateTo("browse"); window.history.pushState({}, "", "/"); }}>Browse All Sales</button>
             </div>
           </div>
 
@@ -2088,12 +2088,12 @@ export default function App() {
               <p style={{ fontSize: 40, marginBottom: 12 }}>🤍</p>
               <p style={{ fontFamily: "'Cormorant Garamond', serif", fontSize: 22, color: "#292524", marginBottom: 8 }}>No saved sales yet</p>
               <p style={{ color: "#78716c", fontSize: 14, marginBottom: 20 }}>Tap the 🤍 on any sale card to save it here</p>
-              <button className="btn-primary" onClick={() => setView("browse")}>Browse Sales</button>
+              <button className="btn-primary" onClick={() => navigateTo("browse")}>Browse Sales</button>
             </div>
           ) : (
             <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(300px, 1fr))", gap: 24 }}>
               {sales.filter(s => favourites.includes(s.id)).map(sale => (
-                <div key={sale.id} className="card-hover" onClick={() => { setSelectedSale(sale); setPhotoIndex(0); loadReviews(sale.id); trackView(sale.id); setView("browse"); }} style={{ background: "white", borderRadius: 8, overflow: "hidden", boxShadow: "0 2px 12px rgba(0,0,0,0.08)", border: "2px solid #fecdd3" }}>
+                <div key={sale.id} className="card-hover" onClick={() => { setSelectedSale(sale); setPhotoIndex(0); loadReviews(sale.id); trackView(sale.id); navigateTo("browse"); }} style={{ background: "white", borderRadius: 8, overflow: "hidden", boxShadow: "0 2px 12px rgba(0,0,0,0.08)", border: "2px solid #fecdd3" }}>
                   {sale.photos && sale.photos.length > 0 ? (
                     <img src={sale.photos[0]} alt="" style={{ width: "100%", height: 160, objectFit: "cover" }} />
                   ) : (
@@ -2209,7 +2209,7 @@ export default function App() {
               const count = sales.filter(s => (s.tags || []).includes(tag)).length;
               const color = tagColors[tag] || "#a08060";
               return (
-                <div key={tag} className="card-hover" onClick={() => { setSearch(tag); setView("browse"); setSelectedSale(null); }} style={{ background: "white", borderRadius: 10, padding: "20px 16px", textAlign: "center", border: `2px solid ${color}33`, boxShadow: "0 2px 8px rgba(0,0,0,0.06)" }}>
+                <div key={tag} className="card-hover" onClick={() => { setSearch(tag); navigateTo("browse"); setSelectedSale(null); }} style={{ background: "white", borderRadius: 10, padding: "20px 16px", textAlign: "center", border: `2px solid ${color}33`, boxShadow: "0 2px 8px rgba(0,0,0,0.06)" }}>
                   <div style={{ width: 50, height: 50, borderRadius: "50%", background: color + "22", border: `2px solid ${color}55`, display: "flex", alignItems: "center", justifyContent: "center", margin: "0 auto 10px", fontSize: 22 }}>
                     {tag === "Furniture" ? "🛋️" : tag === "Clothes" ? "👕" : tag === "Tools" ? "🔧" : tag === "Toys" ? "🧸" : tag === "Antiques" ? "🏺" : tag === "Jewelry" ? "💍" : tag === "Art" ? "🎨" : tag === "Books" ? "📚" : tag === "Electronics" ? "💻" : tag === "Sports" ? "⚽" : tag === "Baby" ? "🍼" : tag === "Hockey Gear" ? "🏒" : "📦"}
                   </div>
@@ -2231,11 +2231,11 @@ export default function App() {
                   <h3 style={{ fontFamily: "'Playfair Display', serif", fontSize: 20, color: "#2d1b0e" }}>
                     <span style={{ color }}>{tag === "Furniture" ? "🛋️" : tag === "Clothes" ? "👕" : tag === "Tools" ? "🔧" : tag === "Toys" ? "🧸" : tag === "Antiques" ? "🏺" : tag === "Jewelry" ? "💍" : tag === "Art" ? "🎨" : tag === "Books" ? "📚" : tag === "Electronics" ? "💻" : tag === "Sports" ? "⚽" : tag === "Baby" ? "🍼" : tag === "Hockey Gear" ? "🏒" : "📦"}</span> {tag}
                   </h3>
-                  <button onClick={() => { setSearch(tag); setView("browse"); }} style={{ background: "none", border: "none", color: "#c0392b", cursor: "pointer", fontSize: 13, fontFamily: "'Playfair Display', serif", fontWeight: 700 }}>See all →</button>
+                  <button onClick={() => { setSearch(tag); navigateTo("browse"); }} style={{ background: "none", border: "none", color: "#c0392b", cursor: "pointer", fontSize: 13, fontFamily: "'Playfair Display', serif", fontWeight: 700 }}>See all →</button>
                 </div>
                 <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(260px, 1fr))", gap: 16 }}>
                   {catSales.slice(0, 3).map(sale => (
-                    <div key={sale.id} className="card-hover" onClick={() => { setSelectedSale(sale); setView("browse"); setPhotoIndex(0); loadReviews(sale.id); }} style={{ background: "white", borderRadius: 8, overflow: "hidden", boxShadow: "0 2px 8px rgba(0,0,0,0.08)", border: `1px solid ${color}33` }}>
+                    <div key={sale.id} className="card-hover" onClick={() => { setSelectedSale(sale); navigateTo("browse"); setPhotoIndex(0); loadReviews(sale.id); }} style={{ background: "white", borderRadius: 8, overflow: "hidden", boxShadow: "0 2px 8px rgba(0,0,0,0.08)", border: `1px solid ${color}33` }}>
                       <div style={{ background: `linear-gradient(135deg, ${color}33, ${color}55)`, padding: "14px 16px", borderBottom: `2px solid ${color}33` }}>
                         <p style={{ fontFamily: "'Playfair Display', serif", fontSize: 15, fontWeight: 700, color: "#2d1b0e" }}>{sale.title}</p>
                         <p style={{ fontSize: 12, color: "#7a5c3a", marginTop: 3 }}>📍 {sale.city}, {sale.province} • 📅 {new Date(sale.date + "T12:00:00").toLocaleDateString("en-CA", { month: "short", day: "numeric" })}</p>
@@ -2255,7 +2255,7 @@ export default function App() {
               <div style={{ fontSize: 48, marginBottom: 12 }}>🗂️</div>
               <p style={{ fontFamily: "'Playfair Display', serif", fontSize: 22, color: "#7a5c3a" }}>No sales yet</p>
               <p style={{ color: "#a08060", marginTop: 8 }}>Be the first to post a sale! 🍁</p>
-              {user && <button className="btn-primary" onClick={() => setView("post")} style={{ marginTop: 16 }}>🍁 Post a Sale</button>}
+              {user && <button className="btn-primary" onClick={() => navigateTo("post")} style={{ marginTop: 16 }}>🍁 Post a Sale</button>}
             </div>
           )}
         </main>
@@ -2284,7 +2284,7 @@ export default function App() {
               </div>
               <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(280px, 1fr))", gap: 16 }}>
                 {sales.map(sale => (
-                  <div key={sale.id} className="card-hover" onClick={() => { setSelectedSale(sale); setView("browse"); }} style={{ background: "white", borderRadius: 8, padding: "14px 16px", boxShadow: "0 2px 8px rgba(0,0,0,0.08)", border: "1px solid #e8d9c4", display: "flex", gap: 12, alignItems: "flex-start" }}>
+                  <div key={sale.id} className="card-hover" onClick={() => { setSelectedSale(sale); navigateTo("browse"); }} style={{ background: "white", borderRadius: 8, padding: "14px 16px", boxShadow: "0 2px 8px rgba(0,0,0,0.08)", border: "1px solid #e8d9c4", display: "flex", gap: 12, alignItems: "flex-start" }}>
                     <span style={{ fontSize: 24 }}>{sale.emoji || "🏠"}</span>
                     <div>
                       <p style={{ fontFamily: "'Playfair Display', serif", fontSize: 15, fontWeight: 700, color: "#2d1b0e" }}>{sale.title}</p>
@@ -3027,10 +3027,10 @@ export default function App() {
             <div>
               <p style={{ color: "#f5ddb4", fontSize: 12, fontWeight: 600, letterSpacing: 1, textTransform: "uppercase", marginBottom: 12 }}>Explore</p>
               {[
-                { label: "Browse Sales", action: () => { setView("browse"); setSelectedSale(null); window.scrollTo({top:0}); } },
-                { label: "Categories", action: () => { setView("categories"); window.scrollTo({top:0}); } },
-                { label: "Map View", action: () => { setView("map"); window.scrollTo({top:0}); } },
-                { label: "Saved Sales", action: () => { setView("favourites"); window.scrollTo({top:0}); } },
+                { label: "Browse Sales", action: () => { navigateTo("browse"); setSelectedSale(null); window.scrollTo({top:0}); } },
+                { label: "Categories", action: () => { navigateTo("categories"); window.scrollTo({top:0}); } },
+                { label: "Map View", action: () => { navigateTo("map"); window.scrollTo({top:0}); } },
+                { label: "Saved Sales", action: () => { navigateTo("favourites"); window.scrollTo({top:0}); } },
               ].map(item => (
                 <p key={item.label} style={{ color: "#a8a29e", fontSize: 14, marginBottom: 8, cursor: "pointer" }} onClick={item.action}>{item.label}</p>
               ))}
@@ -3038,10 +3038,10 @@ export default function App() {
             <div>
               <p style={{ color: "#f5ddb4", fontSize: 12, fontWeight: 600, letterSpacing: 1, textTransform: "uppercase", marginBottom: 12 }}>Sellers</p>
               {[
-                { label: "Post a Sale", action: () => { user ? setView("post") : (setView("auth"), setAuthMode("signup")); window.scrollTo({top:0}); } },
-                { label: "Featured Listings", action: () => { setView("browse"); setSelectedSale(null); window.scrollTo({top:0}); } },
-                { label: "My Dashboard", action: () => { user ? setView("dashboard") : (setView("auth"), setAuthMode("login")); window.scrollTo({top:0}); } },
-                { label: "Promote Your Business", action: () => { setView("advertise"); window.scrollTo({top:0}); } },
+                { label: "Post a Sale", action: () => { user ? navigateTo("post") : (setView("auth"), setAuthMode("signup")); window.scrollTo({top:0}); } },
+                { label: "Featured Listings", action: () => { navigateTo("browse"); setSelectedSale(null); window.scrollTo({top:0}); } },
+                { label: "My Dashboard", action: () => { user ? navigateTo("dashboard") : (setView("auth"), setAuthMode("login")); window.scrollTo({top:0}); } },
+                { label: "Promote Your Business", action: () => { navigateTo("advertise"); window.scrollTo({top:0}); } },
               ].map(item => (
                 <p key={item.label} style={{ color: "#a8a29e", fontSize: 14, marginBottom: 8, cursor: "pointer" }} onClick={item.action}>{item.label}</p>
               ))}
@@ -3049,7 +3049,7 @@ export default function App() {
           </div>
         </div>
         <div style={{ maxWidth: 900, margin: "28px auto 0", paddingTop: 20, borderTop: "1px solid rgba(255,255,255,0.06)", display: "flex", justifyContent: "space-between", alignItems: "center", flexWrap: "wrap", gap: 10 }}>
-          <p style={{ color: "#44403c", fontSize: 12 }}>© 2026 Yardhunt.ca · All rights reserved · <span style={{ cursor: "pointer", textDecoration: "underline" }} onClick={() => setView("terms")}>Terms & Privacy</span></p>
+          <p style={{ color: "#44403c", fontSize: 12 }}>© 2026 Yardhunt.ca · All rights reserved · <span style={{ cursor: "pointer", textDecoration: "underline" }} onClick={() => navigateTo("terms")}>Terms & Privacy</span></p>
           <div style={{ display: "flex", gap: 12, flexWrap: "wrap", marginTop: 8 }}>
             {[["Ontario","on"],["Alberta","ab"],["British Columbia","british-columbia"],["Quebec","quebec"]].map(([name, slug]) => (
               <a key={slug} href={`/garage-sales/${slug}`} style={{ color: "#44403c", fontSize: 11, textDecoration: "underline" }}>Garage Sales in {name}</a>
@@ -3072,11 +3072,11 @@ export default function App() {
       {/* ===== BOTTOM NAV BAR (mobile) ===== */}
       <div style={{ position: "fixed", bottom: 0, left: 0, right: 0, background: darkMode ? "#1c1009" : "white", borderTop: "1px solid #e7e5e4", display: "flex", justifyContent: "space-around", alignItems: "center", padding: "8px 0 calc(8px + env(safe-area-inset-bottom))", zIndex: 100, boxShadow: "0 -4px 20px rgba(0,0,0,0.08)" }}>
         {[
-          { icon: "🏠", label: "Browse", v: "browse", action: () => { setView("browse"); setSelectedSale(null); window.scrollTo({top:0}); } },
-          { icon: "❤️", label: "Saved", v: "favourites", action: () => { setView("favourites"); window.scrollTo({top:0}); } },
-          { icon: "➕", label: "Post", v: "post", action: () => { user ? setView("post") : (setView("auth"), setAuthMode("signup")); window.scrollTo({top:0}); } },
-          { icon: "📋", label: "My Sales", v: "dashboard", action: () => { user ? setView("dashboard") : (setView("auth"), setAuthMode("login")); window.scrollTo({top:0}); } },
-          { icon: "🗺️", label: "Map", v: "map", action: () => { setView("map"); window.scrollTo({top:0}); } },
+          { icon: "🏠", label: "Browse", v: "browse", action: () => { navigateTo("browse"); setSelectedSale(null); window.scrollTo({top:0}); } },
+          { icon: "❤️", label: "Saved", v: "favourites", action: () => { navigateTo("favourites"); window.scrollTo({top:0}); } },
+          { icon: "➕", label: "Post", v: "post", action: () => { user ? navigateTo("post") : (setView("auth"), setAuthMode("signup")); window.scrollTo({top:0}); } },
+          { icon: "📋", label: "My Sales", v: "dashboard", action: () => { user ? navigateTo("dashboard") : (setView("auth"), setAuthMode("login")); window.scrollTo({top:0}); } },
+          { icon: "🗺️", label: "Map", v: "map", action: () => { navigateTo("map"); window.scrollTo({top:0}); } },
         ].map(item => (
           <button key={item.v} onClick={item.action} style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 2, background: "none", border: "none", cursor: "pointer", padding: "4px 12px", borderRadius: 10, transition: "all 0.15s" }}>
             <span style={{ fontSize: 22, filter: (view === item.v || (item.v === "browse" && view === "browse" && selectedSale)) ? "none" : "grayscale(40%)", opacity: view === item.v ? 1 : 0.6 }}>{item.icon}</span>
