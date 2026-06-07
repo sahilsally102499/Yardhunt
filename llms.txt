@@ -1,0 +1,30 @@
+# Yardhunt.ca
+
+> Canada's garage sale and yard sale marketplace. Find and post garage sales across Canada for free.
+
+## What is Yardhunt.ca?
+
+Yardhunt.ca is a free Canadian platform dedicated to garage sales and yard sales. Buyers can browse upcoming sales by city, province, or neighbourhood. Sellers can post their sales with photos, tags, and descriptions.
+
+## Features
+
+- Browse garage sales across Canada
+- Search by city, province, neighbourhood, or keyword
+- Post a free garage sale listing with photos
+- Get email notifications for sales near you
+- Featured listings for sellers
+- Verified seller badges
+- Reviews and Q&A on listings
+- Business advertising for local companies
+
+## URLs
+
+- Homepage: https://yardhunt.ca
+- Browse sales: https://yardhunt.ca/browse  
+- Post a sale: https://yardhunt.ca/post
+- Categories: https://yardhunt.ca/categories
+- Advertise: https://yardhunt.ca/advertise
+
+## Coverage
+
+Canada-wide including Ontario, Alberta, British Columbia, Quebec, Saskatchewan, Manitoba, Nova Scotia, New Brunswick, PEI, Newfoundland, Northwest Territories, Nunavut, Yukon.
