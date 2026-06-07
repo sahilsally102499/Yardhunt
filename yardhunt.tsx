@@ -3000,14 +3000,24 @@ export default function App() {
           <div style={{ display: "flex", gap: 40, flexWrap: "wrap" }}>
             <div>
               <p style={{ color: "#f5ddb4", fontSize: 12, fontWeight: 600, letterSpacing: 1, textTransform: "uppercase", marginBottom: 12 }}>Explore</p>
-              {["Browse Sales", "Categories", "Map View"].map(item => (
-                <p key={item} style={{ color: "#78716c", fontSize: 14, marginBottom: 8, cursor: "pointer" }} onClick={() => { setView(item === "Browse Sales" ? "browse" : item === "Categories" ? "categories" : "map"); setSelectedSale(null); }}>{item}</p>
+              {[
+                { label: "Browse Sales", action: () => { setView("browse"); setSelectedSale(null); } },
+                { label: "Categories", action: () => setView("categories") },
+                { label: "Map View", action: () => setView("map") },
+                { label: "Saved Sales", action: () => setView("favourites") },
+              ].map(item => (
+                <p key={item.label} style={{ color: "#a8a29e", fontSize: 14, marginBottom: 8, cursor: "pointer" }} onClick={item.action}>{item.label}</p>
               ))}
             </div>
             <div>
               <p style={{ color: "#f5ddb4", fontSize: 12, fontWeight: 600, letterSpacing: 1, textTransform: "uppercase", marginBottom: 12 }}>Sellers</p>
-              {["Post a Sale", "Featured Listings", "My Dashboard"].map(item => (
-                <p key={item} style={{ color: "#78716c", fontSize: 14, marginBottom: 8, cursor: "pointer" }} onClick={() => { if (item === "Post a Sale") setView("post"); else if (item === "My Dashboard") setView("dashboard"); }}>{item}</p>
+              {[
+                { label: "Post a Sale", action: () => user ? setView("post") : (setView("auth"), setAuthMode("signup")) },
+                { label: "Featured Listings", action: () => { setView("browse"); setSelectedSale(null); } },
+                { label: "My Dashboard", action: () => user ? setView("dashboard") : (setView("auth"), setAuthMode("login")) },
+                { label: "Promote Your Business", action: () => setView("advertise") },
+              ].map(item => (
+                <p key={item.label} style={{ color: "#a8a29e", fontSize: 14, marginBottom: 8, cursor: "pointer" }} onClick={item.action}>{item.label}</p>
               ))}
             </div>
           </div>
