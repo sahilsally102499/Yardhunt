@@ -326,6 +326,7 @@ export default function App() {
   const [showSuggestions, setShowSuggestions] = useState(false);
   const [viewCounts, setViewCounts] = useState({});
   const [isRefreshing, setIsRefreshing] = useState(false);
+  const [pageVisible, setPageVisible] = useState(true);
   const [touchStartY, setTouchStartY] = useState(0);
   const [saleAnalytics, setSaleAnalytics] = useState({});
   const [unlockedSales, setUnlockedSales] = useState([]);
@@ -711,20 +712,31 @@ export default function App() {
   };
 
   const navigateTo = (newView) => {
-    setViewHistory(h => [...h.slice(-9), newView]);
-    setView(newView);
-    document.title = "Yardhunt.ca — Canada's Garage Sale Marketplace";
-    window.scrollTo({ top: 0, behavior: "smooth" });
+    setPageVisible(false);
+    setTimeout(() => {
+      setViewHistory(h => [...h.slice(-9), newView]);
+      setView(newView);
+      window.scrollTo({ top: 0 });
+      // Update URL path
+      const paths = { browse: "/", categories: "/categories", map: "/map", favourites: "/saved", dashboard: "/my-sales", post: "/post", advertise: "/advertise", terms: "/terms", auth: "/login", admin: "/admin" };
+      window.history.pushState({}, "", paths[newView] || "/");
+      document.title = newView === "browse" ? "Yardhunt.ca — Canada's Garage Sale Marketplace" : `${newView.charAt(0).toUpperCase() + newView.slice(1)} | Yardhunt.ca`;
+      setPageVisible(true);
+    }, 180);
   };
 
   const scrollTop = () => window.scrollTo({ top: 0, behavior: "smooth" });
 
   const goBack = () => {
-    if (selectedSale) { setSelectedSale(null); window.scrollTo({ top: 0, behavior: "smooth" }); return; }
-    const prev = viewHistory.length > 1 ? viewHistory[viewHistory.length - 2] : "browse";
-    setViewHistory(h => h.slice(0, -1));
-    setView(prev);
-    window.scrollTo({ top: 0, behavior: "smooth" });
+    setPageVisible(false);
+    setTimeout(() => {
+      if (selectedSale) { setSelectedSale(null); window.scrollTo({ top: 0 }); setPageVisible(true); return; }
+      const prev = viewHistory.length > 1 ? viewHistory[viewHistory.length - 2] : "browse";
+      setViewHistory(h => h.slice(0, -1));
+      setView(prev);
+      window.scrollTo({ top: 0 });
+      setPageVisible(true);
+    }, 180);
   };
 
   const handleTouchStart = (e) => setTouchStartY(e.touches[0].clientY);
@@ -756,7 +768,7 @@ export default function App() {
       {/* Dark overlay */}
       <div style={{ position: "fixed", inset: 0, zIndex: 0, background: darkMode ? "rgba(10,5,0,0.85)" : "rgba(28,16,9,0.55)" }} />
       {/* Content wrapper */}
-      <div style={{ position: "relative", zIndex: 1 }}>
+      <div style={{ position: "relative", zIndex: 1, opacity: pageVisible ? 1 : 0, transition: "opacity 0.18s ease" }}>
       {/* Pull to refresh indicator */}
       {isRefreshing && (
         <div style={{ position: "fixed", top: 70, left: "50%", transform: "translateX(-50%)", background: "#1c1009", color: "#f5ddb4", padding: "8px 20px", borderRadius: 20, fontSize: 13, fontWeight: 600, zIndex: 999, boxShadow: "0 4px 16px rgba(0,0,0,0.3)" }}>
@@ -819,6 +831,8 @@ export default function App() {
             background-position: center !important;
           }
         }
+        .page-content { transition: opacity 0.18s ease; }
+        .page-content.hidden { opacity: 0; }
         .photo-remove { position: absolute; top: 4px; right: 4px; background: rgba(41,37,36,0.7); color: white; border: none; border-radius: 50%; width: 20px; height: 20px; font-size: 10px; cursor: pointer; display: flex; align-items: center; justify-content: center; backdrop-filter: blur(4px); }
         .upload-zone { border: 2px dashed var(--bark-pale); border-radius: 10px; padding: 24px; text-align: center; cursor: pointer; transition: all 0.2s; background: var(--cream); }
         .upload-zone:hover { border-color: var(--crimson); background: #fff5f5; }
