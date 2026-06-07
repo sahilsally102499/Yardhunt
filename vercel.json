@@ -3,5 +3,15 @@
     { "source": "/garage-sales/:city/:province", "destination": "/index.html" },
     { "source": "/garage-sales/:province", "destination": "/index.html" },
     { "source": "/(.*)", "destination": "/index.html" }
+  ],
+  "headers": [
+    {
+      "source": "/robots.txt",
+      "headers": [{ "key": "Content-Type", "value": "text/plain" }]
+    },
+    {
+      "source": "/llms.txt", 
+      "headers": [{ "key": "Content-Type", "value": "text/plain" }]
+    }
   ]
 }
