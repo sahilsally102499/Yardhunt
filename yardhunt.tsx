@@ -637,9 +637,17 @@ export default function App() {
 
   // Check for /admin URL
   useEffect(() => {
-    if (window.location.pathname === '/admin') {
-      setView('admin');
-    }
+    // Handle direct URL navigation
+    const pathname = window.location.pathname;
+    if (pathname === '/admin') setView('admin');
+    else if (pathname === '/categories') setView('categories');
+    else if (pathname === '/map') setView('map');
+    else if (pathname === '/saved') setView('favourites');
+    else if (pathname === '/my-sales') setView('dashboard');
+    else if (pathname === '/post') setView('post');
+    else if (pathname === '/advertise') setView('advertise');
+    else if (pathname === '/terms') setView('terms');
+    else if (pathname === '/login') { setView('auth'); setAuthMode('login'); }
     // SEO city/province pages e.g. /garage-sales/ontario or /garage-sales/toronto
     const path = window.location.pathname;
     const seoMatch = path.match(/^\/garage-sales\/([^/]+)(?:\/([^/]+))?/);
