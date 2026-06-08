@@ -2,16 +2,7 @@
   "rewrites": [
     { "source": "/garage-sales/:city/:province", "destination": "/index.html" },
     { "source": "/garage-sales/:province", "destination": "/index.html" },
+    { "source": "/googleb23a5a9086930925.html", "destination": "/googleb23a5a9086930925.html" },
     { "source": "/(.*)", "destination": "/index.html" }
-  ],
-  "headers": [
-    {
-      "source": "/robots.txt",
-      "headers": [{ "key": "Content-Type", "value": "text/plain" }]
-    },
-    {
-      "source": "/llms.txt", 
-      "headers": [{ "key": "Content-Type", "value": "text/plain" }]
-    }
   ]
 }
